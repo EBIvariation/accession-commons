@@ -15,13 +15,21 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ampt2d.accession.test.generator;
+package uk.ac.ebi.ampt2d.accession;
 
-public class TestAccessionGeneratorB extends TestPrefixAccessionGenerator {
+import org.springframework.boot.context.properties.ConfigurationProperties;
 
-    public static final String PREFIX = "B";
 
-    public TestAccessionGeneratorB() {
-        super(PREFIX);
+@ConfigurationProperties(prefix = "accessioning")
+public class AccessioningProperties {
+
+    private String namespace;
+
+    public String getNamespace() {
+        return namespace;
+    }
+
+    public void setNamespace(String namespace) {
+        this.namespace = namespace;
     }
 }

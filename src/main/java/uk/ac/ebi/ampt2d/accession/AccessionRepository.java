@@ -24,7 +24,8 @@ import java.util.Map;
  * @param <T> Object class
  */
 
-public interface AccessionRepository<T> {
+public interface AccessionRepository<T, U> {
+
     /**
      * Given a list of objects, it looks for the accessioned ones in the repository, and returns a them in a map. The
      * objects that have no accession in the repository are not returned.
@@ -32,12 +33,13 @@ public interface AccessionRepository<T> {
      * @param objects List of objects to accession
      * @return Objects to accessions map, for the objects that are stored in the repository
      */
-    Map<T, String> get(List<T> objects);
+    Map<T, U> get(List<T> objects);
 
     /**
      * Add object-accession pairs to a repository
      *
      * @param accessions Objects to accessions map
      */
-    void add(Map<T, String> accessions);
+    void add(Map<T, U> accessions);
+
 }

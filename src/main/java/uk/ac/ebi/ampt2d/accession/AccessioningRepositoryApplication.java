@@ -15,13 +15,16 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ampt2d.accession.test.generator;
+package uk.ac.ebi.ampt2d.accession;
 
-public class TestAccessionGeneratorA extends TestPrefixAccessionGenerator {
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
-    public static final String PREFIX = "A";
-
-    public TestAccessionGeneratorA() {
-        super(PREFIX);
+@SpringBootApplication
+@EnableConfigurationProperties(AccessioningProperties.class)
+public class AccessioningRepositoryApplication {
+    public static void main(String[] args) throws Exception {
+        SpringApplication.run(AccessioningRepositoryApplication.class, args);
     }
 }
