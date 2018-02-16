@@ -21,34 +21,45 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import uk.ac.ebi.ampt2d.accession.HashableMessage;
 import uk.ac.ebi.ampt2d.accession.Message;
 
-import java.util.Map;
-import java.util.stream.Collectors;
-
 public class StudyMessage implements HashableMessage<String>, Message {
 
-    private Map<String, String> studyProperties;
+    private String studyTitle;
 
-    StudyMessage() {
+    private String submitterEmail;
+
+    private String studyType;
+
+    public StudyMessage() {
     }
 
-    public StudyMessage(Map<String, String> studyProperties) {
-        this.studyProperties = studyProperties;
+    public StudyMessage(String studyTitle, String submitterEmail, String studyType) {
+        this.studyTitle = studyTitle;
+        this.submitterEmail = submitterEmail;
+        this.studyType = studyType;
     }
 
     @Override
     @JsonIgnore
     public String getHashableMessage() {
-        return this.studyProperties.values().stream().sorted().collect(Collectors.joining(","));
-    }
-
-    public Map<String, String> getStudyProperties() {
-        return studyProperties;
+        return getStudyTitle() + getStudyType() + getSubmitterEmail();
     }
 
     @Override
     @JsonIgnore
     public String getMessage() {
         return getHashableMessage();
+    }
+
+    public String getStudyTitle() {
+        return studyTitle;
+    }
+
+    public String getSubmitterEmail() {
+        return submitterEmail;
+    }
+
+    public String getStudyType() {
+        return studyType;
     }
 
     @Override
@@ -69,8 +80,10 @@ public class StudyMessage implements HashableMessage<String>, Message {
 
     @Override
     public String toString() {
-        return "{" +
-                "studyProperties=" + studyProperties +
+        return "StudyMessage{" +
+                "studyTitle='" + studyTitle + '\'' +
+                ", submitterEmail='" + submitterEmail + '\'' +
+                ", studyType='" + studyType + '\'' +
                 '}';
     }
 }

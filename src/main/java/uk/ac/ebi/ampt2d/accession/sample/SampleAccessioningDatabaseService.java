@@ -25,13 +25,13 @@ public class SampleAccessioningDatabaseService extends GenericDatabaseService<Sa
 
     @Override
     public SampleMessage toMessage(SampleEntity sampleEntity) {
-        return new SampleMessage(sampleEntity.getSampleProperties());
+        return new SampleMessage(sampleEntity.getSampleAlias(), sampleEntity.getStudyAccession());
     }
 
     @Override
     public SampleEntity toEntity(Map.Entry<SampleMessage, String> entry) {
-        return new SampleEntity(entry.getKey().getSampleProperties(), entry.getValue(), hashMessage(entry.getKey()
-                .getHashableMessage()));
+        return new SampleEntity(entry.getKey().getSampleAlias(), entry.getKey().getStudyAccession(),
+                hashMessage(entry.getKey().getHashableMessage()), entry.getValue());
     }
 
     @Override

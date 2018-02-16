@@ -76,4 +76,8 @@ public class AccessioningService<MESSAGE_TYPE, ACCESSION_TYPE> {
     public void add(Map<MESSAGE_TYPE, ACCESSION_TYPE> accessions) {
         dbService.save(accessions);
     }
+
+    public Map<ACCESSION_TYPE, MESSAGE_TYPE> getObjectsFromAccessions(List<ACCESSION_TYPE> accessions) {
+        return dbService.getEntitiesFromAccessions(accessions);
+    }
 }

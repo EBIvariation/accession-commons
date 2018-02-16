@@ -20,11 +20,9 @@ package uk.ac.ebi.ampt2d.accession.study;
 import uk.ac.ebi.ampt2d.accession.AccessionableEntity;
 
 import javax.persistence.Column;
-import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.validation.constraints.Size;
-import java.util.Map;
 
 @Entity
 public class StudyEntity implements AccessionableEntity {
@@ -34,8 +32,14 @@ public class StudyEntity implements AccessionableEntity {
     @Size(max = 230, min = 0)
     private String accession;
 
-    @ElementCollection
-    private Map<String, String> studyProperties;
+    @Column(nullable = false)
+    private String studyTitle;
+
+    @Column(nullable = false)
+    private String submitterEmail;
+
+    @Column(nullable = false)
+    private String studyType;
 
     @Column(nullable = false, unique = true)
     private String hashedMessage;
@@ -43,8 +47,10 @@ public class StudyEntity implements AccessionableEntity {
     StudyEntity() {
     }
 
-    public StudyEntity(Map<String, String> studyProperties, String accession, String hashedMessage) {
-        this.studyProperties = studyProperties;
+    public StudyEntity(String studyTitle, String submitterEmail, String studyType, String accession, String hashedMessage) {
+        this.studyTitle = studyTitle;
+        this.submitterEmail = submitterEmail;
+        this.studyType = studyType;
         this.accession = accession;
         this.hashedMessage = hashedMessage;
     }
@@ -53,24 +59,19 @@ public class StudyEntity implements AccessionableEntity {
         return this.accession;
     }
 
-    public void setHashedMessage(String hashedMessage) {
-        this.hashedMessage = hashedMessage;
-    }
-
-    public String getHashedMessage() {
-        return hashedMessage;
-    }
-
     public void setAccession(String accession) {
         this.accession = accession;
     }
 
-    public Map<String, String> getStudyProperties() {
-        return studyProperties;
+    public String getStudyTitle() {
+        return studyTitle;
     }
 
-    public void setStudyProperties(Map<String, String> studyProperties) {
-        this.studyProperties = studyProperties;
+    public String getSubmitterEmail() {
+        return submitterEmail;
     }
 
+    public String getStudyType() {
+        return studyType;
+    }
 }

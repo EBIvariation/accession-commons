@@ -15,7 +15,7 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ampt2d.accession.study;
+package uk.ac.ebi.ampt2d.accession.variant;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -28,6 +28,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -35,19 +36,19 @@ import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = "services=study-accession")
-public class StudyAccessioningRestControllerTest {
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = "services=variant-accession")
+public class VariantAccessioningRestControllerTest {
 
     @Autowired
     private TestRestTemplate testRestTemplate;
 
     @Autowired
-    private StudyAccessioningRepository accessioningObjectRepository;
+    private VariantAccessioningRepository accessioningObjectRepository;
 
     @Test
     public void testRestApi() {
-        String url = "/v1/accession/study";
-        HttpEntity<Object> requestEntity = new HttpEntity<>(getStudyList());
+        String url = "/v1/accession/variant/getAccessions";
+        HttpEntity<Object> requestEntity = new HttpEntity<>(getListOfVariantMessages());
         ResponseEntity<Map> response = testRestTemplate.exchange(url, HttpMethod.POST, requestEntity, Map.class);
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(2, response.getBody().size());
@@ -55,8 +56,8 @@ public class StudyAccessioningRestControllerTest {
 
     @Test
     public void requestPostTwiceAndWeGetSameAccessions() {
-        String url = "/v1/accession/study";
-        HttpEntity<Object> requestEntity = new HttpEntity<>(getStudyList());
+        String url = "/v1/accession/variant/getAccessions";
+        HttpEntity<Object> requestEntity = new HttpEntity<>(getListOfVariantMessages());
         ResponseEntity<Map> response = testRestTemplate.exchange(url, HttpMethod.POST, requestEntity, Map.class);
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(2, response.getBody().size());
@@ -69,9 +70,26 @@ public class StudyAccessioningRestControllerTest {
         assertEquals(2, accessioningObjectRepository.count());
     }
 
-    public List<StudyMessage> getStudyList() {
-        StudyMessage study1 = new StudyMessage("Title1", "Type1", "Email1");
-        StudyMessage study2 = new StudyMessage("Title2", "Type2", "Email2");
-        return asList(study1, study2);
+    @Test
+    public void testGetVariantsRestApi() {
+        String getAccessionsUrl = "/v1/accession/variant/getAccessions";
+        HttpEntity<Object> requestEntity = new HttpEntity<>(getListOfVariantMessages());
+        ResponseEntity<Map> getAccessionsResponse = testRestTemplate.exchange(getAccessionsUrl, HttpMethod.POST,
+                requestEntity, Map.class);
+        assertEquals(HttpStatus.OK, getAccessionsResponse.getStatusCode());
+        assertEquals(2, getAccessionsResponse.getBody().size());
+
+        String getVariantsUrl = "/v1/accession/variant/getVariants";
+        HttpEntity<Object> listOfAccessions = new HttpEntity<>(Arrays.asList(getAccessionsResponse.getBody().values().toArray()));
+        ResponseEntity<Map> getVariantsResponse = testRestTemplate.exchange(getVariantsUrl, HttpMethod.POST,
+                listOfAccessions, Map.class);
+        assertEquals(HttpStatus.OK, getVariantsResponse.getStatusCode());
+        assertEquals(2, getVariantsResponse.getBody().size());
+    }
+
+    public List<VariantMessage> getListOfVariantMessages() {
+        VariantMessage variant1 = new VariantMessage("ASMACC01", "PROJACC01", "CHROM1", 1234, VariantType.DIV);
+        VariantMessage variant2 = new VariantMessage("ASMACC02", "PROJACC02", "CHROM2", 1234, VariantType.DIV);
+        return asList(variant1, variant2);
     }
 }

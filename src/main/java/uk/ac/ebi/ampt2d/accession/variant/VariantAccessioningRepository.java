@@ -15,22 +15,14 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ampt2d.accession;
+package uk.ac.ebi.ampt2d.accession.variant;
 
-import java.util.List;
-import java.util.Map;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Repository;
+import uk.ac.ebi.ampt2d.accession.AccessioningRepository;
 
-public interface DatabaseService<MESSAGE_TYPE, ENTITY_TYPE> {
+@Repository
+@ConditionalOnProperty(name = "services", havingValue = "variant-accession")
+public interface VariantAccessioningRepository extends AccessioningRepository<VariantEntity, String> {
 
-    Map<MESSAGE_TYPE, String> findObjectsInDB(List<MESSAGE_TYPE> hashes);
-
-    void save(Map<MESSAGE_TYPE, String> accessioningObjects);
-
-    MESSAGE_TYPE toMessage(ENTITY_TYPE studyEntity);
-
-    ENTITY_TYPE toEntity(Map.Entry<MESSAGE_TYPE, String> entry);
-
-    String hashMessage(String message);
-
-    Map<String, MESSAGE_TYPE> getEntitiesFromAccessions(List<String> accessions);
 }

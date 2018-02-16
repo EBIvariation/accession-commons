@@ -17,9 +17,6 @@
  */
 package uk.ac.ebi.ampt2d.accession;
 
-import uk.ac.ebi.ampt2d.accession.AccessionableMessage;
-import uk.ac.ebi.ampt2d.accession.SingleAccessionGenerator;
-
 public class BasicAccessionGenerator<T extends AccessionableMessage<String>> extends SingleAccessionGenerator<T,
         String> {
 
@@ -27,5 +24,4 @@ public class BasicAccessionGenerator<T extends AccessionableMessage<String>> ext
     protected String generateAccession(T object) {
         return object.getAccession();
     }
-
 }

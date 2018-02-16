@@ -15,22 +15,8 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ampt2d.accession;
+package uk.ac.ebi.ampt2d.accession.variant;
 
-import java.util.List;
-import java.util.Map;
-
-public interface DatabaseService<MESSAGE_TYPE, ENTITY_TYPE> {
-
-    Map<MESSAGE_TYPE, String> findObjectsInDB(List<MESSAGE_TYPE> hashes);
-
-    void save(Map<MESSAGE_TYPE, String> accessioningObjects);
-
-    MESSAGE_TYPE toMessage(ENTITY_TYPE studyEntity);
-
-    ENTITY_TYPE toEntity(Map.Entry<MESSAGE_TYPE, String> entry);
-
-    String hashMessage(String message);
-
-    Map<String, MESSAGE_TYPE> getEntitiesFromAccessions(List<String> accessions);
+public enum VariantType {
+    SNV, DIV, HETEROZYGOUS, STR, NAMEDVARIANT, NOVARIATION, MIXED, MNV
 }

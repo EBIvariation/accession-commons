@@ -25,13 +25,13 @@ public class StudyAccessioningDatabaseService extends GenericDatabaseService<Stu
 
     @Override
     public StudyMessage toMessage(StudyEntity studyEntity) {
-        return new StudyMessage(studyEntity.getStudyProperties());
+        return new StudyMessage(studyEntity.getStudyTitle(), studyEntity.getStudyType(), studyEntity.getSubmitterEmail());
     }
 
     @Override
     public StudyEntity toEntity(Map.Entry<StudyMessage, String> entry) {
-        return new StudyEntity(entry.getKey().getStudyProperties(), entry.getValue(), hashMessage(entry.getKey()
-                .getHashableMessage()));
+        return new StudyEntity(entry.getKey().getStudyTitle(), entry.getKey().getStudyType(), entry.getKey()
+                .getSubmitterEmail(), entry.getValue(), hashMessage(entry.getKey().getHashableMessage()));
     }
 
     @Override
