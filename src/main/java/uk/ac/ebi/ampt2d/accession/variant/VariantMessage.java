@@ -15,30 +15,39 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ampt2d.accession.sample;
+package uk.ac.ebi.ampt2d.accession.variant;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import uk.ac.ebi.ampt2d.accession.HashableMessage;
 import uk.ac.ebi.ampt2d.accession.Message;
 
-public class SampleMessage implements HashableMessage<String>, Message {
+public class VariantMessage implements HashableMessage<String>, Message {
 
-    private String sampleAlias;
+    private String assemblyAccession;
 
-    private String studyAccession;
+    private String projectAccession;
 
-    SampleMessage() {
+    private String chromosome;
+
+    private long start;
+
+    private VariantType type;
+
+    public VariantMessage() {
     }
 
-    public SampleMessage(String sampleAlias, String studyAccession) {
-        this.sampleAlias = sampleAlias;
-        this.studyAccession = studyAccession;
+    public VariantMessage(String assemblyAccession, String projectAccession, String chromosome, long start, VariantType type) {
+        this.assemblyAccession = assemblyAccession;
+        this.projectAccession = projectAccession;
+        this.chromosome = chromosome;
+        this.start = start;
+        this.type = type;
     }
 
     @Override
     @JsonIgnore
     public String getHashableMessage() {
-        return getSampleAlias() + getStudyAccession();
+        return getAssemblyAccession() + getChromosome() + getProjectAccession() + getStart() + getType();
     }
 
     @Override
@@ -47,12 +56,24 @@ public class SampleMessage implements HashableMessage<String>, Message {
         return getHashableMessage();
     }
 
-    public String getSampleAlias() {
-        return sampleAlias;
+    public String getAssemblyAccession() {
+        return assemblyAccession;
     }
 
-    public String getStudyAccession() {
-        return studyAccession;
+    public String getProjectAccession() {
+        return projectAccession;
+    }
+
+    public String getChromosome() {
+        return chromosome;
+    }
+
+    public long getStart() {
+        return start;
+    }
+
+    public VariantType getType() {
+        return type;
     }
 
     @Override
@@ -60,7 +81,7 @@ public class SampleMessage implements HashableMessage<String>, Message {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        SampleMessage that = (SampleMessage) o;
+        VariantMessage that = (VariantMessage) o;
 
         return getHashableMessage() != null ? getHashableMessage().equals(that.getHashableMessage()) : that
                 .getHashableMessage() == null;
@@ -73,9 +94,12 @@ public class SampleMessage implements HashableMessage<String>, Message {
 
     @Override
     public String toString() {
-        return "SampleMessage{" +
-                "sampleAlias='" + sampleAlias + '\'' +
-                ", studyAccession='" + studyAccession + '\'' +
+        return "VariantMessage{" +
+                "assemblyAccession='" + assemblyAccession + '\'' +
+                ", projectAccession='" + projectAccession + '\'' +
+                ", chromosome='" + chromosome + '\'' +
+                ", start=" + start +
+                ", type=" + type +
                 '}';
     }
 }

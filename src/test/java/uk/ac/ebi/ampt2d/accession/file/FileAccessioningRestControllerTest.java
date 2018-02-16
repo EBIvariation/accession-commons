@@ -28,9 +28,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
+import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(SpringRunner.class)
@@ -45,39 +46,33 @@ public class FileAccessioningRestControllerTest {
 
     @Test
     public void testRestApi() {
-        FileMessage fileA = new FileMessage("checksumA");
-        FileMessage fileB = new FileMessage("checksumB");
-        FileMessage fileC = new FileMessage("checksumC");
-
         String url = "/v1/accession/file";
-        HttpEntity<Object> requestEntity = new HttpEntity<>(Arrays.asList(fileA, fileB, fileC));
-
+        HttpEntity<Object> requestEntity = new HttpEntity<>(getFileMessages());
         ResponseEntity<Map> response = testRestTemplate.exchange(url, HttpMethod.POST, requestEntity, Map.class);
-
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(3, response.getBody().size());
     }
 
     @Test
     public void requestPostTwiceAndWeGetSameAccessions() {
-        FileMessage fileA = new FileMessage("checksumA");
-        FileMessage fileB = new FileMessage("checksumB");
-        FileMessage fileC = new FileMessage("checksumC");
-
         String url = "/v1/accession/file";
-        HttpEntity<Object> requestEntity = new HttpEntity<>(Arrays.asList(fileA, fileB, fileC));
-
+        HttpEntity<Object> requestEntity = new HttpEntity<>(getFileMessages());
         ResponseEntity<Map> response = testRestTemplate.exchange(url, HttpMethod.POST, requestEntity, Map.class);
-
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(3, response.getBody().size());
         assertEquals(3, fileAccessioningRepository.count());
 
         //Accessing Post Request again with same files
         response = testRestTemplate.exchange(url, HttpMethod.POST, requestEntity, Map.class);
-
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(3, response.getBody().size());
         assertEquals(3, fileAccessioningRepository.count());
+    }
+
+    public List<FileMessage> getFileMessages() {
+        FileMessage fileA = new FileMessage("checksumA");
+        FileMessage fileB = new FileMessage("checksumB");
+        FileMessage fileC = new FileMessage("checksumC");
+        return asList(fileA, fileB, fileC);
     }
 }

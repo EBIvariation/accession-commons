@@ -17,7 +17,6 @@
  */
 package uk.ac.ebi.ampt2d.accession.sample;
 
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,10 +28,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.util.Arrays;
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(SpringRunner.class)
@@ -45,27 +44,10 @@ public class SampleAccessioningRestControllerTest {
     @Autowired
     private SampleAccessioningRepository accessioningObjectRepository;
 
-    private Map<String, String> sampleMap1;
-    private Map<String, String> sampleMap2;
-
-    @Before
-    public void setup() {
-        sampleMap1 = new HashMap<>();
-        sampleMap1.put("title", "Title1");
-        sampleMap1.put("type", "Type1");
-        sampleMap1.put("submitterEmail", "Email1");
-        sampleMap2 = new HashMap<>();
-        sampleMap2.put("title", "Title2");
-        sampleMap2.put("type", "Type2");
-        sampleMap2.put("submitterEmail", "Email2");
-    }
-
     @Test
     public void testRestApi() {
-        SampleMessage sample1 = new SampleMessage(sampleMap1);
-        SampleMessage sample2 = new SampleMessage(sampleMap2);
         String url = "/v1/accession/sample";
-        HttpEntity<Object> requestEntity = new HttpEntity<>(Arrays.asList(sample1, sample2));
+        HttpEntity<Object> requestEntity = new HttpEntity<>(getSamplesList());
         ResponseEntity<Map> response = testRestTemplate.exchange(url, HttpMethod.POST, requestEntity, Map.class);
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(2, response.getBody().size());
@@ -73,10 +55,8 @@ public class SampleAccessioningRestControllerTest {
 
     @Test
     public void requestPostTwiceAndWeGetSameAccessions() {
-        SampleMessage sample1 = new SampleMessage(sampleMap1);
-        SampleMessage sample2 = new SampleMessage(sampleMap2);
         String url = "/v1/accession/sample";
-        HttpEntity<Object> requestEntity = new HttpEntity<>(Arrays.asList(sample1, sample2));
+        HttpEntity<Object> requestEntity = new HttpEntity<>(getSamplesList());
         ResponseEntity<Map> response = testRestTemplate.exchange(url, HttpMethod.POST, requestEntity, Map.class);
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(2, response.getBody().size());
@@ -87,5 +67,11 @@ public class SampleAccessioningRestControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(2, response.getBody().size());
         assertEquals(2, accessioningObjectRepository.count());
+    }
+
+    public List<SampleMessage> getSamplesList() {
+        SampleMessage sample1 = new SampleMessage("Title1", "S01");
+        SampleMessage sample2 = new SampleMessage("Title2", "S02");
+        return asList(sample1, sample2);
     }
 }

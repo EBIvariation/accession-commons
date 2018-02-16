@@ -15,19 +15,17 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ampt2d.accession.sample;
+package uk.ac.ebi.ampt2d.accession.variant;
 
 import uk.ac.ebi.ampt2d.accession.AccessionableEntity;
 
 import javax.persistence.Column;
-import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.validation.constraints.Size;
-import java.util.Map;
 
 @Entity
-public class SampleEntity implements AccessionableEntity {
+public class VariantEntity implements AccessionableEntity {
 
     @Id
     @Column(nullable = false, unique = true, updatable = false)
@@ -35,39 +33,33 @@ public class SampleEntity implements AccessionableEntity {
     private String accession;
 
     @Column(nullable = false)
-    private String sampleAlias;
+    private String assemblyAccession;
 
     @Column(nullable = false)
-    private String studyAccession;
+    private String projectAccession;
 
-    @ElementCollection
-    private Map<String, String> sampleProperties;
+    @Column(nullable = false)
+    private String chromosome;
+
+    @Column(nullable = false)
+    private long start;
+
+    @Column(nullable = false)
+    private VariantType type;
 
     @Column(nullable = false, unique = true)
     private String hashedMessage;
 
-    SampleEntity() {
+    VariantEntity() {
     }
 
-    public SampleEntity(String sampleAlias, String studyAccession, String hashedMessage, String accession) {
-        this.sampleAlias = sampleAlias;
-        this.studyAccession = studyAccession;
-        this.hashedMessage = hashedMessage;
-        this.accession = accession;
-    }
-
-    public SampleEntity(Map<String, String> sampleProperties, String accession, String hashedMessage) {
-        this.sampleProperties = sampleProperties;
-        this.accession = accession;
-        this.hashedMessage = hashedMessage;
-    }
-
-    public String getSampleAlias() {
-        return sampleAlias;
-    }
-
-    public String getStudyAccession() {
-        return studyAccession;
+    public VariantEntity(String assemblyAccession, String projectAccession, String chromosome, long start, VariantType
+            type) {
+        this.assemblyAccession = assemblyAccession;
+        this.projectAccession = projectAccession;
+        this.chromosome = chromosome;
+        this.start = start;
+        this.type = type;
     }
 
     public String getAccession() {
@@ -76,5 +68,29 @@ public class SampleEntity implements AccessionableEntity {
 
     public void setAccession(String accession) {
         this.accession = accession;
+    }
+
+    public void setHashedMessage(String hashedMessage) {
+        this.hashedMessage = hashedMessage;
+    }
+
+    public String getAssemblyAccession() {
+        return assemblyAccession;
+    }
+
+    public String getProjectAccession() {
+        return projectAccession;
+    }
+
+    public String getChromosome() {
+        return chromosome;
+    }
+
+    public long getStart() {
+        return start;
+    }
+
+    public VariantType getType() {
+        return type;
     }
 }
