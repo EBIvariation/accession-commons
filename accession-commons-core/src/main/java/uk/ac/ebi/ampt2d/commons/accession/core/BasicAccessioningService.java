@@ -130,9 +130,9 @@ public class BasicAccessioningService<MODEL, HASH, ACCESSION extends Serializabl
                 .collect(Collectors.toSet());
         List<AccessionWrapper<MODEL, HASH, ACCESSION>> dbAccessions = dbService.findAllByHash(unsavedHashes);
         if (dbAccessions.size() != unsavedHashes.size()) {
-            logger.error("Unsaved object hashe list and retrieved accessions from database differ in size");
-            logger.error("Failed hashes '" + unsavedHashes.toString() + "'");
-            logger.error("Retrieved accessions from db '" + dbAccessions + "'");
+            logger.error("Lists of unsaved hashes and pre-existing accessions differ in size");
+            logger.error("Failed hashes: '" + unsavedHashes.toString() + "'");
+            logger.error("Accessions retrieved from database: '" + dbAccessions + "'");
             throw new MissingUnsavedAccessionsException(saveFailedAccessions, dbAccessions);
         }
         return dbAccessions;
