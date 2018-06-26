@@ -75,15 +75,13 @@ public class AccessionWrapper<MODEL, HASH, ACCESSION> {
 
         if (version != that.version) return false;
         if (!accession.equals(that.accession)) return false;
-        if (!hash.equals(that.hash)) return false;
-        return data.equals(that.data);
+        return hash.equals(that.hash);
     }
 
     @Override
     public int hashCode() {
         int result = accession.hashCode();
         result = 31 * result + hash.hashCode();
-        result = 31 * result + data.hashCode();
         result = 31 * result + version;
         return result;
     }
