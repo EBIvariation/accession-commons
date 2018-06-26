@@ -18,6 +18,8 @@
 package uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.repository;
 
 import com.mongodb.BulkWriteError;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.mongodb.BulkOperationException;
 import org.springframework.data.mongodb.core.BulkOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -39,6 +41,8 @@ public abstract class BasicMongoDbAccessionedCustomRepositoryImpl<
         ACCESSION extends Serializable,
         DOCUMENT extends AccessionedDocument<ACCESSION>>
         implements IAccessionedObjectCustomRepository<ACCESSION, DOCUMENT> {
+
+    private final static Logger logger = LoggerFactory.getLogger(BasicMongoDbAccessionedCustomRepositoryImpl.class);
 
     private final Class<DOCUMENT> clazz;
     private final MongoTemplate mongoTemplate;
@@ -62,6 +66,9 @@ public abstract class BasicMongoDbAccessionedCustomRepositoryImpl<
                 String duplicatedId = parseIdDuplicateKey(error).orElseThrow(() -> e);
                 duplicatedHash.add(duplicatedId);
             });
+        } catch (RuntimeException e) {
+            logger.error("Unexpected runtime exception on bulk insert", e);
+            throw e;
         }
         return generateSaveResponse(documents, duplicatedHash);
     }
@@ -83,7 +90,7 @@ public abstract class BasicMongoDbAccessionedCustomRepositoryImpl<
      */
     private void setAuditCreatedDate(Iterable<DOCUMENT> documents) {
         LocalDateTime createdDate = LocalDateTime.now();
-        for (DOCUMENT document : documents) {
+        for (DOCUMENT document: documents) {
             document.setCreatedDate(createdDate);
         }
     }
@@ -97,6 +104,8 @@ public abstract class BasicMongoDbAccessionedCustomRepositoryImpl<
                 return Optional.of(matcher.group(1));
             }
         }
+        logger.error("Error parsing BulkWriteError in BulkOperationException code '" + error.getCode() + "' message '" +
+                error.getMessage() + "'");
         return Optional.empty();
     }
 
