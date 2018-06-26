@@ -19,7 +19,9 @@ package uk.ac.ebi.ampt2d.commons.accession.core.exceptions;
 
 import uk.ac.ebi.ampt2d.commons.accession.core.AccessionWrapper;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class MissingUnsavedAccessionsException extends RuntimeException {
@@ -27,16 +29,17 @@ public class MissingUnsavedAccessionsException extends RuntimeException {
     public <MODEL, HASH, ACCESSION> MissingUnsavedAccessionsException(List<AccessionWrapper<MODEL, HASH, ACCESSION>>
                                                                      unsavedAccessions,
                                                                       List<AccessionWrapper<MODEL, HASH, ACCESSION>>
-                                                                     retrievedUnsavedAccessions) {
+                                                                     retrievedAccessions) {
         super("Unsaved objects could not be found: " +
-                generateMessage(unsavedAccessions, retrievedUnsavedAccessions));
+                generateMessage(unsavedAccessions, retrievedAccessions));
     }
 
     private static <MODEL, HASH, ACCESSION> String generateMessage(List<AccessionWrapper<MODEL, HASH, ACCESSION>>
-                                                                           dbAccessions,
+                                                                           unsavedAccessions,
                                                                    List<AccessionWrapper<MODEL, HASH, ACCESSION>>
-                                                                           unsavedObjects) {
-        return dbAccessions.stream().filter(mha -> !unsavedObjects.contains(mha))
+                                                                           retrievedAccessions) {
+        Set<HASH> hashSet = retrievedAccessions.stream().map(AccessionWrapper::getHash).collect(Collectors.toSet());
+        return unsavedAccessions.stream().filter(mha -> !hashSet.contains(mha.getHash()))
                 .collect(Collectors.toList()).toString();
     }
 

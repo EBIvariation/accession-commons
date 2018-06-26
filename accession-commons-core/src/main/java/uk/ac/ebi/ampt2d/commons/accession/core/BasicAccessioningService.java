@@ -17,6 +17,8 @@
  */
 package uk.ac.ebi.ampt2d.commons.accession.core;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
@@ -43,6 +45,8 @@ import java.util.stream.Collectors;
  */
 public class BasicAccessioningService<MODEL, HASH, ACCESSION extends Serializable>
         implements AccessioningService<MODEL, HASH, ACCESSION> {
+
+    private final static Logger logger = LoggerFactory.getLogger(BasicAccessioningService.class);
 
     private AccessionGenerator<MODEL, ACCESSION> accessionGenerator;
 
@@ -126,7 +130,10 @@ public class BasicAccessioningService<MODEL, HASH, ACCESSION extends Serializabl
                 .collect(Collectors.toSet());
         List<AccessionWrapper<MODEL, HASH, ACCESSION>> dbAccessions = dbService.findAllByHash(unsavedHashes);
         if (dbAccessions.size() != unsavedHashes.size()) {
-            throw new MissingUnsavedAccessionsException(dbAccessions, saveFailedAccessions);
+            logger.error("Unsaved object hashe list and retrieved accessions from database differ in size");
+            logger.error("Failed hashes '" + unsavedHashes.toString() + "'");
+            logger.error("Retrieved accessions from db '" + dbAccessions + "'");
+            throw new MissingUnsavedAccessionsException(saveFailedAccessions, dbAccessions);
         }
         return dbAccessions;
     }

@@ -86,4 +86,12 @@ public class AccessionWrapper<MODEL, HASH, ACCESSION> {
         return result;
     }
 
+    @Override
+    public String toString() {
+        return "AccessionWrapper{" +
+                "accession=" + accession +
+                ", hash=" + hash +
+                ", version=" + version +
+                '}';
+    }
 }
