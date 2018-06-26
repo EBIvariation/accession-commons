@@ -57,20 +57,20 @@ public abstract class BasicMongoDbAccessionedCustomRepositoryImpl<
         checkHashUniqueness(documents);
         setAuditCreatedDate(documents);
         final BulkOperations insert = mongoTemplate.bulkOps(BulkOperations.BulkMode.UNORDERED, clazz).insert(documents);
-        final Set<String> duplicatedHash = new HashSet<>();
+        final Set<String> erroneousIds = new HashSet<>();
 
         try {
             insert.execute();
         } catch (BulkOperationException e) {
             e.getErrors().forEach(error -> {
-                String duplicatedId = parseIdDuplicateKey(error).orElseThrow(() -> e);
-                duplicatedHash.add(duplicatedId);
+                String errorId = reportBulkOperationException(error).orElseThrow(() -> e);
+                erroneousIds.add(errorId);
             });
         } catch (RuntimeException e) {
-            logger.error("Unexpected runtime exception on bulk insert", e);
+            logger.error("Unexpected runtime exception in MongoDB bulk insert", e);
             throw e;
         }
-        return generateSaveResponse(documents, duplicatedHash);
+        return generateSaveResponse(documents, erroneousIds);
     }
 
     private void checkHashUniqueness(Collection<DOCUMENT> documents) {
@@ -95,17 +95,21 @@ public abstract class BasicMongoDbAccessionedCustomRepositoryImpl<
         }
     }
 
-    private Optional<String> parseIdDuplicateKey(BulkWriteError error) {
+    private Optional<String> reportBulkOperationException(BulkWriteError error) {
         if (11000 == error.getCode()) {
             final String message = error.getMessage();
             Pattern pattern = Pattern.compile("_id_ dup key:.\\{.:.\"(.*)\".\\}");
             Matcher matcher = pattern.matcher(message);
             if (matcher.find()) {
                 return Optional.of(matcher.group(1));
+            } else {
+                logger.error("Error parsing BulkWriteError in BulkOperationException. Code '" + error.getCode()
+                        + "' Message: '" + error.getMessage() + "'");
             }
+        } else {
+            logger.error("Unexpected BulkWriteError in BulkOperationException. Code: '" + error.getCode()
+                    + "'. Message: '" + error.getMessage() + "'");
         }
-        logger.error("Error parsing BulkWriteError in BulkOperationException code '" + error.getCode() + "' message '" +
-                error.getMessage() + "'");
         return Optional.empty();
     }
 
