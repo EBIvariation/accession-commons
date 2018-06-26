@@ -31,8 +31,6 @@ public class MissingUnsavedAccessionsException extends RuntimeException {
                                                                               unsavedAccessions,
                                                                       List<AccessionWrapper<MODEL, HASH, ACCESSION>>
                                                                               retrievedAccessions) {
-        super("Unsaved objects could not be found: " +
-                generateMissingUnsavedAccessions(unsavedAccessions, retrievedAccessions).toString());
         this.missingUnsavedAccessions = generateMissingUnsavedAccessions(unsavedAccessions, retrievedAccessions);
     }
 
@@ -49,4 +47,8 @@ public class MissingUnsavedAccessionsException extends RuntimeException {
         return missingUnsavedAccessions;
     }
 
+    @Override
+    public String getMessage() {
+        return "Unsaved objects could not be found: " + missingUnsavedAccessions.toString();
+    }
 }
