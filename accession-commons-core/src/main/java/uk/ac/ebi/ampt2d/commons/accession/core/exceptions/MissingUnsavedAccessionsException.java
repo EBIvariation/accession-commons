@@ -19,28 +19,34 @@ package uk.ac.ebi.ampt2d.commons.accession.core.exceptions;
 
 import uk.ac.ebi.ampt2d.commons.accession.core.AccessionWrapper;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 public class MissingUnsavedAccessionsException extends RuntimeException {
 
+    private List<AccessionWrapper<?, ?, ?>> missingUnsavedAccessions;
+
     public <MODEL, HASH, ACCESSION> MissingUnsavedAccessionsException(List<AccessionWrapper<MODEL, HASH, ACCESSION>>
-                                                                     unsavedAccessions,
+                                                                              unsavedAccessions,
                                                                       List<AccessionWrapper<MODEL, HASH, ACCESSION>>
-                                                                     retrievedAccessions) {
+                                                                              retrievedAccessions) {
         super("Unsaved objects could not be found: " +
-                generateMessage(unsavedAccessions, retrievedAccessions));
+                generateMissingUnsavedAccessions(unsavedAccessions, retrievedAccessions).toString());
+        this.missingUnsavedAccessions = generateMissingUnsavedAccessions(unsavedAccessions, retrievedAccessions);
     }
 
-    private static <MODEL, HASH, ACCESSION> String generateMessage(List<AccessionWrapper<MODEL, HASH, ACCESSION>>
-                                                                           unsavedAccessions,
-                                                                   List<AccessionWrapper<MODEL, HASH, ACCESSION>>
-                                                                           retrievedAccessions) {
-        Set<HASH> hashSet = retrievedAccessions.stream().map(AccessionWrapper::getHash).collect(Collectors.toSet());
-        return unsavedAccessions.stream().filter(mha -> !hashSet.contains(mha.getHash()))
-                .collect(Collectors.toList()).toString();
+    private static <MODEL, HASH, ACCESSION> List<AccessionWrapper<?, ?, ?>>
+    generateMissingUnsavedAccessions(List<AccessionWrapper<MODEL, HASH, ACCESSION>> unsavedAccessions,
+                                     List<AccessionWrapper<MODEL, HASH, ACCESSION>> retrievedAccessions) {
+        Set<HASH> uniqueRetrievedHashes = retrievedAccessions.stream().map(AccessionWrapper::getHash)
+                .collect(Collectors.toSet());
+        return unsavedAccessions.stream().filter(mha -> !uniqueRetrievedHashes.contains(mha.getHash()))
+                .collect(Collectors.toList());
+    }
+
+    public List<AccessionWrapper<?, ?, ?>> getMissingUnsavedAccessions() {
+        return missingUnsavedAccessions;
     }
 
 }

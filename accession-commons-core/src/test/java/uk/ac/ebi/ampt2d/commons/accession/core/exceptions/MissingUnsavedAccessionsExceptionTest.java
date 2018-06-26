@@ -38,8 +38,8 @@ public class MissingUnsavedAccessionsExceptionTest {
         );
         MissingUnsavedAccessionsException exception =
                 new MissingUnsavedAccessionsException(unsavedAccessions, retrievedAccessions);
-        assertEquals("Unsaved objects could not be found: [AccessionWrapper{accession=3, hash=HB, version=1}]",
-                exception.getMessage());
+        assertEquals(Arrays.asList(new AccessionWrapper<>("3", "HB", "B")),
+                exception.getMissingUnsavedAccessions());
     }
 
 }
