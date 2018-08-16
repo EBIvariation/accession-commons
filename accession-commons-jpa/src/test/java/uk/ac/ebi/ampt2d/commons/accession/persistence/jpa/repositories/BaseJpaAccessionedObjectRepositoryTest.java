@@ -63,15 +63,15 @@ public class BaseJpaAccessionedObjectRepositoryTest {
 
     @Test
     public void testInsertTwoVersionsSameAccession() {
-        TestEntity testEntity1 = new TestEntity("a1", "h1", 1, "something1");
-        TestEntity testEntity2 = new TestEntity("a1", "h2", 2, "something2");
+        TestEntity testEntity1 = new TestEntity("a1", "h1", 1, "something1", "");
+        TestEntity testEntity2 = new TestEntity("a1", "h2", 2, "something2", "");
         repository.insert(Arrays.asList(testEntity1, testEntity2));
     }
 
     @Test
     public void testFindByAccession() {
-        TestEntity testEntity1 = new TestEntity("a1", "h1", 1, "something1");
-        TestEntity testEntity2 = new TestEntity("a1", "h2", 2, "something2");
+        TestEntity testEntity1 = new TestEntity("a1", "h1", 1, "something1", "");
+        TestEntity testEntity2 = new TestEntity("a1", "h2", 2, "something2", "");
         repository.insert(Arrays.asList(testEntity1, testEntity2));
         assertEquals(2, repository.findByAccession("a1").size());
         assertEquals(2, repository.findByAccessionIn(Arrays.asList("a1")).size());
@@ -79,8 +79,8 @@ public class BaseJpaAccessionedObjectRepositoryTest {
 
     @Test
     public void testFindByAccessionAndVersion() {
-        TestEntity testEntity1 = new TestEntity("a1", "h1", 1, "something1");
-        TestEntity testEntity2 = new TestEntity("a1", "h2", 2, "something2");
+        TestEntity testEntity1 = new TestEntity("a1", "h1", 1, "something1", "");
+        TestEntity testEntity2 = new TestEntity("a1", "h2", 2, "something2", "");
         repository.insert(Arrays.asList(testEntity1, testEntity2));
         assertEquals("something1", repository.findByAccessionAndVersion("a1", 1).getValue());
         assertEquals("something2", repository.findByAccessionAndVersion("a1", 2).getValue());

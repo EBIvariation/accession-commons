@@ -24,6 +24,8 @@ public class TestInactiveSubDocument extends InactiveSubDocument<TestModel, Stri
 
     private String value;
 
+    private String nonIdentifyingValue;
+
     TestInactiveSubDocument() {
         super();
     }
@@ -31,11 +33,17 @@ public class TestInactiveSubDocument extends InactiveSubDocument<TestModel, Stri
     public TestInactiveSubDocument(TestDocument testDocument) {
         super(testDocument);
         this.value = testDocument.getValue();
+        this.nonIdentifyingValue = testDocument.getNonIdentifyingValue();
     }
 
     @Override
     public String getValue() {
         return value;
+    }
+
+    @Override
+    public String getNonIdentifyingValue() {
+        return nonIdentifyingValue;
     }
 
     @Override

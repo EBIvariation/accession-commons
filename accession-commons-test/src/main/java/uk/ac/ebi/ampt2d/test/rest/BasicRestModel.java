@@ -26,6 +26,8 @@ public class BasicRestModel implements TestModel {
     @NotNull(message = "Please provide a value")
     private String value;
 
+    private String nonIdentifyingValue;
+
     public BasicRestModel() {
     }
 
@@ -33,9 +35,18 @@ public class BasicRestModel implements TestModel {
         this.value = value;
     }
 
+    public BasicRestModel(String value, String nonIdentifyingValue) {
+        this.value = value;
+        this.nonIdentifyingValue = nonIdentifyingValue;
+    }
+
     @Override
     public String getValue() {
         return value;
     }
 
+    @Override
+    public String getNonIdentifyingValue() {
+        return nonIdentifyingValue;
+    }
 }

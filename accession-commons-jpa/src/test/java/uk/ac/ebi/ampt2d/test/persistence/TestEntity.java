@@ -28,22 +28,32 @@ public class TestEntity extends AccessionedEntity<TestModel, String> implements 
 
     private String something;
 
+    private String nonIdentifyingValue;
+
     TestEntity() {
         super(null, null, 1);
     }
 
     public TestEntity(AccessionWrapper<TestModel, String, String> model) {
-        this(model.getAccession(), model.getHash(), model.getVersion(), model.getData().getValue());
+        this(model.getAccession(), model.getHash(), model.getVersion(), model.getData().getValue(),
+             model.getData().getNonIdentifyingValue());
     }
 
-    public TestEntity(String accession, String hashedMessage, int version, String something) {
+    public TestEntity(String accession, String hashedMessage, int version, String something,
+                      String nonIdentifyingValue) {
         super(hashedMessage, accession, version);
         this.something = something;
+        this.nonIdentifyingValue = nonIdentifyingValue;
     }
 
     @Override
     public String getValue() {
         return something;
+    }
+
+    @Override
+    public String getNonIdentifyingValue() {
+        return nonIdentifyingValue;
     }
 
     @Override

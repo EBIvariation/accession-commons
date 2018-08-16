@@ -43,9 +43,13 @@ import uk.ac.ebi.ampt2d.test.persistence.TestStringHistoryRepository;
 import uk.ac.ebi.ampt2d.test.persistence.TestStringOperationEntity;
 
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 @RunWith(SpringRunner.class)
 @DataJpaTest
@@ -168,8 +172,53 @@ public class JpaBasicSpringDataRepositoryDatabaseServiceTest {
     @Test(expected = HashAlreadyExistsException.class)
     public void updateWithExistingObjectFails() throws AccessionDoesNotExistException,
             HashAlreadyExistsException, AccessionDeprecatedException, AccessionMergedException {
-        service.save(Arrays.asList(new AccessionWrapper<>("a2", "h1", TestModel.of("something2"))));
-        service.update("a2", "h1", TestModel.of("something2"), 1);
+        service.save(Arrays.asList(new AccessionWrapper<>("a1", "h1", TestModel.of("original"))));
+        service.save(Arrays.asList(new AccessionWrapper<>("a2", "h2", TestModel.of("unrelated"))));
+        service.update("a1", "h2", TestModel.of("modification on 'original' that yields the hash of 'unrelated'"), 1);
+    }
+
+    @Test
+    public void updateIdentifyingFieldInOnlyOneVersion() throws AccessionDoesNotExistException,
+            AccessionDeprecatedException, AccessionMergedException, HashAlreadyExistsException {
+        service.save(Arrays.asList(new AccessionWrapper<>("a2", "h1", TestModel.of("something1", "1"), 1)));
+        service.save(Arrays.asList(new AccessionWrapper<>("a2", "h2", TestModel.of("something2", "2"), 2)));
+        AccessionVersionsWrapper<TestModel, String, String> update = service.update("a2", "h3",
+                                                                                    TestModel.of("something3", "3"), 1);
+
+        assertEquals(2, update.getModelWrappers().size());
+        assertEquals(new HashSet<>(Arrays.asList("h2", "h3")),
+                     update.getModelWrappers().stream().map(AccessionWrapper::getHash).collect(Collectors.toSet()));
+        assertEquals(0, service.findAllByHash(Collections.singletonList("h1")).size());
+        assertEquals(1, service.findAllByHash(Collections.singletonList("h2")).size());
+        assertEquals(1, service.findAllByHash(Collections.singletonList("h3")).size());
+    }
+
+    @Test
+    public void updateIdentifyingFieldInOnlyOneVersionWithHashCollisionFails()
+            throws AccessionDoesNotExistException, AccessionDeprecatedException, AccessionMergedException {
+        service.save(Arrays.asList(new AccessionWrapper<>("a2", "h1", TestModel.of("something1", "1"), 1)));
+        service.save(Arrays.asList(new AccessionWrapper<>("a2", "h2", TestModel.of("something2", "2"), 2)));
+        try {
+            service.update("a2", "h2",
+                           TestModel.of("modification of 'something1' that yields hash of 'something2'", "3"), 1);
+            fail("update should fail because hash would make collision on two objects with different versions");
+        } catch (HashAlreadyExistsException e) {
+            assertEquals(0, inactiveRepository.count());
+        }
+    }
+
+    @Test
+    public void updateNonIdentifyingField() throws AccessionDoesNotExistException,
+            HashAlreadyExistsException, AccessionDeprecatedException, AccessionMergedException {
+        service.save(Arrays.asList(new AccessionWrapper<>("a2", "h1", TestModel.of("something2", "nonIdentifying 1"))));
+        AccessionVersionsWrapper<TestModel, String, String> update = service.update(
+                "a2", "h1", TestModel.of("something2", "nonIdentifying 2"), 1);
+
+        assertEquals(1, update.getModelWrappers().size());
+        assertEquals("nonIdentifying 2", update.getModelWrappers().get(0).getData().getNonIdentifyingValue());
+        List<AccessionWrapper<TestModel, String, String>> h1 = service.findAllByHash(Arrays.asList("h1"));
+        assertEquals(1, h1.size());
+        assertEquals("nonIdentifying 2", h1.get(0).getData().getNonIdentifyingValue());
     }
 
     @Test

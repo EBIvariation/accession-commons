@@ -21,8 +21,34 @@ public interface TestModel {
 
     String getValue();
 
+    String getNonIdentifyingValue();
+
     static TestModel of(String value) {
-        return () -> value;
+        return new TestModel() {
+            @Override
+            public String getValue() {
+                return value;
+            }
+
+            @Override
+            public String getNonIdentifyingValue() {
+                return "";
+            }
+        };
+    }
+
+    static TestModel of(String value, String nonIdentifyingValue) {
+        return new TestModel() {
+            @Override
+            public String getValue() {
+                return value;
+            }
+
+            @Override
+            public String getNonIdentifyingValue() {
+                return nonIdentifyingValue;
+            }
+        };
     }
 
 }

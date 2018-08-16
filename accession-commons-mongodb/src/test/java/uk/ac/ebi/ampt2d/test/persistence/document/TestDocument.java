@@ -27,6 +27,8 @@ public class TestDocument extends AccessionedDocument<TestModel, String> impleme
 
     private String value;
 
+    private String nonIdentifyingValue;
+
     TestDocument() {
         super();
     }
@@ -34,20 +36,32 @@ public class TestDocument extends AccessionedDocument<TestModel, String> impleme
     public TestDocument(String value, String hashedMessage, String accession) {
         super(hashedMessage, accession);
         this.value = value;
+        this.nonIdentifyingValue = "";
     }
 
     public TestDocument(String value, String hashedMessage, String accession, int version) {
+        this(value, "", hashedMessage, accession, version);
+    }
+
+    public TestDocument(String value, String nonIdentifyingValue, String hashedMessage, String accession, int version) {
         super(hashedMessage, accession, version);
         this.value = value;
+        this.nonIdentifyingValue = nonIdentifyingValue;
     }
 
     public TestDocument(AccessionWrapper<TestModel, String, String> wrapper) {
-        this(wrapper.getData().getValue(), wrapper.getHash(), wrapper.getAccession(), wrapper.getVersion());
+        this(wrapper.getData().getValue(), wrapper.getData().getNonIdentifyingValue(), wrapper.getHash(),
+             wrapper.getAccession(), wrapper.getVersion());
     }
 
     @Override
     public String getValue() {
         return value;
+    }
+
+    @Override
+    public String getNonIdentifyingValue() {
+        return nonIdentifyingValue;
     }
 
     public static TestDocument document(int num) {

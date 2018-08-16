@@ -223,8 +223,9 @@ public class BasicSpringDataRepositoryDatabaseService<
             throws AccessionDoesNotExistException, HashAlreadyExistsException, AccessionMergedException,
             AccessionDeprecatedException {
         ACCESSION_ENTITY oldVersion = doFindAccessionVersion(accession, version);
-        checkHashDoesNotExist(hash);
-
+        if (!oldVersion.getHashedMessage().equals(hash)) {
+            checkHashDoesNotExist(hash);
+        }
         inactiveAccessionService.update(oldVersion, "Version update");
         repository.delete(oldVersion);
         checkedInsert(accession, hash, model, version);

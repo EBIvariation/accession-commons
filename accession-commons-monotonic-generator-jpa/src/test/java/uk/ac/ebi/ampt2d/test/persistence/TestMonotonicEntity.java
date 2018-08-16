@@ -28,6 +28,8 @@ public class TestMonotonicEntity extends AccessionedEntity<TestModel, Long> impl
 
     private String something;
 
+    private String nonIdentifyingValue;
+
     TestMonotonicEntity() {
         super(null, null, 1);
     }
@@ -38,13 +40,24 @@ public class TestMonotonicEntity extends AccessionedEntity<TestModel, Long> impl
     }
 
     public TestMonotonicEntity(Long accession, String hashedMessage, int version, String something) {
+        this(accession, hashedMessage, version, something, "");
+    }
+
+    public TestMonotonicEntity(Long accession, String hashedMessage, int version, String something,
+                               String nonIdentifyingValue) {
         super(hashedMessage, accession, version);
         this.something = something;
+        this.nonIdentifyingValue = nonIdentifyingValue;
     }
 
     @Override
     public String getValue() {
         return something;
+    }
+
+    @Override
+    public String getNonIdentifyingValue() {
+        return nonIdentifyingValue;
     }
 
     @Override

@@ -27,6 +27,8 @@ public class TestMonotonicInactiveAccessionEntity extends InactiveAccessionEntit
 
     private String something;
 
+    private String nonIdentifyingValue;
+
     TestMonotonicInactiveAccessionEntity() {
         super();
     }
@@ -34,6 +36,7 @@ public class TestMonotonicInactiveAccessionEntity extends InactiveAccessionEntit
     public TestMonotonicInactiveAccessionEntity(TestMonotonicEntity testEntity) {
         super(testEntity);
         this.something = testEntity.getValue();
+        this.nonIdentifyingValue = testEntity.getNonIdentifyingValue();
     }
 
     @Override
@@ -44,5 +47,10 @@ public class TestMonotonicInactiveAccessionEntity extends InactiveAccessionEntit
     @Override
     public String getValue() {
         return something;
+    }
+
+    @Override
+    public String getNonIdentifyingValue() {
+        return nonIdentifyingValue;
     }
 }
