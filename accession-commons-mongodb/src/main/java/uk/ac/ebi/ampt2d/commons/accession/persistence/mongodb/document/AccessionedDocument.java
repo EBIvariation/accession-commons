@@ -39,7 +39,7 @@ public abstract class AccessionedDocument<MODEL, ACCESSION extends Serializable>
     @Id
     private String hashedMessage;
 
-    @Indexed
+    @Indexed(background = true)
     private ACCESSION accession;
 
     private int version;
