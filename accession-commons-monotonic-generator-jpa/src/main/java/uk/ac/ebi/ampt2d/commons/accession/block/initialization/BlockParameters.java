@@ -26,17 +26,17 @@ public class BlockParameters {
 
     private static final String BLOCK_SIZE = "blockSize";
     private static final String BLOCK_START_VALUE = "blockStartValue";
-    private static final String INTERLEAVE_INTERVAL = "interleaveInterval";
+    private static final String NEXT_BLOCK_INTERVAL = "nextBlockInterval";
 
     private long blockStartValue;
     private long blockSize;
-    private long interleaveInterval;
+    private long nextBlockInterval;
 
     public BlockParameters(String categoryId, Map<String, String> blockInitializations) {
         StringBuilder errorBuffer = new StringBuilder();
         blockStartValue = parseVariable(errorBuffer, BLOCK_START_VALUE, blockInitializations, 0);
         blockSize = parseVariable(errorBuffer, BLOCK_SIZE, blockInitializations, 1);
-        interleaveInterval = parseVariable(errorBuffer, INTERLEAVE_INTERVAL, blockInitializations, 0);
+        nextBlockInterval = parseVariable(errorBuffer, NEXT_BLOCK_INTERVAL, blockInitializations, 0);
 
         if (errorBuffer.length() > 0) {
             throw new BlockInitializationException("Error while parsing parameters for category '" + categoryId + "' " +
@@ -76,8 +76,8 @@ public class BlockParameters {
         return blockSize;
     }
 
-    public long getInterleaveInterval() {
-        return interleaveInterval;
+    public long getNextBlockInterval() {
+        return nextBlockInterval;
     }
 
     @Override
@@ -85,7 +85,7 @@ public class BlockParameters {
         return "BlockParameters{" +
                 "blockStartValue=" + blockStartValue +
                 ", blockSize=" + blockSize +
-                ", interleaveInterval=" + interleaveInterval +
+                ", nextBlockInterval=" + nextBlockInterval +
                 '}';
     }
 }

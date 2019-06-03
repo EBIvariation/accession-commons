@@ -57,11 +57,11 @@ public class BlockParametersTest {
         blockParameters = new BlockParameters("test", getBlockInitialization("1000", "0", "0"));
     }
 
-    private Map<String, String> getBlockInitialization(String blockSize, String blockStartValue, String interleaveInterval) {
+    private Map<String, String> getBlockInitialization(String blockSize, String blockStartValue, String nextBlockInterval) {
         Map<String, String> blockInitializations = new HashMap<>();
         blockInitializations.put("blockSize", blockSize);
         blockInitializations.put("blockStartValue", blockStartValue);
-        blockInitializations.put("interleaveInterval", interleaveInterval);
+        blockInitializations.put("nextBlockInterval", nextBlockInterval);
         return blockInitializations;
     }
 }

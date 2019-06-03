@@ -157,7 +157,7 @@ public class ContiguousIdBlockServiceTest {
         assertEquals(999, block1.getLastValue());
 
         ContiguousIdBlock block2 = block1.nextBlock(INSTANCE_ID, 2000, 0, 0);
-        assertEquals(1000, block2.getFirstValue()); // does not interleave as interleaveInterval = 0
+        assertEquals(1000, block2.getFirstValue()); // does not interleave as nextBlockInterval = 0
         assertEquals(2999, block2.getLastValue()); // as there is no interleaving any size can be reserved for a block
     }
 

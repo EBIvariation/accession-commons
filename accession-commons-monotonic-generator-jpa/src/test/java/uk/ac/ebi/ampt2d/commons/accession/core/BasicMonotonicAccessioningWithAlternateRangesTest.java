@@ -63,7 +63,7 @@ public class BasicMonotonicAccessioningWithAlternateRangesTest {
 
     @Test
     public void testAlternateRangesWithDifferentGenerators() throws AccessionCouldNotBeGeneratedException {
-        /* blockStartValue= 0, blockSize= 10 , interleaveInterval= 20
+        /* blockStartValue= 0, blockSize= 10 , nextBlockInterval= 20
           the new blocks are interleaved or jumped for each 20 items accessioned
           so the accesions will be in the range of 0-19,40-59,80-99 */
         String categoryId = "eva_2";

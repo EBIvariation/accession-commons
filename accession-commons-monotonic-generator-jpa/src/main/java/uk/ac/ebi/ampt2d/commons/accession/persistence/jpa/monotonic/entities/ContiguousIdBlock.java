@@ -74,41 +74,41 @@ public class ContiguousIdBlock implements Comparable<ContiguousIdBlock> {
     }
 
     /**
-     * This method creates a new block based on the previous block and interleaveInterval.
-     * In case of interleaveInterval is zero, the next block can start right after the last one, otherwise
+     * This method creates a new block based on the previous block and nextBlockInterval.
+     * In case of nextBlockInterval is zero, the next block can start right after the last one, otherwise
      * the interleavingPoint is calculated by finding the range in which the lastvalue (previous block's endValue)
      * falls.
      * <p>
      * Below are the series of cases
      * <p>
-     * if earliestBlockStartValue = 0 , interleaveInterval = 50 , lastValue = 40 then,
+     * if earliestBlockStartValue = 0 , nextBlockInterval = 50 , lastValue = 40 then,
      * interleavingPoint = 50 and remainingSizeInRangeOfBlocks=9 so the nextBlockStartValue will be 41
-     * if earliestBlockStartValue = 0 , interleaveInterval = 50 , lastValue = 49 then,
+     * if earliestBlockStartValue = 0 , nextBlockInterval = 50 , lastValue = 49 then,
      * interleavingPoint = 50 and remainingSizeInRangeOfBlocks=0 so the nextBlockStartValue will be 100
      * <p>
-     * if earliestBlockStartValue = 0 , interleaveInterval = 50 , lastValue = 120 then,
+     * if earliestBlockStartValue = 0 , nextBlockInterval = 50 , lastValue = 120 then,
      * interleavingPoint = 150 and remainingSizeInRangeOfBlocks= 29 so the nextBlockStartValue will be 121
-     * if earliestBlockStartValue = 0 , interleaveInterval = 50 , lastValue = 130 and size is 25 then,
+     * if earliestBlockStartValue = 0 , nextBlockInterval = 50 , lastValue = 130 and size is 25 then,
      * interleavingPoint = 150 and remainingSizeInRangeOfBlocks= 19 so the nextBlockStartValue equals 131 and size = 19
      *
      * @param instanceId              instance id for the machine
      * @param size                    size of the block to be reserved
-     * @param interleaveInterval      specifies when to interleave and interval to interleave
+     * @param nextBlockInterval       specifies when to interleave and interval to interleave
      * @param earliestBlockStartValue refers to blockStartValue in properties file
      * @return
      */
-    public ContiguousIdBlock nextBlock(String instanceId, long size, long interleaveInterval,
+    public ContiguousIdBlock nextBlock(String instanceId, long size, long nextBlockInterval,
                                        long earliestBlockStartValue) {
         long nextBlockStartValue = lastValue + 1;
-        if (interleaveInterval == 0) {
+        if (nextBlockInterval == 0) {
             return new ContiguousIdBlock(categoryId, instanceId, nextBlockStartValue, size);
         }
-        long interleavingPoint = ((lastValue - earliestBlockStartValue) / interleaveInterval + 1) *
-                interleaveInterval + earliestBlockStartValue;
+        long interleavingPoint = ((lastValue - earliestBlockStartValue) / nextBlockInterval + 1) *
+                nextBlockInterval + earliestBlockStartValue;
         long remainingSize = interleavingPoint - nextBlockStartValue;
         if (remainingSize <= 0) {
-            nextBlockStartValue = nextBlockStartValue + interleaveInterval;
-            remainingSize = interleaveInterval;
+            nextBlockStartValue = nextBlockStartValue + nextBlockInterval;
+            remainingSize = nextBlockInterval;
         }
         if (size > remainingSize) {
             /* To make sure we allocate only available size in case we have reserved different sizes
