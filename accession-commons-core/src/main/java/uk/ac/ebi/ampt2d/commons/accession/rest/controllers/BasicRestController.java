@@ -31,6 +31,7 @@ import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedExcepti
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.HashAlreadyExistsException;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionVersionsResponseDTO;
+import uk.ac.ebi.ampt2d.commons.accession.rest.dto.GetOrCreateAccessionResponseDTO;
 
 import javax.validation.Valid;
 import java.util.List;
@@ -58,10 +59,10 @@ public class BasicRestController<DTO extends MODEL, MODEL, HASH, ACCESSION> {
 
     @RequestMapping(method = RequestMethod.POST, produces = "application/json",
             consumes = "application/json")
-    public List<AccessionResponseDTO<DTO, MODEL, HASH, ACCESSION>> generateAccessions(@RequestBody @Valid List<DTO> dtos)
-            throws AccessionCouldNotBeGeneratedException {
+    public List<GetOrCreateAccessionResponseDTO<DTO, MODEL, HASH, ACCESSION>> generateAccessions(
+            @RequestBody @Valid List<DTO> dtos) throws AccessionCouldNotBeGeneratedException {
         return service.getOrCreate(dtos).stream()
-                .map(accessionModel -> new AccessionResponseDTO<>(accessionModel, modelToDTO))
+                .map(accessionModel -> new GetOrCreateAccessionResponseDTO<>(accessionModel, modelToDTO))
                 .collect(Collectors.toList());
     }
 

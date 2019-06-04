@@ -27,6 +27,7 @@ import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.HashAlreadyExistsExcep
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.MissingUnsavedAccessionsException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionVersionsWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.GetOrCreateAccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.SaveResponse;
 import uk.ac.ebi.ampt2d.commons.accession.generators.AccessionGenerator;
 
@@ -41,8 +42,8 @@ import java.util.stream.Collectors;
 /**
  * Basic implementation of a service for creation, retrieval and modifications of object accessions.
  *
- * @param <MODEL> Type of the objects identified by the accessions
- * @param <HASH> Type of the hash calculated based on the fields that uniquely identify an accessioned object
+ * @param <MODEL>     Type of the objects identified by the accessions
+ * @param <HASH>      Type of the hash calculated based on the fields that uniquely identify an accessioned object
  * @param <ACCESSION> Type of the accession that identifies an object of a particular model
  */
 public class BasicAccessioningService<MODEL, HASH, ACCESSION extends Serializable>
@@ -68,7 +69,7 @@ public class BasicAccessioningService<MODEL, HASH, ACCESSION extends Serializabl
     }
 
     @Override
-    public List<AccessionWrapper<MODEL, HASH, ACCESSION>> getOrCreate(List<? extends MODEL> messages)
+    public List<GetOrCreateAccessionWrapper<MODEL, HASH, ACCESSION>> getOrCreate(List<? extends MODEL> messages)
             throws AccessionCouldNotBeGeneratedException {
         return saveAccessions(accessionGenerator.generateAccessions(mapHashOfMessages(messages)));
     }
@@ -87,21 +88,23 @@ public class BasicAccessioningService<MODEL, HASH, ACCESSION extends Serializabl
      * application instance / thread with a different id.
      * See {@link #getPreexistingAccessions(List)} } for more details.
      */
-    private List<AccessionWrapper<MODEL, HASH, ACCESSION>> saveAccessions(List<AccessionWrapper<MODEL, HASH, ACCESSION>> accessions) {
+    private List<GetOrCreateAccessionWrapper<MODEL, HASH, ACCESSION>> saveAccessions(
+            List<AccessionWrapper<MODEL, HASH, ACCESSION>> accessions) {
         SaveResponse<ACCESSION> response = dbService.save(accessions);
         accessionGenerator.postSave(response);
 
-        final List<AccessionWrapper<MODEL, HASH, ACCESSION>> savedAccessions = new ArrayList<>();
+        final List<GetOrCreateAccessionWrapper<MODEL, HASH, ACCESSION>> savedAccessions = new ArrayList<>();
         final List<AccessionWrapper<MODEL, HASH, ACCESSION>> unsavedAccessions = new ArrayList<>();
         accessions.stream().forEach(accessionModel -> {
             if (response.isSavedAccession(accessionModel.getAccession())) {
-                savedAccessions.add(accessionModel);
+                savedAccessions.add(GetOrCreateAccessionWrapper.newAccession(accessionModel));
             } else {
                 unsavedAccessions.add(accessionModel);
             }
         });
         if (!unsavedAccessions.isEmpty()) {
-            savedAccessions.addAll(getPreexistingAccessions(unsavedAccessions));
+            getPreexistingAccessions(unsavedAccessions).stream().map(GetOrCreateAccessionWrapper::oldAccession)
+                    .forEach(savedAccessions::add);
         }
         return savedAccessions;
     }
@@ -138,7 +141,7 @@ public class BasicAccessioningService<MODEL, HASH, ACCESSION extends Serializabl
 
     @Override
     public AccessionWrapper<MODEL, HASH, ACCESSION> getByAccession(ACCESSION accession)
-            throws AccessionDoesNotExistException, AccessionMergedException,AccessionDeprecatedException {
+            throws AccessionDoesNotExistException, AccessionMergedException, AccessionDeprecatedException {
         return dbService.findLastVersionByAccession(accession);
     }
 

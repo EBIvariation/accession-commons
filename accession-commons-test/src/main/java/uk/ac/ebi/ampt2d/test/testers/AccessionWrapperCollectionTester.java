@@ -29,10 +29,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 public class AccessionWrapperCollectionTester
-        extends MethodResponseTester<List<AccessionWrapper<TestModel, String, String>>> {
+        extends MethodResponseTester<List<? extends AccessionWrapper<TestModel, String, String>>> {
 
     public AccessionWrapperCollectionTester(
-            ThrowingSupplier<List<AccessionWrapper<TestModel, String, String>>> functionCall) {
+            ThrowingSupplier<List<? extends AccessionWrapper<TestModel, String, String>>> functionCall) {
         super(functionCall);
     }
 
@@ -42,13 +42,13 @@ public class AccessionWrapperCollectionTester
 
     public void assertAccessions(String... accessions) {
         assertSize(accessions.length);
-        for (String accession: accessions) {
+        for (String accession : accessions) {
             assertAccessionIsPresent(accession);
         }
     }
 
     public void assertAccessionIsPresent(String accession) {
-        for (AccessionWrapper<TestModel, String, String> wrapper: getData()) {
+        for (AccessionWrapper<TestModel, String, String> wrapper : getData()) {
             if (Objects.equals(wrapper.getAccession(), accession)) {
                 return;
             }
@@ -62,13 +62,13 @@ public class AccessionWrapperCollectionTester
 
     public void assertAccessionValues(String... values) {
         assertSize(values.length);
-        for (String value: values) {
+        for (String value : values) {
             assertAccessionWithValueIsPresent(value);
         }
     }
 
     public void assertAccessionWithValueIsPresent(String value) {
-        for (AccessionWrapper<TestModel, String, String> wrapper: getData()) {
+        for (AccessionWrapper<TestModel, String, String> wrapper : getData()) {
             if (Objects.equals(wrapper.getData().getValue(), value)) {
                 return;
             }

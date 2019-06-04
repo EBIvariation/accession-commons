@@ -30,6 +30,7 @@ import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedExcepti
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.HashAlreadyExistsException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionVersionsWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.GetOrCreateAccessionWrapper;
 import uk.ac.ebi.ampt2d.test.configuration.TestJpaDatabaseServiceTestConfiguration;
 import uk.ac.ebi.ampt2d.test.models.TestModel;
 
@@ -48,7 +49,7 @@ public class DecoratedAccessioningServiceTest {
 
     @Test
     public void assertGetOrCreate() throws AccessionCouldNotBeGeneratedException {
-        List<AccessionWrapper<TestModel, String, String>> accessions = getPrefixedService().getOrCreate(
+        List<GetOrCreateAccessionWrapper<TestModel, String, String>> accessions = getPrefixedService().getOrCreate(
                 Arrays.asList(
                         TestModel.of("service-test-1")
                 ));
@@ -133,7 +134,7 @@ public class DecoratedAccessioningServiceTest {
     @Test
     public void assertMerge() throws AccessionMergedException, AccessionDoesNotExistException,
             AccessionDeprecatedException, AccessionCouldNotBeGeneratedException {
-        List<AccessionWrapper<TestModel, String, String>> accessions = getPrefixedService().getOrCreate(
+        List<GetOrCreateAccessionWrapper<TestModel, String, String>> accessions = getPrefixedService().getOrCreate(
                 Arrays.asList(
                         TestModel.of("service-test-1"),
                         TestModel.of("service-test-2")
