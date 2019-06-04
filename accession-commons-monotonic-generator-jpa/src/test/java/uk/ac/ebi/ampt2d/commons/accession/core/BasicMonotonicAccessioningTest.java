@@ -150,7 +150,7 @@ public class BasicMonotonicAccessioningTest {
                         TestModel.of("service-test-3")
                 ));
         assertEquals(1, accessions1.size());
-        assertEquals(false, accessions1.get(0).isAlreadyCreated());
+        assertEquals(true, accessions1.get(0).isNewAccession());
         TestTransaction.end();
 
         List<GetOrCreateAccessionWrapper<TestModel, String, Long>> accessions2 = accessioningService.getOrCreate(
@@ -161,10 +161,11 @@ public class BasicMonotonicAccessioningTest {
                 ));
         assertEquals(3, accessions2.size());
         accessions2.stream().forEach(wrapper -> {
-            if (wrapper.isAlreadyCreated()) {
+            if (!wrapper.isNewAccession()) {
                 assertEquals("service-test-3",wrapper.getData().getValue());
             }
         });
+        assertEquals(2,accessions2.stream().filter(GetOrCreateAccessionWrapper::isNewAccession).count());
 
         TestTransaction.start();
         for (AccessionWrapper<TestModel, String, Long> accession : accessions2) {

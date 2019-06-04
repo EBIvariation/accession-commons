@@ -24,16 +24,16 @@ import java.util.function.Function;
 public class GetOrCreateAccessionResponseDTO<DTO, MODEL, HASH, ACCESSION> extends
         AccessionResponseDTO<DTO, MODEL, HASH, ACCESSION> {
 
-    public boolean alreadyCreated;
+    public boolean newAccession;
 
     public GetOrCreateAccessionResponseDTO(GetOrCreateAccessionWrapper<MODEL, HASH, ACCESSION> accessionWrapper,
                                            Function<MODEL, DTO> modelToDto) {
         super(accessionWrapper, modelToDto);
-        this.alreadyCreated = accessionWrapper.isAlreadyCreated();
+        this.newAccession = accessionWrapper.isNewAccession();
     }
 
-    public boolean isAlreadyCreated() {
-        return alreadyCreated;
+    public boolean isNewAccession() {
+        return newAccession;
     }
 
 }

@@ -21,34 +21,34 @@ import java.io.Serializable;
 
 public class GetOrCreateAccessionWrapper<MODEL, HASH, ACCESSION> extends AccessionWrapper<MODEL, HASH, ACCESSION> {
 
-    private boolean alreadyCreated;
+    private boolean newAccession;
 
-    public GetOrCreateAccessionWrapper(ACCESSION accession, HASH hash, MODEL data, boolean alreadyCreated) {
+    public GetOrCreateAccessionWrapper(ACCESSION accession, HASH hash, MODEL data, boolean newAccession) {
         super(accession, hash, data);
-        this.alreadyCreated = alreadyCreated;
+        this.newAccession = newAccession;
     }
 
-    public GetOrCreateAccessionWrapper(ACCESSION accession, HASH hash, MODEL data, int version, boolean alreadyCreated) {
+    public GetOrCreateAccessionWrapper(ACCESSION accession, HASH hash, MODEL data, int version, boolean newAccession) {
         super(accession, hash, data, version);
-        this.alreadyCreated = alreadyCreated;
+        this.newAccession = newAccession;
     }
 
     public static <MODEL, HASH, ACCESSION extends Serializable>
     GetOrCreateAccessionWrapper<MODEL, HASH, ACCESSION> newAccession(
             AccessionWrapper<MODEL, HASH, ACCESSION> wrapper) {
         return new GetOrCreateAccessionWrapper<>(wrapper.getAccession(), wrapper.getHash(), wrapper.getData(),
-                wrapper.getVersion(), false);
+                wrapper.getVersion(), true);
     }
 
     public static <MODEL, HASH, ACCESSION extends Serializable>
     GetOrCreateAccessionWrapper<MODEL, HASH, ACCESSION> oldAccession(
             AccessionWrapper<MODEL, HASH, ACCESSION> wrapper) {
         return new GetOrCreateAccessionWrapper<>(wrapper.getAccession(), wrapper.getHash(), wrapper.getData(),
-                wrapper.getVersion(), true);
+                wrapper.getVersion(), false);
     }
 
-    public boolean isAlreadyCreated() {
-        return alreadyCreated;
+    public boolean isNewAccession() {
+        return newAccession;
     }
 
 }

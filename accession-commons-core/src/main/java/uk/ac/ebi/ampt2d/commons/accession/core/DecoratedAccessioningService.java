@@ -70,7 +70,7 @@ public class DecoratedAccessioningService<MODEL, HASH, DB_ACCESSION, ACCESSION>
     private GetOrCreateAccessionWrapper<MODEL, HASH, ACCESSION> decorate(
             GetOrCreateAccessionWrapper<MODEL, HASH, DB_ACCESSION> wrapper) {
         return new GetOrCreateAccessionWrapper<>(decoratingFunction.apply(wrapper.getAccession()), wrapper.getHash(),
-                wrapper.getData(), wrapper.getVersion(), wrapper.isAlreadyCreated());
+                wrapper.getData(), wrapper.getVersion(), wrapper.isNewAccession());
     }
 
     private List<AccessionWrapper<MODEL, HASH, ACCESSION>> decorate(
