@@ -31,6 +31,7 @@ import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedExcepti
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.HashAlreadyExistsException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionVersionsWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.GetOrCreateAccessionWrapper;
 import uk.ac.ebi.ampt2d.test.configuration.TestJpaDatabaseServiceTestConfiguration;
 import uk.ac.ebi.ampt2d.test.models.TestModel;
 import uk.ac.ebi.ampt2d.test.persistence.TestRepository;
@@ -56,7 +57,7 @@ public class BasicAccessioningServiceTest {
 
     @Test
     public void accessionNotRepeatedElements() throws AccessionCouldNotBeGeneratedException {
-        List<AccessionWrapper<TestModel, String, String>> accessions = accessioningService.getOrCreate(
+        List<GetOrCreateAccessionWrapper<TestModel, String, String>> accessions = accessioningService.getOrCreate(
                 Arrays.asList(
                         TestModel.of("service-test-1"),
                         TestModel.of("service-test-2"),
@@ -67,7 +68,7 @@ public class BasicAccessioningServiceTest {
 
     @Test
     public void accessionWithRepeatedElementsReturnsUnique() throws AccessionCouldNotBeGeneratedException {
-        List<AccessionWrapper<TestModel, String, String>> accessions = accessioningService.getOrCreate(
+        List<GetOrCreateAccessionWrapper<TestModel, String, String>> accessions = accessioningService.getOrCreate(
                 Arrays.asList(
                         TestModel.of("service-test-1"),
                         TestModel.of("service-test-2"),
@@ -107,13 +108,13 @@ public class BasicAccessioningServiceTest {
     public void accessioningMultipleTimesTheSameObjectReturnsTheSameAccession()
             throws AccessionCouldNotBeGeneratedException {
         TestTransaction.flagForCommit();
-        List<AccessionWrapper<TestModel, String, String>> accession1 = accessioningService.getOrCreate(
+        List<GetOrCreateAccessionWrapper<TestModel, String, String>> accession1 = accessioningService.getOrCreate(
                 Arrays.asList(
                         TestModel.of("service-test-3")
                 ));
         TestTransaction.end();
 
-        List<AccessionWrapper<TestModel, String, String>> accession2 = accessioningService.getOrCreate(
+        List<GetOrCreateAccessionWrapper<TestModel, String, String>> accession2 = accessioningService.getOrCreate(
                 Arrays.asList(
                         TestModel.of("service-test-3")
                 ));

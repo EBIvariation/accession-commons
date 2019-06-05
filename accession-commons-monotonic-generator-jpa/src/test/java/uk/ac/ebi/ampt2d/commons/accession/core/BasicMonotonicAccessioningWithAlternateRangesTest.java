@@ -26,6 +26,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import uk.ac.ebi.ampt2d.commons.accession.block.initialization.BlockInitializationException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.GetOrCreateAccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicAccessionGenerator;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service.ContiguousIdBlockService;
@@ -56,7 +57,7 @@ public class BasicMonotonicAccessioningWithAlternateRangesTest {
 
     @Test(expected = BlockInitializationException.class)
     public void testUnknownCategory() throws AccessionCouldNotBeGeneratedException {
-        List<AccessionWrapper<TestModel, String, Long>> evaAccessions =
+        List<GetOrCreateAccessionWrapper<TestModel, String, Long>> evaAccessions =
                 getAccessioningService("unknown-category", INSTANCE_ID)
                         .getOrCreate(getObjectsForAccessionsInRange(1, 10));
     }
@@ -68,7 +69,7 @@ public class BasicMonotonicAccessioningWithAlternateRangesTest {
           so the accesions will be in the range of 0-19,40-59,80-99 */
         String categoryId = "eva_2";
         String instanceId2 = "test-instance_2";
-        List<AccessionWrapper<TestModel, String, Long>> evaAccessions = getAccessioningService(categoryId, INSTANCE_ID)
+        List<GetOrCreateAccessionWrapper<TestModel, String, Long>> evaAccessions = getAccessioningService(categoryId, INSTANCE_ID)
                 .getOrCreate(getObjectsForAccessionsInRange(1, 9));
         assertEquals(9, evaAccessions.size());
         assertEquals(0, evaAccessions.get(0).getAccession().longValue());

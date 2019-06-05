@@ -26,6 +26,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.transaction.TestTransaction;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.GetOrCreateAccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicAccessionGenerator;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.ampt2d.test.models.TestModel;
@@ -57,7 +58,7 @@ public class BasicMonotonicAccessioningWithInitValuesTest {
     public void testAccessionElements() throws AccessionCouldNotBeGeneratedException {
         AccessioningService<TestModel, String, Long> accessioningService = getAccessioningService();
 
-        List<AccessionWrapper<TestModel, String, Long>> accessions = accessioningService.getOrCreate(
+        List<GetOrCreateAccessionWrapper<TestModel, String, Long>> accessions = accessioningService.getOrCreate(
                 Arrays.asList(
                         TestModel.of("service-test-1"),
                         TestModel.of("service-test-2"),
@@ -81,7 +82,7 @@ public class BasicMonotonicAccessioningWithInitValuesTest {
     public void testGetOrCreateFiltersRepeated() throws AccessionCouldNotBeGeneratedException {
         AccessioningService<TestModel, String, Long> accessioningService = getAccessioningService();
 
-        List<AccessionWrapper<TestModel, String, Long>> accessions = accessioningService.getOrCreate(
+        List<GetOrCreateAccessionWrapper<TestModel, String, Long>> accessions = accessioningService.getOrCreate(
                 Arrays.asList(
                         TestModel.of("service-test-1"),
                         TestModel.of("service-test-2"),
@@ -134,7 +135,7 @@ public class BasicMonotonicAccessioningWithInitValuesTest {
 
         AccessioningService<TestModel, String, Long> accessioningService = getAccessioningService();
 
-        List<AccessionWrapper<TestModel, String, Long>> accessions = accessioningService.getOrCreate(
+        List<GetOrCreateAccessionWrapper<TestModel, String, Long>> accessions = accessioningService.getOrCreate(
                 Arrays.asList(
                         TestModel.of("service-test-1"),
                         TestModel.of("service-test-2"),

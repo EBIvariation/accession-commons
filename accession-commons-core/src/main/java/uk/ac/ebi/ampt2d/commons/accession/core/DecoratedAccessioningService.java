@@ -24,6 +24,7 @@ import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedExcepti
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.HashAlreadyExistsException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionVersionsWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.GetOrCreateAccessionWrapper;
 
 import java.util.List;
 import java.util.Objects;
@@ -34,10 +35,10 @@ import java.util.stream.Collectors;
  * Service for creation, retrieval and modifications of object accessions, that decorates accessions usually with a
  * prefix and/or suffix.
  *
- * @param <MODEL> Type of the objects identified by the accessions
- * @param <HASH> Type of the hash calculated based on the fields that uniquely identify an accessioned object
+ * @param <MODEL>        Type of the objects identified by the accessions
+ * @param <HASH>         Type of the hash calculated based on the fields that uniquely identify an accessioned object
  * @param <DB_ACCESSION> Type of the actual accession stored in database
- * @param <ACCESSION> Type of the accession that identifies an object of a particular model
+ * @param <ACCESSION>    Type of the accession that identifies an object of a particular model
  */
 
 public class DecoratedAccessioningService<MODEL, HASH, DB_ACCESSION, ACCESSION>
@@ -56,9 +57,20 @@ public class DecoratedAccessioningService<MODEL, HASH, DB_ACCESSION, ACCESSION>
     }
 
     @Override
-    public List<AccessionWrapper<MODEL, HASH, ACCESSION>> getOrCreate(List<? extends MODEL> messages)
+    public List<GetOrCreateAccessionWrapper<MODEL, HASH, ACCESSION>> getOrCreate(List<? extends MODEL> messages)
             throws AccessionCouldNotBeGeneratedException {
-        return decorate(service.getOrCreate(messages));
+        return getOrCreateDecorate(service.getOrCreate(messages));
+    }
+
+    private List<GetOrCreateAccessionWrapper<MODEL, HASH, ACCESSION>> getOrCreateDecorate(
+            List<GetOrCreateAccessionWrapper<MODEL, HASH, DB_ACCESSION>> accessionWrappers) {
+        return accessionWrappers.stream().map(this::decorate).collect(Collectors.toList());
+    }
+
+    private GetOrCreateAccessionWrapper<MODEL, HASH, ACCESSION> decorate(
+            GetOrCreateAccessionWrapper<MODEL, HASH, DB_ACCESSION> wrapper) {
+        return new GetOrCreateAccessionWrapper<>(decoratingFunction.apply(wrapper.getAccession()), wrapper.getHash(),
+                wrapper.getData(), wrapper.getVersion(), wrapper.isNewAccession());
     }
 
     private List<AccessionWrapper<MODEL, HASH, ACCESSION>> decorate(

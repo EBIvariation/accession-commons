@@ -29,6 +29,7 @@ import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedExc
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
+import uk.ac.ebi.ampt2d.commons.accession.core.models.GetOrCreateAccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicAccessionGenerator;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.ampt2d.test.configuration.TestMonotonicDatabaseServiceTestConfiguration;
@@ -58,7 +59,7 @@ public class BasicMonotonicAccessioningTest {
     public void testCreateAccessions() throws AccessionCouldNotBeGeneratedException {
         AccessioningService<TestModel, String, Long> accessioningService = getAccessioningService();
 
-        List<AccessionWrapper<TestModel, String, Long>> accessions = accessioningService.getOrCreate(
+        List<GetOrCreateAccessionWrapper<TestModel, String, Long>> accessions = accessioningService.getOrCreate(
                 Arrays.asList(
                         TestModel.of("service-test-1"),
                         TestModel.of("service-test-2"),
@@ -81,7 +82,7 @@ public class BasicMonotonicAccessioningTest {
 
         AccessioningService<TestModel, String, Long> accessioningService = getAccessioningService();
 
-        List<AccessionWrapper<TestModel, String, Long>> accessions = accessioningService.getOrCreate(
+        List<GetOrCreateAccessionWrapper<TestModel, String, Long>> accessions = accessioningService.getOrCreate(
                 Arrays.asList(
                         TestModel.of("service-test-1"),
                         TestModel.of("service-test-2"),
@@ -108,7 +109,7 @@ public class BasicMonotonicAccessioningTest {
     public void testGetWithExistingEntries() throws AccessionCouldNotBeGeneratedException {
         AccessioningService<TestModel, String, Long> accessioningService = getAccessioningService();
 
-        List<AccessionWrapper<TestModel, String, Long>> accessions1 = accessioningService.getOrCreate(
+        List<GetOrCreateAccessionWrapper<TestModel, String, Long>> accessions1 = accessioningService.getOrCreate(
                 Arrays.asList(
                         TestModel.of("service-test-3")
                 ));
@@ -129,7 +130,7 @@ public class BasicMonotonicAccessioningTest {
             AccessionDoesNotExistException, AccessionMergedException, AccessionDeprecatedException {
         AccessioningService<TestModel, String, Long> accessioningService = getAccessioningService();
 
-        List<AccessionWrapper<TestModel, String, Long>> accessions1 = accessioningService.getOrCreate(
+        List<GetOrCreateAccessionWrapper<TestModel, String, Long>> accessions1 = accessioningService.getOrCreate(
                 Arrays.asList(
                         TestModel.of("service-test-3")
                 ));
@@ -144,20 +145,27 @@ public class BasicMonotonicAccessioningTest {
     public void testGetOrCreateWithExistingEntries() throws AccessionCouldNotBeGeneratedException {
         AccessioningService<TestModel, String, Long> accessioningService = getAccessioningService();
         TestTransaction.flagForCommit();
-        List<AccessionWrapper<TestModel, String, Long>> accessions1 = accessioningService.getOrCreate(
+        List<GetOrCreateAccessionWrapper<TestModel, String, Long>> accessions1 = accessioningService.getOrCreate(
                 Arrays.asList(
                         TestModel.of("service-test-3")
                 ));
         assertEquals(1, accessions1.size());
+        assertEquals(true, accessions1.get(0).isNewAccession());
         TestTransaction.end();
 
-        List<AccessionWrapper<TestModel, String, Long>> accessions2 = accessioningService.getOrCreate(
+        List<GetOrCreateAccessionWrapper<TestModel, String, Long>> accessions2 = accessioningService.getOrCreate(
                 Arrays.asList(
                         TestModel.of("service-test-1"),
                         TestModel.of("service-test-2"),
                         TestModel.of("service-test-3")
                 ));
         assertEquals(3, accessions2.size());
+        accessions2.stream().forEach(wrapper -> {
+            if (!wrapper.isNewAccession()) {
+                assertEquals("service-test-3",wrapper.getData().getValue());
+            }
+        });
+        assertEquals(2,accessions2.stream().filter(GetOrCreateAccessionWrapper::isNewAccession).count());
 
         TestTransaction.start();
         for (AccessionWrapper<TestModel, String, Long> accession : accessions2) {
