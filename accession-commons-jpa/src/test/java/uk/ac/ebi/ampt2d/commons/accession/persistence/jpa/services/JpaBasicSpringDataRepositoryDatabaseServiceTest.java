@@ -134,9 +134,9 @@ public class JpaBasicSpringDataRepositoryDatabaseServiceTest {
 
         TestTransaction.start();
         TestTransaction.flagForCommit();
-        repository.delete("h1");
-        repository.delete("h2");
-        repository.delete("h3");
+        repository.deleteById("h1");
+        repository.deleteById("h2");
+        repository.deleteById("h3");
         TestTransaction.end();
     }
 
@@ -150,15 +150,15 @@ public class JpaBasicSpringDataRepositoryDatabaseServiceTest {
 
         assertEquals(3, accessions.getSavedAccessions().size());
         assertEquals(0, accessions.getSaveFailedAccessions().size());
-        assertEquals("a1", repository.findOne("h0").getAccession());
-        assertEquals("a1", repository.findOne("h1").getAccession());
+        assertEquals("a1", repository.findById("h0").orElse(null).getAccession());
+        assertEquals("a1", repository.findById("h1").orElse(null).getAccession());
 
         TestTransaction.start();
         TestTransaction.flagForCommit();
-        repository.delete("h0");
-        repository.delete("h1");
-        repository.delete("h2");
-        repository.delete("h3");
+        repository.deleteById("h0");
+        repository.deleteById("h1");
+        repository.deleteById("h2");
+        repository.deleteById("h3");
         TestTransaction.end();
     }
 

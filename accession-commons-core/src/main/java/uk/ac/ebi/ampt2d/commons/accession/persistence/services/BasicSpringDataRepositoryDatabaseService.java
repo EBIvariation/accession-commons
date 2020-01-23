@@ -71,7 +71,7 @@ public class BasicSpringDataRepositoryDatabaseService<
     @Override
     public List<AccessionWrapper<MODEL, String, ACCESSION>> findAllByHash(Collection<String> hashes) {
         List<AccessionWrapper<MODEL, String, ACCESSION>> wrappedAccessions = new ArrayList<>();
-        repository.findAll(hashes).iterator().forEachRemaining(
+        repository.findAllById(hashes).iterator().forEachRemaining(
                 entity -> wrappedAccessions.add(toModelWrapper(entity)));
         return wrappedAccessions;
     }
@@ -195,7 +195,7 @@ public class BasicSpringDataRepositoryDatabaseService<
 
     private void checkHashDoesNotExist(String hash)
             throws HashAlreadyExistsException {
-        final ACCESSION_ENTITY dbAccession = repository.findOne(hash);
+        final ACCESSION_ENTITY dbAccession = repository.findById(hash).orElse(null);
         if (dbAccession != null) {
             throw new HashAlreadyExistsException(dbAccession.getHashedMessage(), dbAccession.getAccession());
         }
@@ -233,7 +233,7 @@ public class BasicSpringDataRepositoryDatabaseService<
             AccessionMergedException, AccessionDeprecatedException {
         List<ACCESSION_ENTITY> accessionedElements = getAccession(accession);
         inactiveAccessionService.deprecate(accession, accessionedElements, reason);
-        repository.delete(accessionedElements);
+        repository.deleteAll(accessionedElements);
     }
 
     @Override
@@ -242,7 +242,7 @@ public class BasicSpringDataRepositoryDatabaseService<
         List<ACCESSION_ENTITY> accessionedElements = getAccession(accession);
         getAccession(mergeInto);
         inactiveAccessionService.merge(accession, mergeInto, accessionedElements, reason);
-        repository.delete(accessionedElements);
+        repository.deleteAll(accessionedElements);
     }
 
 }

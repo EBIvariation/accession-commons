@@ -280,7 +280,7 @@ public class MonotonicAccessionGeneratorTest {
 
         // Only 998 elements have been confirmed due to 999 not being confirmed, reread the block to assert it
         generator.commit(accessions2);
-        block = repository.findOne(block.getId());
+        block = repository.findById(block.getId()).orElse(null);
         assertEquals(998, block.getLastCommitted());
         // 999 is committed and then the remaining elements get confirmed
         generator.commit(999);

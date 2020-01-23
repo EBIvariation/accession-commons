@@ -17,9 +17,12 @@
  */
 package uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.repository;
 
-import com.mongodb.BulkWriteError;
+import com.mongodb.bulk.BulkWriteError;
+import com.mongodb.MongoBulkWriteException;
+import com.mongodb.bulk.BulkWriteResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.mongodb.BulkOperationException;
 import org.springframework.data.mongodb.core.BulkOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -61,8 +64,9 @@ public abstract class BasicMongoDbAccessionedCustomRepositoryImpl<
 
         try {
             insert.execute();
-        } catch (BulkOperationException e) {
-            e.getErrors().forEach(error -> {
+        } catch (DuplicateKeyException e) {
+            MongoBulkWriteException bulkWriteException = ((MongoBulkWriteException) e.getCause());
+            bulkWriteException.getWriteErrors().forEach(error -> {
                 String errorId = reportBulkOperationException(error).orElseThrow(() -> e);
                 erroneousIds.add(errorId);
             });

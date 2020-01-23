@@ -235,7 +235,7 @@ public class AccessionedDocumentRepositoryTest {
     @Test
     public void testInsertFindById() {
         insertDocuments(1);
-        TestDocument document = repository.findOne("h0");
+        TestDocument document = repository.findById("h0").orElse(null);
         assertEquals("h0", document.getHashedMessage());
         assertEquals("a0", document.getAccession());
         assertEquals("test-0", document.getValue());

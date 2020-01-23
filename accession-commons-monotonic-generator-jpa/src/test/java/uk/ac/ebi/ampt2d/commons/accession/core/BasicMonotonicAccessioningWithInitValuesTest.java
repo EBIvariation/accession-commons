@@ -147,7 +147,7 @@ public class BasicMonotonicAccessioningWithInitValuesTest {
 
         TestTransaction.start();
         for (AccessionWrapper<TestModel, String, Long> accession : accessions) {
-            repository.delete(accession.getHash());
+            repository.deleteById(accession.getHash());
         }
         TestTransaction.flagForCommit();
         TestTransaction.end();
