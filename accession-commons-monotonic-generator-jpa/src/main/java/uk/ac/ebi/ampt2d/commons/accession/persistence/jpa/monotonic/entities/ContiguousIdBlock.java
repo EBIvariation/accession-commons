@@ -24,6 +24,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Index;
 import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
 
 /**
  * This class represents a block allocated by an application instance, in a monotonic sequence associated with a
@@ -39,6 +40,9 @@ import javax.persistence.Table;
         name = "contiguous_id_blocks",
         indexes = {
                 @Index(name = "CATEGORY_INDEX", columnList = "categoryId")
+        },
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = {"categoryId", "firstValue"})
         }
 )
 public class ContiguousIdBlock implements Comparable<ContiguousIdBlock> {
