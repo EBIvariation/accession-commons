@@ -11,7 +11,7 @@
     <parent>
         <artifactId>accession-commons</artifactId>
         <groupId>uk.ac.ebi.ampt2d</groupId>
-        <version>0.6.3</version>
+        <version>0.6.4</version>
     </parent>
 
     <properties>
