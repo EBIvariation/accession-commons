@@ -17,10 +17,13 @@
  */
 package uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.entities.ContiguousIdBlock;
@@ -48,6 +51,9 @@ public class ContiguousIdBlockServiceTest {
 
     @Autowired
     private ContiguousIdBlockService service;
+
+    @Rule
+    public final ExpectedException thrown = ExpectedException.none();
 
     @Test
     public void testReserveNewBlocks() {
@@ -220,6 +226,17 @@ public class ContiguousIdBlockServiceTest {
         block1 = block1.nextBlock(INSTANCE_ID, 10, 20, 500);
         assertEquals(620, block1.getFirstValue());
         assertEquals(629, block1.getLastValue());
+    }
+
+    @Test
+    public void testBlocksWithDuplicateCategoryAndFirstValue() throws DataIntegrityViolationException {
+        ContiguousIdBlock block1 = new ContiguousIdBlock(CATEGORY_ID, INSTANCE_ID, 100, 1000);
+        repository.save(block1);
+
+        thrown.expect(DataIntegrityViolationException.class);
+
+        ContiguousIdBlock block2 = new ContiguousIdBlock(CATEGORY_ID, INSTANCE_ID_2, 100, 2000);
+        repository.save(block2);
     }
 
 }
