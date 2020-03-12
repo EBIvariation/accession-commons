@@ -38,6 +38,7 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.SaveResponse;
 import uk.ac.ebi.ampt2d.test.configuration.TestJpaDatabaseServiceTestConfiguration;
 import uk.ac.ebi.ampt2d.test.models.TestModel;
+import uk.ac.ebi.ampt2d.test.persistence.TestEntity;
 import uk.ac.ebi.ampt2d.test.persistence.TestInactiveAccessionEntity;
 import uk.ac.ebi.ampt2d.test.persistence.TestInactiveAccessionRepository;
 import uk.ac.ebi.ampt2d.test.persistence.TestRepository;
@@ -47,9 +48,11 @@ import uk.ac.ebi.ampt2d.test.persistence.TestStringOperationEntity;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringRunner.class)
 @DataJpaTest
@@ -150,8 +153,13 @@ public class JpaBasicSpringDataRepositoryDatabaseServiceTest {
 
         assertEquals(3, accessions.getSavedAccessions().size());
         assertEquals(0, accessions.getSaveFailedAccessions().size());
-        assertEquals("a1", repository.findById("h0").orElse(null).getAccession());
-        assertEquals("a1", repository.findById("h1").orElse(null).getAccession());
+        Optional<TestEntity> document = repository.findById("h0");
+        assertTrue(document.isPresent());
+        assertEquals("a1", document.get().getAccession());
+
+        document = repository.findById("h1");
+        assertTrue(document.isPresent());
+        assertEquals("a1", document.get().getAccession());
 
         TestTransaction.start();
         TestTransaction.flagForCommit();
