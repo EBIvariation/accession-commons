@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -195,9 +196,10 @@ public class BasicSpringDataRepositoryDatabaseService<
 
     private void checkHashDoesNotExist(String hash)
             throws HashAlreadyExistsException {
-        final ACCESSION_ENTITY dbAccession = repository.findById(hash).orElse(null);
-        if (dbAccession != null) {
-            throw new HashAlreadyExistsException(dbAccession.getHashedMessage(), dbAccession.getAccession());
+        final Optional<ACCESSION_ENTITY> dbAccession = repository.findById(hash);
+        if (dbAccession.isPresent()) {
+            throw new HashAlreadyExistsException(dbAccession.get().getHashedMessage(),
+                                                 dbAccession.get().getAccession());
         }
     }
 

@@ -37,12 +37,11 @@ import uk.ac.ebi.ampt2d.test.rule.FixSpringMongoDbRule;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static uk.ac.ebi.ampt2d.test.persistence.document.TestDocument.document;
-
-;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {MongoDbTestConfiguration.class})
@@ -235,10 +234,11 @@ public class AccessionedDocumentRepositoryTest {
     @Test
     public void testInsertFindById() {
         insertDocuments(1);
-        TestDocument document = repository.findById("h0").orElse(null);
-        assertEquals("h0", document.getHashedMessage());
-        assertEquals("a0", document.getAccession());
-        assertEquals("test-0", document.getValue());
+        Optional<TestDocument> document = repository.findById("h0");
+        assertTrue(document.isPresent());
+        assertEquals("h0", document.get().getHashedMessage());
+        assertEquals("a0", document.get().getAccession());
+        assertEquals("test-0", document.get().getValue());
     }
 
 }

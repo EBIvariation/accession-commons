@@ -19,11 +19,9 @@ package uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.repository;
 
 import com.mongodb.bulk.BulkWriteError;
 import com.mongodb.MongoBulkWriteException;
-import com.mongodb.bulk.BulkWriteResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DuplicateKeyException;
-import org.springframework.data.mongodb.BulkOperationException;
 import org.springframework.data.mongodb.core.BulkOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.SaveResponse;

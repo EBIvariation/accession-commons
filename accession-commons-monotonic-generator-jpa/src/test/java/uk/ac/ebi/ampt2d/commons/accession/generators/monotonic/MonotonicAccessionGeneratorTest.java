@@ -34,12 +34,14 @@ import uk.ac.ebi.ampt2d.test.configuration.MonotonicAccessionGeneratorTestConfig
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import static org.hamcrest.Matchers.contains;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringRunner.class)
 @DataJpaTest
@@ -280,8 +282,9 @@ public class MonotonicAccessionGeneratorTest {
 
         // Only 998 elements have been confirmed due to 999 not being confirmed, reread the block to assert it
         generator.commit(accessions2);
-        block = repository.findById(block.getId()).orElse(null);
-        assertEquals(998, block.getLastCommitted());
+        Optional<ContiguousIdBlock> blockResult = repository.findById(block.getId());
+        assertTrue(blockResult.isPresent());
+        assertEquals(998, blockResult.get().getLastCommitted());
         // 999 is committed and then the remaining elements get confirmed
         generator.commit(999);
         block = repository.findFirstByCategoryIdAndApplicationInstanceIdOrderByLastValueDesc(CATEGORY_ID, INSTANCE_ID);
