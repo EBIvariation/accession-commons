@@ -18,9 +18,7 @@
 package uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service;
 
 import org.hibernate.exception.ConstraintViolationException;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
@@ -36,8 +34,8 @@ import javax.persistence.PersistenceException;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.hamcrest.CoreMatchers.isA;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringRunner.class)
@@ -58,9 +56,6 @@ public class ContiguousIdBlockServiceTest {
 
     @PersistenceContext
     EntityManager entityManager;
-
-    @Rule
-    public final ExpectedException thrown = ExpectedException.none();
 
     @Test
     public void testReserveNewBlocks() {
@@ -241,12 +236,11 @@ public class ContiguousIdBlockServiceTest {
         repository.save(block1);
         entityManager.flush();
 
-        thrown.expect(PersistenceException.class);
-        thrown.expectCause(isA(ConstraintViolationException.class));
-
         ContiguousIdBlock block2 = new ContiguousIdBlock(CATEGORY_ID, INSTANCE_ID_2, 100, 2000);
         repository.save(block2);
-        entityManager.flush();
+
+        Throwable exception = assertThrows(PersistenceException.class, () -> entityManager.flush());
+        assertTrue(exception.getCause() instanceof ConstraintViolationException);
     }
 
 }
