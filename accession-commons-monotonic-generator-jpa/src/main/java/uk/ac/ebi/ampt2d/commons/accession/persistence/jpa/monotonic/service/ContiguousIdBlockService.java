@@ -51,10 +51,12 @@ public class ContiguousIdBlockService {
         BlockParameters blockParameters = getBlockParameters(categoryId);
         if (lastBlock != null) {
             return repository.save(lastBlock.nextBlock(instanceId, blockParameters.getBlockSize(),
-                    blockParameters.getNextBlockInterval(), blockParameters.getBlockStartValue()));
+                                                       blockParameters.getNextBlockInterval(),
+                                                       blockParameters.getBlockStartValue()));
         } else {
             ContiguousIdBlock newBlock = new ContiguousIdBlock(categoryId, instanceId,
-                    blockParameters.getBlockStartValue(), blockParameters.getBlockSize());
+                                                               blockParameters.getBlockStartValue(),
+                                                               blockParameters.getBlockSize());
             return repository.save(newBlock);
         }
     }

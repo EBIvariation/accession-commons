@@ -31,15 +31,22 @@ import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.repositories
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service.ContiguousIdBlockService;
 import uk.ac.ebi.ampt2d.test.configuration.MonotonicAccessionGeneratorTestConfiguration;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.Matchers.contains;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringRunner.class)
 @DataJpaTest
@@ -431,6 +438,75 @@ public class MonotonicAccessionGeneratorTest {
     private MonotonicAccessionGenerator getMonotonicAccessionGeneratorForCategoryHavingBlockInterval() {
         assertEquals(0, repository.count());
         return new MonotonicAccessionGenerator(CATEGORY_ID_2, INSTANCE_ID, service);
+    }
+
+    //See https://www.planetgeek.ch/2009/08/25/how-to-find-a-concurrency-bug-with-java/
+    public static void assertConcurrent(final String message, final List<? extends Runnable> runnables,
+                                        final int maxTimeoutSeconds) throws InterruptedException {
+        final int numThreads = runnables.size();
+        final List<Throwable> exceptions = Collections.synchronizedList(new ArrayList<Throwable>());
+        final ExecutorService threadPool = Executors.newFixedThreadPool(numThreads);
+        try {
+            final CountDownLatch allExecutorThreadsReady = new CountDownLatch(numThreads);
+            final CountDownLatch afterInitBlocker = new CountDownLatch(1);
+            final CountDownLatch allDone = new CountDownLatch(numThreads);
+            for (final Runnable submittedTestRunnable : runnables) {
+                threadPool.submit(new Runnable() {
+                    public void run() {
+                        allExecutorThreadsReady.countDown();
+                        try {
+                            afterInitBlocker.await();
+                            submittedTestRunnable.run();
+                        } catch (final Throwable e) {
+                            exceptions.add(e);
+                        } finally {
+                            allDone.countDown();
+                        }
+                    }
+                });
+            }
+            // wait until all threads are ready
+            assertTrue(
+                    "Timeout when initializing threads! " +
+                            "Perform long lasting initializations before passing runnables to assertConcurrent",
+                    allExecutorThreadsReady.await(runnables.size() * 10, TimeUnit.MILLISECONDS));
+            // start all test runners
+            afterInitBlocker.countDown();
+            assertTrue(message +" timeout! More than" + maxTimeoutSeconds + "seconds",
+                       allDone.await(maxTimeoutSeconds, TimeUnit.SECONDS));
+        } finally {
+            threadPool.shutdownNow();
+        }
+        assertTrue(message + "failed with exception(s)" + exceptions, exceptions.isEmpty());
+    }
+
+    @Test
+    public void assertConcurrentAccessionGenerationWithSameInstance() throws InterruptedException {
+        List<Runnable> accessionGenerators = new ArrayList<>();
+        int numConcurrentGenerators = 32;
+
+        for (int i = 0; i < numConcurrentGenerators; i++) {
+            accessionGenerators.add(new Runnable() {
+                MonotonicAccessionGenerator generator = new MonotonicAccessionGenerator(CATEGORY_ID, INSTANCE_ID,
+                                                                                        service);
+                @Override
+                public void run()  {
+                    try {
+                        generator.generateAccessions(BLOCK_SIZE);
+                    }
+                    catch(Exception ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            });
+        }
+
+        assertConcurrent("Concurrent accession generation", accessionGenerators, 120);
+
+        // Ensure that we arrive at the expected final block configuration
+        // despite constraint violations that occur above due to concurrent accession generation with the same instance
+        ContiguousIdBlock lastBlock = repository.findFirstByCategoryIdOrderByLastValueDesc(CATEGORY_ID);
+        assertEquals(numConcurrentGenerators * BLOCK_SIZE - 1, lastBlock.getLastValue());
     }
 
 }
