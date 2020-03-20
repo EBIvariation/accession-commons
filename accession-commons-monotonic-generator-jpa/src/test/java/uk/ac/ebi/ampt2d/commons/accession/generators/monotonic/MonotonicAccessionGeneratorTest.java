@@ -17,6 +17,7 @@
  */
 package uk.ac.ebi.ampt2d.commons.accession.generators.monotonic;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -66,6 +67,11 @@ public class MonotonicAccessionGeneratorTest {
 
     @Autowired
     private ContiguousIdBlockService service;
+
+    @Before
+    public void initializeBlocks() {
+        repository.deleteAll();
+    }
 
     @Test
     public void assertNoBlockGeneratedAtLoadIfNoneExists() throws Exception {
