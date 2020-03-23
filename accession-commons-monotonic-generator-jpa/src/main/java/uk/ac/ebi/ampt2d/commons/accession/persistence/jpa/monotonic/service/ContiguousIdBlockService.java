@@ -23,6 +23,8 @@ import uk.ac.ebi.ampt2d.commons.accession.block.initialization.BlockParameters;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.entities.ContiguousIdBlock;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.repositories.ContiguousIdBlockRepository;
 
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -33,6 +35,9 @@ public class ContiguousIdBlockService {
     private ContiguousIdBlockRepository repository;
 
     private Map<String, BlockParameters> categoryBlockInitializations;
+
+    @PersistenceContext
+    EntityManager entityManager;
 
     public ContiguousIdBlockService(ContiguousIdBlockRepository repository, Map<String, BlockParameters>
             categoryBlockInitializations) {
@@ -49,16 +54,20 @@ public class ContiguousIdBlockService {
     public ContiguousIdBlock reserveNewBlock(String categoryId, String instanceId) {
         ContiguousIdBlock lastBlock = repository.findFirstByCategoryIdOrderByLastValueDesc(categoryId);
         BlockParameters blockParameters = getBlockParameters(categoryId);
+        ContiguousIdBlock reservedBlock = null;
         if (lastBlock != null) {
-            return repository.save(lastBlock.nextBlock(instanceId, blockParameters.getBlockSize(),
+            reservedBlock = repository.save(lastBlock.nextBlock(instanceId, blockParameters.getBlockSize(),
                                                        blockParameters.getNextBlockInterval(),
                                                        blockParameters.getBlockStartValue()));
+            entityManager.flush();
         } else {
             ContiguousIdBlock newBlock = new ContiguousIdBlock(categoryId, instanceId,
                                                                blockParameters.getBlockStartValue(),
                                                                blockParameters.getBlockSize());
-            return repository.save(newBlock);
+            reservedBlock = repository.save(newBlock);
+            entityManager.flush();
         }
+        return reservedBlock;
     }
 
     public BlockParameters getBlockParameters(String categoryId) {
