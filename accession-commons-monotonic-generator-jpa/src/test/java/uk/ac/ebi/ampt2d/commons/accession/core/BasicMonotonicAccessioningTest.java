@@ -169,7 +169,7 @@ public class BasicMonotonicAccessioningTest {
 
         TestTransaction.start();
         for (AccessionWrapper<TestModel, String, Long> accession : accessions2) {
-            repository.delete(accession.getHash());
+            repository.deleteById(accession.getHash());
         }
         TestTransaction.flagForCommit();
         TestTransaction.end();

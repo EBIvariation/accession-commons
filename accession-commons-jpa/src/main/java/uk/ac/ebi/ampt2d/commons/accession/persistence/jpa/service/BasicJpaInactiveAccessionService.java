@@ -69,7 +69,7 @@ public class BasicJpaInactiveAccessionService<
         final OPERATION_ENTITY savedOperation = historyRepository.save(operation);
         if(accessionInactiveEntities!=null) {
             accessionInactiveEntities.forEach(entity -> entity.setHistoryId(savedOperation.getId()));
-            inactiveAccessionRepository.save(accessionInactiveEntities);
+            inactiveAccessionRepository.saveAll(accessionInactiveEntities);
         }
 
     }

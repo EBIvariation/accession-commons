@@ -123,7 +123,7 @@ public class BasicAccessioningServiceTest {
 
         TestTransaction.start();
         TestTransaction.flagForCommit();
-        repository.delete(accession1.get(0).getHash());
+        repository.deleteById(accession1.get(0).getHash());
         TestTransaction.end();
     }
 
