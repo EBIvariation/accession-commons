@@ -100,6 +100,14 @@ public abstract class EventDocument<
         return createdDate;
     }
 
+    /**
+     * When performing bulk operations the createdDate will not be filled automatically, so the setter is needed
+     * in order to assign the date manually
+     */
+    public void setCreatedDate(LocalDateTime createdDate) {
+        this.createdDate = createdDate;
+    }
+
     @Override
     public String getId() {
         return id;
