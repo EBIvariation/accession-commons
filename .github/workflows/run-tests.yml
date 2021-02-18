@@ -1,4 +1,4 @@
-name: Run Maven tests
+name: Run tests
 
 on:
   push:
