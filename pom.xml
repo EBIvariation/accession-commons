@@ -53,15 +53,15 @@
             <snapshots>
                 <enabled>false</enabled>
             </snapshots>
-            <id>eva-releases</id>
-            <url>https://oss.jfrog.org/artifactory/libs-release</url>
+            <id>eva-artifactory-releases</id>
+            <url>https://evaebi.jfrog.io/artifactory/libs-release</url>
         </repository>
         <repository>
             <snapshots>
                 <enabled>true</enabled>
             </snapshots>
-            <id>eva-snapshots</id>
-            <url>https://oss.jfrog.org/artifactory/libs-snapshot</url>
+            <id>eva-artifactory-snapshots</id>
+            <url>https://evaebi.jfrog.io/artifactory/libs-snapshot</url>
         </repository>
     </repositories>
     
@@ -86,14 +86,16 @@
     </build>
 
     <distributionManagement>
-        <snapshotRepository>
-            <id>eva-snapshots</id>
-            <url>https://oss.jfrog.org/artifactory/oss-snapshot-local</url>
-        </snapshotRepository>
         <repository>
-            <id>eva-releases</id>
-            <url>https://oss.jfrog.org/artifactory/oss-release-local</url>
+            <id>eva-artifactory-releases</id>
+            <name>libs-release</name>
+            <url>https://evaebi.jfrog.io/artifactory/libs-release</url>
         </repository>
+        <snapshotRepository>
+            <id>eva-artifactory-snapshots</id>
+            <name>libs-snapshot</name>
+            <url>https://evaebi.jfrog.io/artifactory/libs-snapshot</url>
+        </snapshotRepository>
     </distributionManagement>
 
 </project>
