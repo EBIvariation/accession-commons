@@ -56,21 +56,6 @@
             <version>2.4.0</version>
         </dependency>
     </dependencies>
-
-    <repositories>
-        <repository>
-            <id>cloudsmith</id>
-            <url>https://dl.cloudsmith.io/public/ebivariation/packages/maven/</url>
-            <releases>
-                <enabled>true</enabled>
-                <updatePolicy>always</updatePolicy>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-                <updatePolicy>always</updatePolicy>
-            </snapshots>
-        </repository>
-    </repositories>
     
     <build>
         <plugins>
@@ -91,16 +76,5 @@
             </plugin>
         </plugins>
     </build>
-
-    <distributionManagement>
-        <snapshotRepository>
-            <id>cloudsmith</id>
-            <url>https://maven.cloudsmith.io/ebivariation/packages/</url>
-        </snapshotRepository>
-        <repository>
-            <id>cloudsmith</id>
-            <url>https://maven.cloudsmith.io/ebivariation/packages/</url>
-        </repository>
-    </distributionManagement>
 
 </project>
