@@ -17,6 +17,7 @@
  */
 package uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.models;
 
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.models.IAccessionedObject;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.IEvent;
@@ -59,6 +60,11 @@ public class JpaEvent<MODEL, ACCESSION extends Serializable> implements IEvent<M
     @Override
     public ACCESSION getMergedInto() {
         return mergeInto;
+    }
+
+    @Override
+    public ACCESSION getSplitInto() {
+        throw new NotImplementedException();
     }
 
     @Override

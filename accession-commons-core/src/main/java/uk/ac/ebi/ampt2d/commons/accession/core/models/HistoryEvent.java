@@ -17,6 +17,7 @@
  */
 package uk.ac.ebi.ampt2d.commons.accession.core.models;
 
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.models.IAccessionedObject;
 
 import java.time.LocalDateTime;
@@ -62,6 +63,11 @@ public class HistoryEvent<MODEL, ACCESSION> implements IEvent<MODEL, ACCESSION> 
 
     public ACCESSION getMergedInto() {
         return mergedInto;
+    }
+
+    @Override
+    public ACCESSION getSplitInto() {
+        throw new NotImplementedException();
     }
 
     @Override
