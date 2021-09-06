@@ -31,7 +31,10 @@ public enum EventType {
     // accession1 merged into accession2
     MERGED,
 
+    // new accession id created because of RS split
+    RS_SPLIT,
+
     // accession is no longer valid
-    DEPRECATED;
+    DEPRECATED
 
 }

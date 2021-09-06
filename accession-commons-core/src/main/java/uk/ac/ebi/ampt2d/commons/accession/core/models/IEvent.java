@@ -42,6 +42,11 @@ public interface IEvent<MODEL, ACCESSION> {
     ACCESSION getMergedInto();
 
     /**
+     * @return Accession of the target object into which the original object accession has split
+     */
+    ACCESSION getSplitInto();
+
+    /**
      * @return Type of the event like creation, update, etc, executed on the accessioned object
      */
     EventType getEventType();

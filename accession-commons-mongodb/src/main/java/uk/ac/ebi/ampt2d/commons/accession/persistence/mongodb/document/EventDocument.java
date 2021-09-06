@@ -53,6 +53,8 @@ public abstract class EventDocument<
 
     private ACCESSION mergeInto;
 
+    private ACCESSION splitInto;
+
     private String reason;
 
     private List<INACTIVE_DOCUMENT> inactiveObjects;
@@ -67,7 +69,11 @@ public abstract class EventDocument<
                      String reason, List<INACTIVE_DOCUMENT> inactiveObjects) {
         this.eventType = eventType;
         this.accession = accessionIdOrigin;
-        this.mergeInto = accessionIdDestiny;
+        if(eventType==EventType.RS_SPLIT){
+            this.splitInto = accessionIdDestiny;
+        }else if(eventType==EventType.MERGED){
+            this.mergeInto = accessionIdDestiny;
+        }
         this.reason = reason;
         this.inactiveObjects = new ArrayList<>();
         if (inactiveObjects != null && !inactiveObjects.isEmpty()) {
@@ -88,6 +94,11 @@ public abstract class EventDocument<
     @Override
     public ACCESSION getMergedInto() {
         return mergeInto;
+    }
+
+    @Override
+    public ACCESSION getSplitInto() {
+        return splitInto;
     }
 
     @Override
