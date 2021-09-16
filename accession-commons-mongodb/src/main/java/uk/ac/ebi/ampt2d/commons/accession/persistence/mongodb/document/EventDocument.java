@@ -81,6 +81,15 @@ public abstract class EventDocument<
         }
     }
 
+    public void fill(EventType eventType, ACCESSION accessionIdOrigin,
+                     String reason, List<INACTIVE_DOCUMENT> inactiveObjects) {
+       fill(eventType, accessionIdOrigin, null, reason, inactiveObjects);
+    }
+
+    public void fill(EventType eventType, String reason, List<INACTIVE_DOCUMENT> inactiveObjects) {
+        fill(eventType, null, reason, inactiveObjects);
+    }
+
     @Override
     public EventType getEventType() {
         return eventType;
