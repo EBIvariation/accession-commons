@@ -130,11 +130,7 @@ public class MonotonicAccessionGenerator<MODEL> implements AccessionGenerator<MO
      */
     private synchronized void reserveNewBlocksUntilSizeIs(int totalAccessionsToGenerate) {
         while (!blockManager.hasAvailableAccessions(totalAccessionsToGenerate)) {
-            try {
-                ExponentialBackOff.execute(() -> reserveNewBlock(categoryId, applicationInstanceId), 10, 30);
-            } catch (ExponentialBackOffMaxRetriesRuntimeException e) {
-                // Ignore, max backoff have been reached, we will try again until we can reserve blocks
-            }
+            ExponentialBackOff.execute(() -> reserveNewBlock(categoryId, applicationInstanceId), 10, 30);
         }
     }
 
