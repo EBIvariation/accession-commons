@@ -17,8 +17,11 @@
  */
 package uk.ac.ebi.ampt2d.commons.accession.generators.monotonic;
 
+import org.hibernate.exception.ConstraintViolationException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Answers;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.context.ContextConfiguration;
@@ -29,6 +32,7 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.SaveResponse;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.entities.ContiguousIdBlock;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.repositories.ContiguousIdBlockRepository;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service.ContiguousIdBlockService;
+import uk.ac.ebi.ampt2d.commons.accession.utils.exceptions.ExponentialBackOffMaxRetriesRuntimeException;
 import uk.ac.ebi.ampt2d.test.configuration.MonotonicAccessionGeneratorTestConfiguration;
 
 import java.util.HashMap;
@@ -41,7 +45,10 @@ import static org.hamcrest.Matchers.contains;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
 
 @RunWith(SpringRunner.class)
 @DataJpaTest
@@ -436,4 +443,12 @@ public class MonotonicAccessionGeneratorTest {
         return new MonotonicAccessionGenerator(CATEGORY_ID_2, INSTANCE_ID, service);
     }
 
+    @Test
+    public void assertAbortExecutionWhenDBConstraintExceptionThrown() {
+        ContiguousIdBlockService mockService = Mockito.mock(ContiguousIdBlockService.class, Answers.RETURNS_DEEP_STUBS);
+        MonotonicAccessionGenerator mockGenerator = new MonotonicAccessionGenerator(CATEGORY_ID, INSTANCE_ID, mockService);
+        when(mockService.reserveNewBlock(anyString(), anyString())).thenThrow(ConstraintViolationException.class);
+        assertThrows(ExponentialBackOffMaxRetriesRuntimeException.class, () -> mockGenerator.generateAccessions(1));
+        assertEquals(0, repository.count());
+    }
 }
