@@ -78,4 +78,9 @@ public class BasicMongoDbInactiveAccessionService<
     public List<? extends IEvent<MODEL, ACCESSION>> getEvents(ACCESSION accession) {
         return historyRepository.findAllByAccession(accession);
     }
+
+    @Override
+    public List<? extends IEvent<MODEL, ACCESSION>> getAllEventsInvolvedIn(ACCESSION accession) {
+        return historyRepository.findAllInvolvedIn(accession);
+    }
 }

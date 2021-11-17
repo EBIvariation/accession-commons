@@ -17,7 +17,6 @@
  */
 package uk.ac.ebi.ampt2d.commons.accession.core.models;
 
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.models.IAccessionedObject;
 
 import java.time.LocalDateTime;
@@ -33,16 +32,22 @@ public class HistoryEvent<MODEL, ACCESSION> implements IEvent<MODEL, ACCESSION> 
 
     private ACCESSION mergedInto;
 
+    private ACCESSION splitInto;
+
     private LocalDateTime localDateTime;
 
     private MODEL data;
 
-    public HistoryEvent(EventType eventType, ACCESSION accession, Integer version, ACCESSION mergedInto,
+    public HistoryEvent(EventType eventType, ACCESSION accession, Integer version, ACCESSION resultInto,
                         LocalDateTime localDateTime, MODEL data) {
         this.eventType = eventType;
         this.accession = accession;
         this.version = version;
-        this.mergedInto = mergedInto;
+        if(this.eventType == EventType.MERGED){
+            this.mergedInto = resultInto;
+        }else if(this.eventType == EventType.RS_SPLIT){
+            this.splitInto = resultInto;
+        }
         this.localDateTime = localDateTime;
         this.data = data;
     }
@@ -61,13 +66,14 @@ public class HistoryEvent<MODEL, ACCESSION> implements IEvent<MODEL, ACCESSION> 
         return version;
     }
 
+    @Override
     public ACCESSION getMergedInto() {
         return mergedInto;
     }
 
     @Override
     public ACCESSION getSplitInto() {
-        throw new NotImplementedException();
+        return splitInto;
     }
 
     @Override
@@ -111,6 +117,11 @@ public class HistoryEvent<MODEL, ACCESSION> implements IEvent<MODEL, ACCESSION> 
     public static <MODEL, ACCESSION> HistoryEvent<MODEL, ACCESSION> merged(ACCESSION accession, ACCESSION mergedInto,
                                                                            LocalDateTime localDateTime) {
         return new HistoryEvent<>(EventType.MERGED, accession, null, mergedInto, localDateTime, null);
+    }
+
+    public static <MODEL, ACCESSION> HistoryEvent<MODEL, ACCESSION> split(ACCESSION accession, ACCESSION splitInto,
+                                                                          LocalDateTime localDateTime) {
+        return new HistoryEvent<>(EventType.RS_SPLIT, accession, null, splitInto, localDateTime, null);
     }
 
     public static <MODEL, ACCESSION> HistoryEvent<MODEL, ACCESSION> updated(ACCESSION accession, int version,

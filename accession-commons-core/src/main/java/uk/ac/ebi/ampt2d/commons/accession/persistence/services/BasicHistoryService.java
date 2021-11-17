@@ -79,6 +79,11 @@ public class BasicHistoryService<
                     newEvent = HistoryEvent.merged(operation.getAccession(),
                             operation.getMergedInto(), operation.getCreatedDate());
                     break;
+                case RS_SPLIT:
+                    versionMap = mapVersions(operation.getInactiveObjects());
+                    newEvent = HistoryEvent.split(operation.getAccession(), operation.getSplitInto(),
+                            operation.getCreatedDate());
+                    break;
                 case UPDATED:
                     IAccessionedObject<MODEL, ?, ACCESSION> dataBeforeUpdate = operation.getInactiveObjects().get(0);
                     int version = dataBeforeUpdate.getVersion();

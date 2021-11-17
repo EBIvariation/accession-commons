@@ -51,6 +51,9 @@ public abstract class OperationEntity<ACCESSION> {
     @Column
     private ACCESSION mergeInto;
 
+    @Column
+    private ACCESSION splitInto;
+
     @Enumerated(value = EnumType.STRING)
     @Column(nullable = false)
     private EventType eventType;
@@ -74,6 +77,10 @@ public abstract class OperationEntity<ACCESSION> {
         return mergeInto;
     }
 
+    public ACCESSION getSplitInto() {
+        return splitInto;
+    }
+
     public EventType getEventType() {
         return eventType;
     }
@@ -89,7 +96,11 @@ public abstract class OperationEntity<ACCESSION> {
     public void fill(EventType type, ACCESSION origin, ACCESSION destination, String reason) {
         this.eventType = type;
         this.accession = origin;
-        this.mergeInto = destination;
+        if (type == EventType.MERGED) {
+            this.mergeInto = destination;
+        } else if (type == EventType.RS_SPLIT) {
+            this.splitInto = destination;
+        }
         this.reason = reason;
     }
 }

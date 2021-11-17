@@ -21,6 +21,7 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.NoRepositoryBean;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 @NoRepositoryBean
@@ -31,4 +32,15 @@ public interface IHistoryRepository<ACCESSION, OPERATION_ENTITY, ID extends Seri
 
     List<OPERATION_ENTITY> findAllByAccession(ACCESSION accession);
 
+    List<OPERATION_ENTITY> findAllByMergeInto(ACCESSION accession);
+
+    List<OPERATION_ENTITY> findAllBySplitInto(ACCESSION accession);
+
+    default List<OPERATION_ENTITY> findAllInvolvedIn(ACCESSION accession) {
+        List<OPERATION_ENTITY> allOperations = new ArrayList<>();
+        allOperations.addAll(findAllByAccession(accession));
+        allOperations.addAll(findAllByMergeInto(accession));
+        allOperations.addAll(findAllBySplitInto(accession));
+        return allOperations;
+    }
 }
