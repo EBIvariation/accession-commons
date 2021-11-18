@@ -39,6 +39,10 @@ public class HistoryEventDTO<ACCESSION, DTO> {
 
     private DTO data;
 
+    public HistoryEventDTO(){
+
+    }
+
     public <MODEL> HistoryEventDTO(HistoryEvent<MODEL, ACCESSION> event, Function<MODEL, DTO> modelToDTO) {
         this.type = event.getEventType();
         this.accession = event.getAccession();
