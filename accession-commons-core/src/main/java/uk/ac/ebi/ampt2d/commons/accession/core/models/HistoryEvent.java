@@ -38,15 +38,15 @@ public class HistoryEvent<MODEL, ACCESSION> implements IEvent<MODEL, ACCESSION> 
 
     private MODEL data;
 
-    public HistoryEvent(EventType eventType, ACCESSION accession, Integer version, ACCESSION resultInto,
+    public HistoryEvent(EventType eventType, ACCESSION accession, Integer version, ACCESSION destinationAccession,
                         LocalDateTime localDateTime, MODEL data) {
         this.eventType = eventType;
         this.accession = accession;
         this.version = version;
         if(this.eventType == EventType.MERGED){
-            this.mergedInto = resultInto;
+            this.mergedInto = destinationAccession;
         }else if(this.eventType == EventType.RS_SPLIT){
-            this.splitInto = resultInto;
+            this.splitInto = destinationAccession;
         }
         this.localDateTime = localDateTime;
         this.data = data;

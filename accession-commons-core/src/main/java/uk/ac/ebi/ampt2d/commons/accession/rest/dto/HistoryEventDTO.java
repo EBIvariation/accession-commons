@@ -76,7 +76,7 @@ public class HistoryEventDTO<ACCESSION, DTO> {
         return splitInto;
     }
 
-    public ACCESSION getResultInto(){
+    public ACCESSION getDestinationAccession(){
         if(this.type == EventType.MERGED){
             return mergedInto;
         }else if(this.type == EventType.RS_SPLIT){
