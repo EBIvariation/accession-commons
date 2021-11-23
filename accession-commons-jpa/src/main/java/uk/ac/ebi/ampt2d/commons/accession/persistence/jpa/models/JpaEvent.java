@@ -17,12 +17,11 @@
  */
 package uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.models;
 
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
-import uk.ac.ebi.ampt2d.commons.accession.persistence.models.IAccessionedObject;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.IEvent;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.entities.InactiveAccessionEntity;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.entities.OperationEntity;
+import uk.ac.ebi.ampt2d.commons.accession.persistence.models.IAccessionedObject;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -33,6 +32,8 @@ public class JpaEvent<MODEL, ACCESSION extends Serializable> implements IEvent<M
     private ACCESSION accession;
 
     private ACCESSION mergeInto;
+
+    private ACCESSION splitInto;
 
     private EventType eventType;
 
@@ -45,8 +46,12 @@ public class JpaEvent<MODEL, ACCESSION extends Serializable> implements IEvent<M
     public JpaEvent(OperationEntity<ACCESSION> lastOperation,
                     List<? extends InactiveAccessionEntity<MODEL, ACCESSION>> inactiveEntities) {
         this.accession = lastOperation.getAccession();
-        this.mergeInto = lastOperation.getMergeInto();
         this.eventType = lastOperation.getEventType();
+        if(this.eventType == EventType.MERGED){
+            this.mergeInto = lastOperation.getMergeInto();
+        }else if(this.eventType == EventType.RS_SPLIT){
+            this.splitInto = lastOperation.getSplitInto();
+        }
         this.reason = lastOperation.getReason();
         this.createdDate = lastOperation.getCreatedDate();
         this.inactiveEntities = inactiveEntities;
@@ -64,7 +69,7 @@ public class JpaEvent<MODEL, ACCESSION extends Serializable> implements IEvent<M
 
     @Override
     public ACCESSION getSplitInto() {
-        throw new NotImplementedException();
+        return splitInto;
     }
 
     @Override

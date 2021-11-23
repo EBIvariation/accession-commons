@@ -50,4 +50,5 @@ public interface InactiveAccessionService<
 
     List<? extends IEvent<MODEL, ACCESSION>> getEvents(ACCESSION accession);
 
+    List<? extends IEvent<MODEL, ACCESSION>> getAllEventsInvolvedIn(ACCESSION accession);
 }

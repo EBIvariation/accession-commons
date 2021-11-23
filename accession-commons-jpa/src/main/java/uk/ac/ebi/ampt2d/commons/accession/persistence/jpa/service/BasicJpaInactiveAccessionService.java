@@ -17,15 +17,16 @@
  */
 package uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.service;
 
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
-import uk.ac.ebi.ampt2d.commons.accession.persistence.services.BasicInactiveAccessionService;
-import uk.ac.ebi.ampt2d.commons.accession.persistence.models.IAccessionedObject;
-import uk.ac.ebi.ampt2d.commons.accession.persistence.repositories.IHistoryRepository;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.IEvent;
-import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.repositories.InactiveAccessionRepository;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.entities.InactiveAccessionEntity;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.entities.OperationEntity;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.models.JpaEvent;
+import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.repositories.InactiveAccessionRepository;
+import uk.ac.ebi.ampt2d.commons.accession.persistence.models.IAccessionedObject;
+import uk.ac.ebi.ampt2d.commons.accession.persistence.repositories.IHistoryRepository;
+import uk.ac.ebi.ampt2d.commons.accession.persistence.services.BasicInactiveAccessionService;
 
 import java.io.Serializable;
 import java.util.List;
@@ -67,7 +68,7 @@ public class BasicJpaInactiveAccessionService<
         OPERATION_ENTITY operation = historyEntitySupplier.get();
         operation.fill(type, accession, mergeInto, reason);
         final OPERATION_ENTITY savedOperation = historyRepository.save(operation);
-        if(accessionInactiveEntities!=null) {
+        if (accessionInactiveEntities != null) {
             accessionInactiveEntities.forEach(entity -> entity.setHistoryId(savedOperation.getId()));
             inactiveAccessionRepository.saveAll(accessionInactiveEntities);
         }
@@ -97,6 +98,11 @@ public class BasicJpaInactiveAccessionService<
     public List<IEvent<MODEL, ACCESSION>> getEvents(ACCESSION accession) {
         final List<OPERATION_ENTITY> operations = historyRepository.findAllByAccession(accession);
         return operations.stream().map(this::toJpaOperation).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<? extends IEvent<MODEL, ACCESSION>> getAllEventsInvolvedIn(ACCESSION accession) {
+        throw new NotImplementedException();
     }
 
 }

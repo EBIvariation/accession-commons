@@ -31,15 +31,26 @@ public class HistoryEventDTO<ACCESSION, DTO> {
 
     private Integer version;
 
+    private ACCESSION splitInto;
+
     private ACCESSION mergedInto;
 
     private LocalDateTime localDateTime;
 
     private DTO data;
 
+    public HistoryEventDTO(){
+
+    }
+
     public <MODEL> HistoryEventDTO(HistoryEvent<MODEL, ACCESSION> event, Function<MODEL, DTO> modelToDTO) {
         this.type = event.getEventType();
         this.accession = event.getAccession();
+        if(event.getEventType() == EventType.MERGED){
+            this.mergedInto = event.getMergedInto();
+        }else if(event.getEventType() == EventType.RS_SPLIT){
+            this.splitInto = event.getSplitInto();
+        }
         this.mergedInto = event.getMergedInto();
         this.localDateTime = event.getLocalDateTime();
         this.data = modelToDTO.apply(event.getData());
@@ -59,6 +70,20 @@ public class HistoryEventDTO<ACCESSION, DTO> {
 
     public ACCESSION getMergedInto() {
         return mergedInto;
+    }
+
+    public ACCESSION getSplitInto(){
+        return splitInto;
+    }
+
+    public ACCESSION getDestinationAccession(){
+        if(this.type == EventType.MERGED){
+            return mergedInto;
+        }else if(this.type == EventType.RS_SPLIT){
+            return splitInto;
+        }else{
+            return null;
+        }
     }
 
     public LocalDateTime getLocalDateTime() {

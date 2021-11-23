@@ -31,4 +31,9 @@ public interface IHistoryRepository<ACCESSION, OPERATION_ENTITY, ID extends Seri
 
     List<OPERATION_ENTITY> findAllByAccession(ACCESSION accession);
 
+    List<OPERATION_ENTITY> findAllByAccessionOrMergeIntoOrSplitInto(ACCESSION accession, ACCESSION mergeInto, ACCESSION splitInto);
+
+    default List<OPERATION_ENTITY> findAllInvolvedIn(ACCESSION accession) {
+        return findAllByAccessionOrMergeIntoOrSplitInto(accession, accession, accession);
+    }
 }
