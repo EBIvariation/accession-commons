@@ -93,6 +93,7 @@ public class MonotonicAccessionGenerator<MODEL> implements AccessionGenerator<MO
         //Insert as available ranges
         for (ContiguousIdBlock block : uncompletedBlocks) {
             blockManager.addBlock(block);
+            blockService.markBlockAsUsed(block);
         }
         return blockManager;
     }
@@ -143,7 +144,7 @@ public class MonotonicAccessionGenerator<MODEL> implements AccessionGenerator<MO
     }
 
     private synchronized void reserveNewBlock(String categoryId, String instanceId) {
-        blockManager.addBlock(blockService.reserveNewBlock(categoryId, instanceId));
+        blockManager.addNewBlock(blockService.reserveNewBlock(categoryId, instanceId));
     }
 
     public synchronized void commit(long... accessions) throws AccessionIsNotPendingException {
