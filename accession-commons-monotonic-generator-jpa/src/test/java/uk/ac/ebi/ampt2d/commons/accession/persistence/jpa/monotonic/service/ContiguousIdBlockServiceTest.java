@@ -35,6 +35,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
@@ -57,16 +58,19 @@ public class ContiguousIdBlockServiceTest {
     @PersistenceContext
     EntityManager entityManager;
 
+    /**
+     * When reserving, block should be marked as used
+     */
     @Test
     public void testReserveNewBlocks() {
         ContiguousIdBlock block = service.reserveNewBlock(CATEGORY_ID, INSTANCE_ID);
         assertEquals(0, block.getFirstValue());
         assertEquals(999, block.getLastValue());
-        assertTrue(block.isNotFull());
+        assertFalse(block.isNotFull());
         ContiguousIdBlock block2 = service.reserveNewBlock(CATEGORY_ID, INSTANCE_ID);
         assertEquals(1000, block2.getFirstValue());
         assertEquals(1999, block2.getLastValue());
-        assertTrue(block.isNotFull());
+        assertFalse(block.isNotFull());
     }
 
     @Test
@@ -76,7 +80,7 @@ public class ContiguousIdBlockServiceTest {
         ContiguousIdBlock block = service.reserveNewBlock(CATEGORY_ID, INSTANCE_ID);
         assertEquals(5, block.getFirstValue());
         assertEquals(1004, block.getLastValue());
-        assertTrue(block.isNotFull());
+        assertFalse(block.isNotFull());
     }
 
     @Test
@@ -84,27 +88,33 @@ public class ContiguousIdBlockServiceTest {
         ContiguousIdBlock block = service.reserveNewBlock(CATEGORY_ID, INSTANCE_ID);
         assertEquals(0, block.getFirstValue());
         assertEquals(999, block.getLastValue());
-        assertTrue(block.isNotFull());
+        assertFalse(block.isNotFull());
         ContiguousIdBlock block2 = service.reserveNewBlock(CATEGORY_ID, INSTANCE_ID_2);
         assertEquals(1000, block2.getFirstValue());
         assertEquals(1999, block2.getLastValue());
-        assertTrue(block.isNotFull());
+        assertFalse(block.isNotFull());
         ContiguousIdBlock block3 = service.reserveNewBlock(CATEGORY_ID, INSTANCE_ID);
         assertEquals(2000, block3.getFirstValue());
         assertEquals(2999, block3.getLastValue());
-        assertTrue(block.isNotFull());
+        assertFalse(block.isNotFull());
     }
 
     @Test
     public void testGetUncompleteBlocks() {
         ContiguousIdBlock uncompletedBlock = new ContiguousIdBlock(CATEGORY_ID, INSTANCE_ID, 0, 5);
-        ContiguousIdBlock completedBlock = new ContiguousIdBlock(CATEGORY_ID, INSTANCE_ID, 10, 5);
-        completedBlock.setLastCommitted(14);
-
+        uncompletedBlock.setLastCommitted(-1);
         service.save(Arrays.asList(uncompletedBlock));
-        service.save(Arrays.asList(new ContiguousIdBlock(CATEGORY_ID, INSTANCE_ID_2, 5, 5)));
+
+        ContiguousIdBlock uncompletedBlockDifferentInstance = new ContiguousIdBlock(CATEGORY_ID, INSTANCE_ID_2, 5, 5);
+        uncompletedBlockDifferentInstance.setLastCommitted(4);
+        service.save(Arrays.asList(uncompletedBlockDifferentInstance));
+
+        ContiguousIdBlock completedBlock = new ContiguousIdBlock(CATEGORY_ID, INSTANCE_ID, 10, 5);
         service.save(Arrays.asList(completedBlock));
-        service.save(Arrays.asList(new ContiguousIdBlock(CATEGORY_ID, INSTANCE_ID, 15, 5)));
+
+        ContiguousIdBlock uncompletedBlock2 = new ContiguousIdBlock(CATEGORY_ID, INSTANCE_ID, 15, 5);
+        service.save(Arrays.asList(uncompletedBlock2));
+        uncompletedBlock2.setLastCommitted(14);
 
         List<ContiguousIdBlock> contiguousBlocks =
                 service.getUncompletedBlocksByCategoryIdAndApplicationInstanceIdOrderByEndAsc(CATEGORY_ID, INSTANCE_ID);
@@ -127,9 +137,8 @@ public class ContiguousIdBlockServiceTest {
 
         List<ContiguousIdBlock> contiguousBlocks = service
                 .getUncompletedBlocksByCategoryIdAndApplicationInstanceIdOrderByEndAsc(CATEGORY_ID_2, INSTANCE_ID);
-        assertEquals(2, contiguousBlocks.size());
-        assertTrue(contiguousBlocks.get(0).isNotFull());
-        assertTrue(contiguousBlocks.get(1).isNotFull());
+        //There are no contiguous blocks since all were marked as used
+        assertEquals(0, contiguousBlocks.size());
     }
 
     @Test

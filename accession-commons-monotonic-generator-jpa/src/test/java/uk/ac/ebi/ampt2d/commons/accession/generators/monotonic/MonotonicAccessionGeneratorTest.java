@@ -35,6 +35,7 @@ import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service.Cont
 import uk.ac.ebi.ampt2d.commons.accession.utils.exceptions.ExponentialBackOffMaxRetriesRuntimeException;
 import uk.ac.ebi.ampt2d.test.configuration.MonotonicAccessionGeneratorTestConfiguration;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -83,7 +84,7 @@ public class MonotonicAccessionGeneratorTest {
         ContiguousIdBlock block = repository.findFirstByCategoryIdOrderByLastValueDesc(CATEGORY_ID);
         assertEquals(0, block.getFirstValue());
         assertEquals(BLOCK_SIZE - 1, block.getLastValue());
-        assertEquals(-1, block.getLastCommitted());
+        assertEquals(block.getLastValue(), block.getLastCommitted());
     }
 
     @Test
@@ -112,14 +113,14 @@ public class MonotonicAccessionGeneratorTest {
         block = repository.findFirstByCategoryIdAndApplicationInstanceIdOrderByLastValueDesc(CATEGORY_ID, INSTANCE_ID);
         assertEquals(0, block.getFirstValue());
         assertEquals(BLOCK_SIZE - 1, block.getLastValue());
-        assertEquals(-1, block.getLastCommitted());
+        assertEquals(999, block.getLastCommitted());
 
         generator2.generateAccessions(TENTH_BLOCK_SIZE);
         assertEquals(2, repository.count());
         block = repository.findFirstByCategoryIdAndApplicationInstanceIdOrderByLastValueDesc(CATEGORY_ID, INSTANCE_2_ID);
         assertEquals(BLOCK_SIZE, block.getFirstValue());
         assertEquals(2 * BLOCK_SIZE - 1, block.getLastValue());
-        assertEquals(BLOCK_SIZE - 1, block.getLastCommitted());
+        assertEquals(block.getLastValue(), block.getLastCommitted());
     }
 
     @Test
@@ -167,11 +168,11 @@ public class MonotonicAccessionGeneratorTest {
     @Test
     public void assertNotCommittingDoesNotModifyLastCommitted() throws Exception {
         MonotonicAccessionGenerator generator = getMonotonicAccessionGenerator();
-        long[] accessions = generator.generateAccessions(TENTH_BLOCK_SIZE);
+        generator.generateAccessions(TENTH_BLOCK_SIZE);
 
         ContiguousIdBlock block =
                 repository.findFirstByCategoryIdAndApplicationInstanceIdOrderByLastValueDesc(CATEGORY_ID, INSTANCE_ID);
-        assertEquals(-1, block.getLastCommitted());
+        assertEquals(999, block.getLastCommitted());
     }
 
     @Test
@@ -184,7 +185,7 @@ public class MonotonicAccessionGeneratorTest {
 
         ContiguousIdBlock block =
                 repository.findFirstByCategoryIdAndApplicationInstanceIdOrderByLastValueDesc(CATEGORY_ID, INSTANCE_ID);
-        assertEquals(-1, block.getLastCommitted());
+        assertEquals(999, block.getLastCommitted());
 
         generator.commit(accessions1);
 
@@ -204,7 +205,8 @@ public class MonotonicAccessionGeneratorTest {
         ContiguousIdBlock block =
                 repository.findFirstByCategoryIdAndApplicationInstanceIdOrderByLastValueDesc(CATEGORY_ID, INSTANCE_ID);
         assertEquals(BLOCK_SIZE, block.getFirstValue());
-        assertEquals(BLOCK_SIZE - 1, block.getLastCommitted());
+        //Last committed should be at the end of the second block (999 to 1999)
+        assertEquals(block.getLastValue(), block.getLastCommitted());
 
         generator.commit(accessions1);
 
@@ -273,7 +275,7 @@ public class MonotonicAccessionGeneratorTest {
         //999 is waiting somewhere taking a big nap and no elements have been confirmed due to element 0 being released
         ContiguousIdBlock block =
                 repository.findFirstByCategoryIdAndApplicationInstanceIdOrderByLastValueDesc(CATEGORY_ID, INSTANCE_ID);
-        assertEquals(-1, block.getLastCommitted());
+        assertEquals(999, block.getLastCommitted());
 
         long[] accessions2 = generator.generateAccessions(BLOCK_SIZE);
         assertEquals(0, accessions2[0]);
@@ -298,26 +300,35 @@ public class MonotonicAccessionGeneratorTest {
         assertEquals(1991, block.getLastCommitted());
     }
 
+    /**
+     * New block created and marked as used (first_value = 0, last_committed = 999, last_value = 999)
+     * Application failed -> No updated performed in contiguous_id_blocks tables (the whole block remain as used)
+     *
+     * Application run again using the same category and instance
+     * ids (2, 3, 5) were used in the previous run
+     * The last block (0 to 999) is marked as used so there are no available ranges
+     */
     @Test
     public void assertRecoverNoPendingCommit() throws Exception {
         MonotonicAccessionGenerator generator = getMonotonicAccessionGenerator();
-        long[] accessions1 = generator.generateAccessions(BLOCK_SIZE);
+        generator.generateAccessions(BLOCK_SIZE);
         // Now assume that the db layer has stored some elements and that the application has died and restarted.
 
         MonotonicAccessionGenerator generatorRecovering =
                 new MonotonicAccessionGenerator(CATEGORY_ID, INSTANCE_ID, service, new long[]{2, 3, 5});
         ContiguousIdBlock block =
                 repository.findFirstByCategoryIdAndApplicationInstanceIdOrderByLastValueDesc(CATEGORY_ID, INSTANCE_ID);
-        assertEquals(-1, block.getLastCommitted());
-        assertFalse(generatorRecovering.getAvailableRanges().isEmpty());
-        assertThat(generatorRecovering.getAvailableRanges(),
-                contains(new MonotonicRange(0, 1), new MonotonicRange(4, 4), new MonotonicRange(6, BLOCK_SIZE - 1)));
+
+        //New generated block marked as used
+        assertEquals(999, block.getLastCommitted());
+        //Last block is marked as used and can't be recovered so there are no ranges available
+        assertTrue(generatorRecovering.getAvailableRanges().isEmpty());
     }
 
     @Test
     public void assertRecoverPendingCommit() throws Exception {
         MonotonicAccessionGenerator generator = getMonotonicAccessionGenerator();
-        long[] accessions1 = generator.generateAccessions(BLOCK_SIZE);
+        generator.generateAccessions(BLOCK_SIZE);
         generator.commit(0, 1);
         // Now assume that the db layer has stored some elements and that the application has died and restarted.
 
@@ -416,18 +427,25 @@ public class MonotonicAccessionGeneratorTest {
         assertEquals(11, accessions2[3]);
     }
 
+    /**
+     * Block (1 to 5) was marked and used
+     * generatorRecovering can't recover the unused ids
+     * A new block (11 to 15) is created to issue requested ids
+     */
     @Test
     public void assertRecoverInAlternateRanges() throws Exception {
         MonotonicAccessionGenerator generator = getMonotonicAccessionGeneratorForCategoryHavingBlockInterval();
-        long[] accessions1 = generator.generateAccessions(NUM_OF_ACCESSIONS);
+        generator.generateAccessions(NUM_OF_ACCESSIONS);
         // Now assume that the db layer has stored some elements and that the application has died and restarted.
+
         MonotonicAccessionGenerator generatorRecovering =
                 new MonotonicAccessionGenerator(CATEGORY_ID_2, INSTANCE_ID, service, new long[]{2, 3});
         long[] accessions2 = generatorRecovering.generateAccessions(NUM_OF_ACCESSIONS);
-        assertEquals(1, accessions2[0]);
-        assertEquals(4, accessions2[1]);
-        assertEquals(5, accessions2[2]);
-        assertEquals(11, accessions2[3]);
+
+        assertEquals(11, accessions2[0]);
+        assertEquals(12, accessions2[1]);
+        assertEquals(13, accessions2[2]);
+        assertEquals(14, accessions2[3]);
     }
 
     private MonotonicAccessionGenerator getMonotonicAccessionGenerator() throws Exception {

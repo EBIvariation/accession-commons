@@ -74,7 +74,8 @@ public class ContiguousIdBlock implements Comparable<ContiguousIdBlock> {
         this.applicationInstanceId = applicationInstanceId;
         this.firstValue = firstValue;
         this.lastValue = firstValue + size - 1;
-        this.lastCommitted = firstValue - 1;
+        this.lastCommitted = firstValue + size - 1;
+//        this.lastCommitted = firstValue - 1;
     }
 
     /**

@@ -27,7 +27,6 @@ import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.entities.Con
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service.ContiguousIdBlockService;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service.MonotonicDatabaseService;
 import uk.ac.ebi.ampt2d.commons.accession.utils.ExponentialBackOff;
-import uk.ac.ebi.ampt2d.commons.accession.utils.exceptions.ExponentialBackOffMaxRetriesRuntimeException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -85,6 +84,7 @@ public class MonotonicAccessionGenerator<MODEL> implements AccessionGenerator<MO
         //Insert as available ranges
         for (ContiguousIdBlock block : uncompletedBlocks) {
             blockManager.addBlock(block);
+            blockService.markBlockAsUsed(block);
         }
         return blockManager;
     }
@@ -135,7 +135,7 @@ public class MonotonicAccessionGenerator<MODEL> implements AccessionGenerator<MO
     }
 
     private synchronized void reserveNewBlock(String categoryId, String instanceId) {
-        blockManager.addBlock(blockService.reserveNewBlock(categoryId, instanceId));
+        blockManager.addNewBlock(blockService.reserveNewBlock(categoryId, instanceId));
     }
 
     public synchronized void commit(long... accessions) throws AccessionIsNotPendingException {
