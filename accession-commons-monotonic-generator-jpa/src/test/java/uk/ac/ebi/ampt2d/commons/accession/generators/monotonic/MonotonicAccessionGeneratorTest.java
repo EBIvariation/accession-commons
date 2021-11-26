@@ -113,7 +113,7 @@ public class MonotonicAccessionGeneratorTest {
         block = repository.findFirstByCategoryIdAndApplicationInstanceIdOrderByLastValueDesc(CATEGORY_ID, INSTANCE_ID);
         assertEquals(0, block.getFirstValue());
         assertEquals(BLOCK_SIZE - 1, block.getLastValue());
-        assertEquals(999, block.getLastCommitted());
+        assertEquals(block.getLastValue(), block.getLastCommitted());
 
         generator2.generateAccessions(TENTH_BLOCK_SIZE);
         assertEquals(2, repository.count());
@@ -172,7 +172,7 @@ public class MonotonicAccessionGeneratorTest {
 
         ContiguousIdBlock block =
                 repository.findFirstByCategoryIdAndApplicationInstanceIdOrderByLastValueDesc(CATEGORY_ID, INSTANCE_ID);
-        assertEquals(999, block.getLastCommitted());
+        assertEquals(block.getLastValue(), block.getLastCommitted());
     }
 
     @Test
@@ -185,7 +185,7 @@ public class MonotonicAccessionGeneratorTest {
 
         ContiguousIdBlock block =
                 repository.findFirstByCategoryIdAndApplicationInstanceIdOrderByLastValueDesc(CATEGORY_ID, INSTANCE_ID);
-        assertEquals(999, block.getLastCommitted());
+        assertEquals(block.getLastValue(), block.getLastCommitted());
 
         generator.commit(accessions1);
 
@@ -320,7 +320,7 @@ public class MonotonicAccessionGeneratorTest {
                 repository.findFirstByCategoryIdAndApplicationInstanceIdOrderByLastValueDesc(CATEGORY_ID, INSTANCE_ID);
 
         //New generated block marked as used
-        assertEquals(999, block.getLastCommitted());
+        assertEquals(block.getLastValue(), block.getLastCommitted());
         //Last block is marked as used and can't be recovered so there are no ranges available
         assertTrue(generatorRecovering.getAvailableRanges().isEmpty());
     }
