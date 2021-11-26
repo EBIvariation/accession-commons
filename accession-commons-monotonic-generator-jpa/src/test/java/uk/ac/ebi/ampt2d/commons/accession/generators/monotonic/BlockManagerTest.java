@@ -23,7 +23,6 @@ import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionIsNotPendingE
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.entities.ContiguousIdBlock;
 
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.Set;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -183,39 +182,5 @@ public class BlockManagerTest {
                 default:
             }
         }
-    }
-
-    @Test
-    public void commitMoreAccessionsThanMaxPerBlock2() throws AccessionCouldNotBeGeneratedException {
-        BlockManager manager = new BlockManager();
-        manager.addNewBlock(new ContiguousIdBlock(CATEGORY_ID, INSTANCE_ID, 0, 10));
-        long[] accessions1 = manager.pollNext(3);
-        Set<ContiguousIdBlock> blocksToUpdate = manager.commit(accessions1);
-
-        assertEquals(1, blocksToUpdate.size());
-        assertEquals(2, blocksToUpdate.iterator().next().getLastCommitted());
-
-        long[] accessions2 = {};
-        Set<ContiguousIdBlock> blocksToUpdate2 = manager.commit(accessions2);
-        assertEquals(1, blocksToUpdate2.size());
-        assertEquals(2, blocksToUpdate2.iterator().next().getLastCommitted());
-
-//        long[] accessions2 = {1, 2, 3};
-//
-//
-//        //Entire first block should be marked as used
-//        //Second should only mark 2 accessions as used (accession 10 and 11)
-//        assertEquals(2, blocksToUpdate.size());
-//        for (ContiguousIdBlock currentBlock : blocksToUpdate) {
-//            switch ((int) currentBlock.getFirstValue()) {
-//                case 0:
-//                    assertEquals(9, currentBlock.getLastCommitted());
-//                    break;
-//                case 10:
-//                    assertEquals(11, currentBlock.getLastCommitted());
-//                    break;
-//                default:
-//            }
-//        }
     }
 }
