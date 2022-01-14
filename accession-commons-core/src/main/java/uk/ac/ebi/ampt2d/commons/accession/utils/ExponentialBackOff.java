@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.ac.ebi.ampt2d.commons.accession.utils.exceptions.ExponentialBackOffMaxRetriesRuntimeException;
 
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Supplier;
 
 /**
@@ -32,6 +33,8 @@ public abstract class ExponentialBackOff {
 
     static int DEFAULT_TOTAL_ATTEMPTS = 7;
     private static int DEFAULT_TIME_BASE = 1000;
+    private static int MAX_JITTER = 1000;
+    private static int MIN_JITTER = 100;
 
     public static void execute(Runnable function) {
         execute(function, DEFAULT_TOTAL_ATTEMPTS, DEFAULT_TIME_BASE);
@@ -78,7 +81,7 @@ public abstract class ExponentialBackOff {
 
     private static void doWait(int valueInTheSeries, int timeBase) {
         try {
-            Thread.sleep(valueInTheSeries * timeBase);
+            Thread.sleep(valueInTheSeries * timeBase + ThreadLocalRandom.current().nextInt(MIN_JITTER, MAX_JITTER));
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
