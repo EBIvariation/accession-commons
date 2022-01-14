@@ -20,6 +20,7 @@ package uk.ac.ebi.ampt2d.commons.accession.core.models;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.models.IAccessionedObject;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 
 public class HistoryEvent<MODEL, ACCESSION> implements IEvent<MODEL, ACCESSION> {
@@ -34,21 +35,29 @@ public class HistoryEvent<MODEL, ACCESSION> implements IEvent<MODEL, ACCESSION> 
 
     private ACCESSION splitInto;
 
-    private LocalDateTime localDateTime;
+    private String reason;
 
-    private MODEL data;
+    private LocalDateTime createdDate;
+
+    private List<MODEL> data;
 
     public HistoryEvent(EventType eventType, ACCESSION accession, Integer version, ACCESSION destinationAccession,
-                        LocalDateTime localDateTime, MODEL data) {
+                        String reason, LocalDateTime createdDate, MODEL data) {
+        this(eventType, accession, version, destinationAccession, reason, createdDate, Collections.singletonList(data));
+    }
+
+    public HistoryEvent(EventType eventType, ACCESSION accession, Integer version, ACCESSION destinationAccession,
+                        String reason, LocalDateTime createdDate, List<MODEL> data) {
         this.eventType = eventType;
         this.accession = accession;
         this.version = version;
-        if(this.eventType == EventType.MERGED){
+        if (this.eventType == EventType.MERGED) {
             this.mergedInto = destinationAccession;
-        }else if(this.eventType == EventType.RS_SPLIT){
+        } else if (this.eventType == EventType.RS_SPLIT) {
             this.splitInto = destinationAccession;
         }
-        this.localDateTime = localDateTime;
+        this.reason = reason;
+        this.createdDate = createdDate;
         this.data = data;
     }
 
@@ -78,12 +87,12 @@ public class HistoryEvent<MODEL, ACCESSION> implements IEvent<MODEL, ACCESSION> 
 
     @Override
     public String getReason() {
-        return null;
+        return reason;
     }
 
     @Override
     public LocalDateTime getCreatedDate() {
-        return null;
+        return createdDate;
     }
 
     @Override
@@ -91,42 +100,38 @@ public class HistoryEvent<MODEL, ACCESSION> implements IEvent<MODEL, ACCESSION> 
         return null;
     }
 
-    public LocalDateTime getLocalDateTime() {
-        return localDateTime;
-    }
-
-    public MODEL getData() {
+    public List<MODEL> getData() {
         return data;
     }
 
     public static <MODEL, ACCESSION> HistoryEvent<MODEL, ACCESSION> created(ACCESSION accession, MODEL model,
-                                                                            LocalDateTime localDateTime) {
-        return new HistoryEvent<>(EventType.CREATED, accession, 1, null, localDateTime, model);
+                                                                            LocalDateTime createdDate) {
+        return new HistoryEvent<>(EventType.CREATED, accession, 1, null, "", createdDate, model);
     }
 
     public static <MODEL, ACCESSION> HistoryEvent<MODEL, ACCESSION> patch(ACCESSION accession, int version,
-                                                                          MODEL model, LocalDateTime localDateTime) {
-        return new HistoryEvent<>(EventType.PATCHED, accession, version, null, localDateTime, model);
+                                                                          MODEL model, String reason, LocalDateTime createdDate) {
+        return new HistoryEvent<>(EventType.PATCHED, accession, version, null, reason, createdDate, model);
     }
 
-    public static <MODEL, ACCESSION> HistoryEvent<MODEL, ACCESSION> deprecated(ACCESSION accession,
-                                                                               LocalDateTime localDateTime) {
-        return new HistoryEvent<>(EventType.DEPRECATED, accession, null, null, localDateTime, null);
+    public static <MODEL, ACCESSION> HistoryEvent<MODEL, ACCESSION> deprecated(ACCESSION accession, String reason,
+                                                                               LocalDateTime createdDate) {
+        return new HistoryEvent<>(EventType.DEPRECATED, accession, null, null, reason, createdDate, null);
     }
 
     public static <MODEL, ACCESSION> HistoryEvent<MODEL, ACCESSION> merged(ACCESSION accession, ACCESSION mergedInto,
-                                                                           LocalDateTime localDateTime) {
-        return new HistoryEvent<>(EventType.MERGED, accession, null, mergedInto, localDateTime, null);
+                                                                           String reason, LocalDateTime createdDate) {
+        return new HistoryEvent<>(EventType.MERGED, accession, null, mergedInto, reason, createdDate, null);
     }
 
     public static <MODEL, ACCESSION> HistoryEvent<MODEL, ACCESSION> split(ACCESSION accession, ACCESSION splitInto,
-                                                                          LocalDateTime localDateTime) {
-        return new HistoryEvent<>(EventType.RS_SPLIT, accession, null, splitInto, localDateTime, null);
+                                                                          String reason, LocalDateTime createdDate) {
+        return new HistoryEvent<>(EventType.RS_SPLIT, accession, null, splitInto, reason, createdDate, null);
     }
 
-    public static <MODEL, ACCESSION> HistoryEvent<MODEL, ACCESSION> updated(ACCESSION accession, int version,
-                                                                            MODEL data, LocalDateTime localDateTime) {
-        return new HistoryEvent<>(EventType.UPDATED, accession, version, null, localDateTime, data);
+    public static <MODEL, ACCESSION> HistoryEvent<MODEL, ACCESSION> updated(ACCESSION accession, int version, MODEL data,
+                                                                            String reason, LocalDateTime createdDate) {
+        return new HistoryEvent<>(EventType.UPDATED, accession, version, null, reason, createdDate, data);
     }
 
 }

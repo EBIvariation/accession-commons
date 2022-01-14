@@ -21,6 +21,7 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.HistoryEvent;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.function.Function;
 
 public class HistoryEventDTO<ACCESSION, DTO> {
@@ -35,24 +36,27 @@ public class HistoryEventDTO<ACCESSION, DTO> {
 
     private ACCESSION mergedInto;
 
-    private LocalDateTime localDateTime;
+    private String reason;
 
-    private DTO data;
+    private LocalDateTime createdDate;
 
-    public HistoryEventDTO(){
+    private List<DTO> data;
+
+    public HistoryEventDTO() {
 
     }
 
-    public <MODEL> HistoryEventDTO(HistoryEvent<MODEL, ACCESSION> event, Function<MODEL, DTO> modelToDTO) {
+    public <MODEL> HistoryEventDTO(HistoryEvent<MODEL, ACCESSION> event, Function<List<MODEL>, List<DTO>> modelToDTO) {
         this.type = event.getEventType();
         this.accession = event.getAccession();
-        if(event.getEventType() == EventType.MERGED){
+        if (event.getEventType() == EventType.MERGED) {
             this.mergedInto = event.getMergedInto();
-        }else if(event.getEventType() == EventType.RS_SPLIT){
+        } else if (event.getEventType() == EventType.RS_SPLIT) {
             this.splitInto = event.getSplitInto();
         }
         this.mergedInto = event.getMergedInto();
-        this.localDateTime = event.getLocalDateTime();
+        this.reason = event.getReason();
+        this.createdDate = event.getCreatedDate();
         this.data = modelToDTO.apply(event.getData());
     }
 
@@ -72,25 +76,29 @@ public class HistoryEventDTO<ACCESSION, DTO> {
         return mergedInto;
     }
 
-    public ACCESSION getSplitInto(){
+    public ACCESSION getSplitInto() {
         return splitInto;
     }
 
-    public ACCESSION getDestinationAccession(){
-        if(this.type == EventType.MERGED){
+    public ACCESSION getDestinationAccession() {
+        if (this.type == EventType.MERGED) {
             return mergedInto;
-        }else if(this.type == EventType.RS_SPLIT){
+        } else if (this.type == EventType.RS_SPLIT) {
             return splitInto;
-        }else{
+        } else {
             return null;
         }
     }
 
-    public LocalDateTime getLocalDateTime() {
-        return localDateTime;
+    public String getReason() {
+        return reason;
     }
 
-    public DTO getData() {
+    public LocalDateTime getCreatedDate() {
+        return createdDate;
+    }
+
+    public List<DTO> getData() {
         return data;
     }
 }
