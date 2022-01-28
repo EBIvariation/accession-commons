@@ -101,7 +101,7 @@ public class HistoryTester {
     }
 
     private static Consumer<HistoryEvent<TestModel, String>> assertEventContentIs(String value) {
-        return event -> assertEquals(value, event.getData().getValue());
+        return event -> assertEquals(value, event.getData().get(0).getValue());
     }
 
     public static Consumer<HistoryEvent<TestModel, String>> assertEventIsPatch(String value, int version) {

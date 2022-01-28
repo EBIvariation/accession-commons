@@ -65,37 +65,38 @@ public class BasicHistoryService<
             List<? extends IEvent<MODEL, ACCESSION>> history) {
         List<HistoryEvent<MODEL, ACCESSION>> events = new ArrayList<>();
         Map<Integer, IAccessionedObject<MODEL, ?, ACCESSION>> versionMap = mapVersions(current);
-        sortOperationsNewToOld(history);
+        sortEventsNewToOld(history);
 
         for (IEvent<MODEL, ACCESSION> operation : history) {
             HistoryEvent<MODEL, ACCESSION> newEvent;
             switch (operation.getEventType()) {
                 case DEPRECATED:
                     versionMap = mapVersions(operation.getInactiveObjects());
-                    newEvent = HistoryEvent.deprecated(operation.getAccession(), operation.getCreatedDate());
+                    newEvent = HistoryEvent.deprecated(operation.getAccession(), operation.getReason(),
+                            operation.getCreatedDate());
                     break;
                 case MERGED:
                     versionMap = mapVersions(operation.getInactiveObjects());
-                    newEvent = HistoryEvent.merged(operation.getAccession(),
-                            operation.getMergedInto(), operation.getCreatedDate());
+                    newEvent = HistoryEvent.merged(operation.getAccession(), operation.getMergedInto(),
+                            operation.getReason(), operation.getCreatedDate());
                     break;
                 case RS_SPLIT:
                     versionMap = mapVersions(operation.getInactiveObjects());
                     newEvent = HistoryEvent.split(operation.getAccession(), operation.getSplitInto(),
-                            operation.getCreatedDate());
+                            operation.getReason(), operation.getCreatedDate());
                     break;
                 case UPDATED:
                     IAccessionedObject<MODEL, ?, ACCESSION> dataBeforeUpdate = operation.getInactiveObjects().get(0);
                     int version = dataBeforeUpdate.getVersion();
                     MODEL updateData = versionMap.get(version).getModel();
                     newEvent = HistoryEvent.updated(operation.getAccession(), version, updateData,
-                            operation.getCreatedDate());
+                            operation.getReason(), operation.getCreatedDate());
                     versionMap.put(version, dataBeforeUpdate);
                     break;
                 case PATCHED:
                     int lastVersion = versionMap.keySet().size();
                     newEvent = HistoryEvent.patch(operation.getAccession(), lastVersion,
-                            versionMap.get(lastVersion).getModel(), operation.getCreatedDate());
+                            versionMap.get(lastVersion).getModel(), operation.getReason(), operation.getCreatedDate());
                     versionMap.remove(lastVersion);
                     if (lastVersion == 0) {
                         throw new RuntimeException("Error parsing accession history");
@@ -114,11 +115,11 @@ public class BasicHistoryService<
     }
 
     private void sortEventsOldToNew(List<HistoryEvent<MODEL, ACCESSION>> events) {
-        events.sort(Comparator.comparing(HistoryEvent::getLocalDateTime));
+        events.sort(Comparator.comparing(HistoryEvent::getCreatedDate));
     }
 
-    private void sortOperationsNewToOld(List<? extends IEvent<MODEL, ACCESSION>> operations) {
-        operations.sort(Comparator.comparing(IEvent::getCreatedDate, Comparator.reverseOrder()));
+    private void sortEventsNewToOld(List<? extends IEvent<MODEL, ACCESSION>> events) {
+        events.sort(Comparator.comparing(IEvent::getCreatedDate, Comparator.reverseOrder()));
 
     }
 
