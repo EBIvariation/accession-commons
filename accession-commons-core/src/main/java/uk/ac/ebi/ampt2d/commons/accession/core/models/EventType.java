@@ -39,6 +39,8 @@ public enum EventType {
     RS_SPLIT,
 
     // accession is no longer valid
-    DEPRECATED
+    DEPRECATED,
 
+    // RS ID was back-propagated from a remapped assembly
+    RS_BACK_PROPAGATED
 }
