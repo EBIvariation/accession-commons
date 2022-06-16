@@ -69,7 +69,7 @@ public abstract class EventDocument<
                      String reason, List<INACTIVE_DOCUMENT> inactiveObjects) {
         this.eventType = eventType;
         this.accession = accessionIdOrigin;
-        if(eventType==EventType.RS_SPLIT){
+        if(eventType==EventType.RS_SPLIT || eventType == EventType.SS_SPLIT) {
             this.splitInto = accessionIdDestiny;
         }else if(eventType==EventType.MERGED){
             this.mergeInto = accessionIdDestiny;
@@ -131,6 +131,10 @@ public abstract class EventDocument<
     @Override
     public String getId() {
         return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     @Override
