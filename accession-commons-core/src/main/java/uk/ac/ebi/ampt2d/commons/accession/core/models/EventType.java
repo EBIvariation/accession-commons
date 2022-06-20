@@ -42,5 +42,11 @@ public enum EventType {
     DEPRECATED,
 
     // RS ID was back-propagated from a remapped assembly
-    RS_BACK_PROPAGATED
+    RS_BACK_PROPAGATED,
+
+    // Candidates for SS ID split
+    SS_SPLIT_CANDIDATES,
+
+    // new SS ID created because of SS split - as a result of processing SS_SPLIT_CANDIDATES
+    SS_SPLIT
 }
