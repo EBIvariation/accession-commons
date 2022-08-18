@@ -41,6 +41,9 @@ public enum EventType {
     // accession is no longer valid
     DEPRECATED,
 
+    // accessioned object was discarded without deprecating the accession
+    DISCARDED,
+
     // RS ID was back-propagated from a remapped assembly
     RS_BACK_PROPAGATED,
 
