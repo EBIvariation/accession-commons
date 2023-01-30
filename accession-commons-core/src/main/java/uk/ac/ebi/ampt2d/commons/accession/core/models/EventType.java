@@ -31,6 +31,9 @@ public enum EventType {
     // accession1 merged into accession2
     MERGED,
 
+    // Undo accession1 merged into accession2
+    UNDO_MERGE,
+
     RS_MERGE_CANDIDATES,
 
     RS_SPLIT_CANDIDATES,
