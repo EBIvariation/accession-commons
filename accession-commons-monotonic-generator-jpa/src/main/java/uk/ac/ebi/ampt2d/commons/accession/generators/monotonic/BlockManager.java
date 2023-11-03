@@ -157,7 +157,7 @@ class BlockManager {
      * @param committedElements Accessions that have already been committed
      * @throws AccessionIsNotPendingException When the generated accession does not match with the accession to commit
      */
-    public void recoverState(long[] committedElements) throws AccessionIsNotPendingException {
+    public Set<ContiguousIdBlock> recoverState(long[] committedElements) throws AccessionIsNotPendingException {
         List<MonotonicRange> ranges = MonotonicRange.convertToMonotonicRanges(committedElements);
         List<MonotonicRange> newAvailableRanges = new ArrayList<>();
         for (MonotonicRange monotonicRange : this.availableRanges) {
@@ -166,6 +166,6 @@ class BlockManager {
 
         this.availableRanges.clear();
         this.availableRanges.addAll(newAvailableRanges);
-        doCommit(committedElements);
+        return doCommit(committedElements);
     }
 }
