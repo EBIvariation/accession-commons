@@ -103,7 +103,7 @@ public class MonotonicAccessionGenerator<MODEL> implements AccessionGenerator<MO
      * @throws AccessionIsNotPendingException
      */
     private void recoverState(long[] committedElements) throws AccessionIsNotPendingException {
-        blockManager.recoverState(committedElements);
+        blockService.save(blockManager.recoverState(committedElements));
     }
 
     public synchronized long[] generateAccessions(int numAccessionsToGenerate)
