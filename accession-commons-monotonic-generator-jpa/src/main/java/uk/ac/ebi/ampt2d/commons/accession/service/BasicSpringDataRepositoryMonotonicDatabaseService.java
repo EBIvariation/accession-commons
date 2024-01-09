@@ -17,7 +17,6 @@
  */
 package uk.ac.ebi.ampt2d.commons.accession.service;
 
-import uk.ac.ebi.ampt2d.commons.accession.core.DatabaseService;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicRange;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service.MonotonicDatabaseService;
@@ -31,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Basic implementation of {@link MonotonicDatabaseService} that requires a Spring Data repository that extends
@@ -62,18 +62,18 @@ public class BasicSpringDataRepositoryMonotonicDatabaseService<
 
     @Override
     public long[] getAccessionsInRanges(Collection<MonotonicRange> ranges) {
-        List<AccessionProjection<Long>> accessionsInRanges = new ArrayList<>();
+        List<Long> accessionsInDB = new ArrayList<>();
         for (MonotonicRange potentiallyBigRange : ranges) {
             for (MonotonicRange range : ensureRangeMaxSize(potentiallyBigRange, MAX_RANGE_SIZE)) {
-                accessionsInRanges.addAll(
+                List<AccessionProjection<Long>> accessionsInRange =
                         repository.findByAccessionGreaterThanEqualAndAccessionLessThanEqual(range.getStart(),
-                                                                                            range.getEnd()));
+                                range.getEnd());
+
+                accessionsInDB.addAll(accessionsInRange.stream().map(ap -> ap.getAccession()).collect(Collectors.toList()));
             }
         }
-        long[] accessionArray = new long[accessionsInRanges.size()];
-        for (int i = 0; i < accessionsInRanges.size(); i++) {
-            accessionArray[i] = accessionsInRanges.get(i).getAccession();
-        }
+
+        long[] accessionArray = accessionsInDB.stream().mapToLong(l -> l).toArray();
         return accessionArray;
     }
 

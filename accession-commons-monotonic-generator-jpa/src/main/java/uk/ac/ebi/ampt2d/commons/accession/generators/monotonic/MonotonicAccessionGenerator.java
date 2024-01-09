@@ -27,9 +27,9 @@ import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.entities.Con
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service.ContiguousIdBlockService;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service.MonotonicDatabaseService;
 import uk.ac.ebi.ampt2d.commons.accession.utils.ExponentialBackOff;
-import uk.ac.ebi.ampt2d.commons.accession.utils.exceptions.ExponentialBackOffMaxRetriesRuntimeException;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -52,7 +52,15 @@ public class MonotonicAccessionGenerator<MODEL> implements AccessionGenerator<MO
                                        ContiguousIdBlockService contiguousIdBlockService,
                                        MonotonicDatabaseService databaseService) {
         this(categoryId, applicationInstanceId, contiguousIdBlockService);
-        recoverState(databaseService.getAccessionsInRanges(getAvailableRanges()));
+        // As we are going through the available ranges and at the same time we are also going to manipulate/update them
+        // Need to make a copy of the original for iteration to avoid ConcurrentModificationException
+        MonotonicRangePriorityQueue copyOfAvailableRanges = new MonotonicRangePriorityQueue();
+        for (MonotonicRange range : getAvailableRanges()) {
+            copyOfAvailableRanges.offer(range);
+        }
+        for (MonotonicRange monotonicRange : copyOfAvailableRanges) {
+            recoverState(databaseService.getAccessionsInRanges(Collections.singletonList(monotonicRange)));
+        }
     }
 
     public MonotonicAccessionGenerator(String categoryId,

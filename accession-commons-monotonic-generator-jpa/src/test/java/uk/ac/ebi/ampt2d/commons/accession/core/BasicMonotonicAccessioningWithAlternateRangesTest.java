@@ -29,15 +29,18 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.GetOrCreateAccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicAccessionGenerator;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
+import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.entities.ContiguousIdBlock;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service.ContiguousIdBlockService;
 import uk.ac.ebi.ampt2d.commons.accession.service.BasicSpringDataRepositoryMonotonicDatabaseService;
 import uk.ac.ebi.ampt2d.test.configuration.TestMonotonicDatabaseServiceTestConfiguration;
 import uk.ac.ebi.ampt2d.test.models.TestModel;
 import uk.ac.ebi.ampt2d.test.persistence.TestMonotonicEntity;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.LongStream;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -60,6 +63,42 @@ public class BasicMonotonicAccessioningWithAlternateRangesTest {
         List<GetOrCreateAccessionWrapper<TestModel, String, Long>> evaAccessions =
                 getAccessioningService("unknown-category", INSTANCE_ID)
                         .getOrCreate(getObjectsForAccessionsInRange(1, 10));
+    }
+
+    @Test
+    public void testRecoverState() {
+        String categoryId = "eva_2";
+        String instanceId2 = "test-instance_2";
+
+        // create 3 un-complete contiguous id blocks of size 10
+        // block-1 : (100 to 109), block-2 : (110 to 119), block-3 : (120 to 129)
+        List<ContiguousIdBlock> uncompletedBlocks = new ArrayList<>();
+        uncompletedBlocks.add(new ContiguousIdBlock(categoryId, instanceId2, 100, 10));
+        uncompletedBlocks.add(new ContiguousIdBlock(categoryId, instanceId2, 110, 10));
+        uncompletedBlocks.add(new ContiguousIdBlock(categoryId, instanceId2, 120, 10));
+        contiguousIdBlockService.save(uncompletedBlocks);
+
+        assertEquals(3, contiguousIdBlockService.getUncompletedBlocksByCategoryIdAndApplicationInstanceIdOrderByEndAsc(categoryId, instanceId2).size());
+
+        // create and save accessions in db (100 to 124)
+        List<AccessionWrapper<TestModel, String, Long>> accessions = LongStream.range(100l, 125l)
+                .boxed()
+                .map(longAcc -> new AccessionWrapper<>(longAcc, "hash" + longAcc, TestModel.of("test-obj-" + longAcc)))
+                .collect(Collectors.toList());
+        databaseService.save(accessions);
+
+        // run recover blocks
+        getGenerator(categoryId, instanceId2);
+
+        // As we have already saved accessions in db from 100 to 124, the status should be
+        // block-1 (100 to 109) : fully complete
+        // block-2 (110 to 119) : fully complete
+        // block-3 (120 to 124) : partially complete
+        assertEquals(1, contiguousIdBlockService.getUncompletedBlocksByCategoryIdAndApplicationInstanceIdOrderByEndAsc(categoryId, instanceId2).size());
+        ContiguousIdBlock uncompletedBlock = contiguousIdBlockService.getUncompletedBlocksByCategoryIdAndApplicationInstanceIdOrderByEndAsc(categoryId, instanceId2).get(0);
+        assertEquals(120l, uncompletedBlock.getFirstValue());
+        assertEquals(129l, uncompletedBlock.getLastValue());
+        assertEquals(124l, uncompletedBlock.getLastCommitted());
     }
 
     @Test

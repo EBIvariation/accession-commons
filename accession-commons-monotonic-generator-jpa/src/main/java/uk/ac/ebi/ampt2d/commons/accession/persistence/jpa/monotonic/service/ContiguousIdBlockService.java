@@ -48,6 +48,7 @@ public class ContiguousIdBlockService {
     @Transactional
     public void save(Iterable<ContiguousIdBlock> blocks) {
         repository.saveAll(blocks);
+        entityManager.flush();
     }
 
     @Transactional(isolation = Isolation.SERIALIZABLE)
