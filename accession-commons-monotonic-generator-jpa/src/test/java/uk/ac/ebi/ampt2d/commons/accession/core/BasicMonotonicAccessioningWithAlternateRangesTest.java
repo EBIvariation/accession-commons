@@ -28,6 +28,8 @@ import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGen
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.GetOrCreateAccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicAccessionGenerator;
+import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicRange;
+import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicRangePriorityQueue;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.entities.ContiguousIdBlock;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service.ContiguousIdBlockService;
@@ -88,7 +90,7 @@ public class BasicMonotonicAccessioningWithAlternateRangesTest {
         databaseService.save(accessions);
 
         // run recover blocks
-        getGenerator(categoryId, instanceId2);
+        MonotonicAccessionGenerator generator = getGenerator(categoryId, instanceId2);
 
         // As we have already saved accessions in db from 100 to 124, the status should be
         // block-1 (100 to 109) : fully complete
@@ -99,6 +101,11 @@ public class BasicMonotonicAccessioningWithAlternateRangesTest {
         assertEquals(120l, uncompletedBlock.getFirstValue());
         assertEquals(129l, uncompletedBlock.getLastValue());
         assertEquals(124l, uncompletedBlock.getLastCommitted());
+
+        MonotonicRangePriorityQueue availableRanges = generator.getAvailableRanges();
+        assertEquals(1, availableRanges.size());
+        assertEquals(125l, availableRanges.peek().getStart());
+        assertEquals(129l, availableRanges.peek().getEnd());
     }
 
     @Test
