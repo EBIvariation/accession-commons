@@ -82,7 +82,7 @@ public class BasicMonotonicAccessioningWithAlternateRangesTest {
 
         assertEquals(3, contiguousIdBlockService.getUncompletedBlocksByCategoryIdAndApplicationInstanceIdOrderByEndAsc(categoryId, instanceId2).size());
 
-        // create and save accessions in db (100 to 124) - save 2 tests of same accessions with different hashes
+        // create and save accessions in db (100 to 124) - save 2 sets of same accessions with different hashes
         List<AccessionWrapper<TestModel, String, Long>> accessionsSet1 = LongStream.range(100l, 125l)
                 .boxed()
                 .map(longAcc -> new AccessionWrapper<>(longAcc, "hash-1" + longAcc, TestModel.of("test-obj-1-" + longAcc)))
