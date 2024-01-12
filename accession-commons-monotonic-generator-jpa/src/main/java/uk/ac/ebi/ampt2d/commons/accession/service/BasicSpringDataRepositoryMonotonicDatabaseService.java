@@ -75,7 +75,7 @@ public class BasicSpringDataRepositoryMonotonicDatabaseService<
             }
         }
 
-        long[] accessionArray = accessionsInDB.stream().mapToLong(l -> l).toArray();
+        long[] accessionArray = accessionsInDB.stream().mapToLong(l -> l).sorted().toArray();
         return accessionArray;
     }
 
