@@ -82,14 +82,19 @@ public class BasicMonotonicAccessioningWithAlternateRangesTest {
 
         assertEquals(3, contiguousIdBlockService.getUncompletedBlocksByCategoryIdAndApplicationInstanceIdOrderByEndAsc(categoryId, instanceId2).size());
 
-        // create and save accessions in db (100 to 124)
-        List<AccessionWrapper<TestModel, String, Long>> accessions = LongStream.range(100l, 125l)
+        // create and save accessions in db (100 to 124) - save 2 tests of same accessions with different hashes
+        List<AccessionWrapper<TestModel, String, Long>> accessionsSet1 = LongStream.range(100l, 125l)
                 .boxed()
-                .map(longAcc -> new AccessionWrapper<>(longAcc, "hash" + longAcc, TestModel.of("test-obj-" + longAcc)))
+                .map(longAcc -> new AccessionWrapper<>(longAcc, "hash-1" + longAcc, TestModel.of("test-obj-1-" + longAcc)))
                 .collect(Collectors.toList());
-        databaseService.save(accessions);
+        List<AccessionWrapper<TestModel, String, Long>> accessionsSet2 = LongStream.range(100l, 125l)
+                .boxed()
+                .map(longAcc -> new AccessionWrapper<>(longAcc, "hash-2" + longAcc, TestModel.of("test-obj-2-" + longAcc)))
+                .collect(Collectors.toList());
+        databaseService.save(accessionsSet1);
+        databaseService.save(accessionsSet2);
 
-        // run recover blocks
+        // run recover state
         MonotonicAccessionGenerator generator = getGenerator(categoryId, instanceId2);
 
         // As we have already saved accessions in db from 100 to 124, the status should be

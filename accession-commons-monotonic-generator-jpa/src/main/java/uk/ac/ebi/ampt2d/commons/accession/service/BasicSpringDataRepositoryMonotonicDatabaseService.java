@@ -28,7 +28,9 @@ import uk.ac.ebi.ampt2d.commons.accession.persistence.services.InactiveAccession
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -62,14 +64,14 @@ public class BasicSpringDataRepositoryMonotonicDatabaseService<
 
     @Override
     public long[] getAccessionsInRanges(Collection<MonotonicRange> ranges) {
-        List<Long> accessionsInDB = new ArrayList<>();
+        Set<Long> accessionsInDB = new HashSet<>();
         for (MonotonicRange potentiallyBigRange : ranges) {
             for (MonotonicRange range : ensureRangeMaxSize(potentiallyBigRange, MAX_RANGE_SIZE)) {
                 List<AccessionProjection<Long>> accessionsInRange =
                         repository.findByAccessionGreaterThanEqualAndAccessionLessThanEqual(range.getStart(),
                                 range.getEnd());
 
-                accessionsInDB.addAll(accessionsInRange.stream().map(ap -> ap.getAccession()).collect(Collectors.toList()));
+                accessionsInDB.addAll(accessionsInRange.stream().map(ap -> ap.getAccession()).collect(Collectors.toSet()));
             }
         }
 
