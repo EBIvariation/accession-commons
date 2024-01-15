@@ -56,6 +56,14 @@ class BlockManager {
         availableRanges.add(new MonotonicRange(block.getLastCommitted() + 1, block.getLastValue()));
     }
 
+    /**
+     * Add a newly created block (all ids are available)
+     */
+    public void addNewBlock(ContiguousIdBlock block) {
+        assignedBlocks.add(block);
+        availableRanges.add(new MonotonicRange(block.getFirstValue(), block.getLastValue()));
+    }
+
     public MonotonicRangePriorityQueue getAvailableRanges() {
         return availableRanges;
     }
@@ -111,26 +119,57 @@ class BlockManager {
     }
 
     private Set<ContiguousIdBlock> doCommit(long[] accessions) {
-        Set<ContiguousIdBlock> blocksToUpdate = new HashSet<>();
+        //Add all previously existing blocks to be updated in the contiguous_id_blocks table in the DB
+        Set<ContiguousIdBlock> blocksToUpdate = assignedBlocks.stream()
+                                                              .filter(block -> !isNewBlock(block))
+                                                              .collect(Collectors.toSet());
+
         if (accessions == null || accessions.length == 0) {
             return blocksToUpdate;
         }
 
         addToCommitted(accessions);
 
+        if (assignedBlocks.size() == 0) {
+            return blocksToUpdate;
+        }
+
         ContiguousIdBlock block = assignedBlocks.peek();
-        while (block != null && committedAccessions.peek() != null &&
-                committedAccessions.peek() == block.getLastCommitted() + 1) {
+        long lastCommitted = calculateLastCommitted(block);
+        while (block != null && committedAccessions.peek() != null && committedAccessions.peek() == lastCommitted + 1) {
             //Next value continues sequence, change last committed value
             block.setLastCommitted(committedAccessions.poll());
+            lastCommitted = block.getLastCommitted();
             blocksToUpdate.add(block);
-            if (!block.isNotFull()) {
+            if (isBlockFull(block)) {
                 assignedBlocks.poll();
                 block = assignedBlocks.peek();
+                if (block != null) {
+                    lastCommitted = calculateLastCommitted(block);
+                }
             }
         }
 
         return blocksToUpdate;
+    }
+
+    /**
+     * Existing blocks have the actual last_committed accession in the block manager but not in the db table
+     * New blocks are all marked as used in both the block manager and db table
+     */
+    private long calculateLastCommitted(ContiguousIdBlock block) {
+        return (isNewBlock(block)) ? (block.getFirstValue() - 1) : block.getLastCommitted();
+    }
+
+    /**
+     * New block have the same last_committed and last_value in the block manager
+     */
+    private boolean isNewBlock(ContiguousIdBlock block) {
+        return block.getLastCommitted() == block.getLastValue();
+    }
+
+    private boolean isBlockFull(ContiguousIdBlock block) {
+        return !block.isNotFull();
     }
 
     private void addToCommitted(long[] accessions) {

@@ -126,6 +126,7 @@ public class BasicMonotonicAccessioningWithAlternateRangesTest {
         assertEquals(0, evaAccessions.get(0).getAccession().longValue());
         assertEquals(8, evaAccessions.get(8).getAccession().longValue());
         //BlockSize of 10 was reserved but only 9 elements have been accessioned
+        //All accessions were marked as used
         assertEquals(1, contiguousIdBlockService
                 .getUncompletedBlocksByCategoryIdAndApplicationInstanceIdOrderByEndAsc(categoryId, INSTANCE_ID)
                 .size());

@@ -70,6 +70,18 @@ public class ContiguousIdBlockService {
         return reservedBlock;
     }
 
+    /**
+     * Mark the block as completely used in the contiguous_id_blocks tables but in the block manager keep last_committed
+     * value before the beginning of the block
+     */
+    @Transactional(isolation = Isolation.SERIALIZABLE)
+    public void markBlockAsUsed(ContiguousIdBlock block) {
+        long lastCommitted = block.getLastCommitted();
+        block.setLastCommitted(block.getLastValue());
+        repository.save(block);
+        block.setLastCommitted(lastCommitted);
+    }
+
     public BlockParameters getBlockParameters(String categoryId) {
         return categoryBlockInitializations.get(categoryId);
     }
