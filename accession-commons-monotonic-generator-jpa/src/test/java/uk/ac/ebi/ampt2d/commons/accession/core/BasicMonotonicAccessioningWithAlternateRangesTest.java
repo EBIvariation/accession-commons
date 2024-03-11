@@ -75,9 +75,15 @@ public class BasicMonotonicAccessioningWithAlternateRangesTest {
         // create 3 un-complete contiguous id blocks of size 10
         // block-1 : (100 to 109), block-2 : (110 to 119), block-3 : (120 to 129)
         List<ContiguousIdBlock> uncompletedBlocks = new ArrayList<>();
-        uncompletedBlocks.add(new ContiguousIdBlock(categoryId, instanceId2, 100, 10));
-        uncompletedBlocks.add(new ContiguousIdBlock(categoryId, instanceId2, 110, 10));
-        uncompletedBlocks.add(new ContiguousIdBlock(categoryId, instanceId2, 120, 10));
+        ContiguousIdBlock contiguousIdBlock1 = new ContiguousIdBlock(categoryId, instanceId2, 100, 10);
+        contiguousIdBlock1.setLastCommitted(99);
+        ContiguousIdBlock contiguousIdBlock2 = new ContiguousIdBlock(categoryId, instanceId2, 110, 10);
+        contiguousIdBlock2.setLastCommitted(109);
+        ContiguousIdBlock contiguousIdBlock3 = new ContiguousIdBlock(categoryId, instanceId2, 120, 10);
+        contiguousIdBlock3.setLastCommitted(119);
+        uncompletedBlocks.add(contiguousIdBlock1);
+        uncompletedBlocks.add(contiguousIdBlock2);
+        uncompletedBlocks.add(contiguousIdBlock3);
         contiguousIdBlockService.save(uncompletedBlocks);
 
         assertEquals(3, contiguousIdBlockService.getUncompletedBlocksByCategoryIdAndApplicationInstanceIdOrderByEndAsc(categoryId, instanceId2).size());
