@@ -97,36 +97,48 @@ public class ContiguousIdBlockServiceTest {
 
     @Test
     public void testGetUncompleteBlocks() {
+        // block: uncompleted and unreserved
         ContiguousIdBlock uncompletedBlock = new ContiguousIdBlock(CATEGORY_ID, INSTANCE_ID, 0, 5);
+        uncompletedBlock.releaseReserved();
+        // block: completed and unreserved
         ContiguousIdBlock completedBlock = new ContiguousIdBlock(CATEGORY_ID, INSTANCE_ID, 10, 5);
         completedBlock.setLastCommitted(14);
+        completedBlock.releaseReserved();
+
+        // block: different instance id
+        ContiguousIdBlock newBlock1 = new ContiguousIdBlock(CATEGORY_ID, INSTANCE_ID_2, 5, 5);
+        newBlock1.releaseReserved();
+        // block: uncompleted but reserved
+        ContiguousIdBlock newBlock2 = new ContiguousIdBlock(CATEGORY_ID, INSTANCE_ID, 15, 5);
 
         service.save(Arrays.asList(uncompletedBlock));
-        service.save(Arrays.asList(new ContiguousIdBlock(CATEGORY_ID, INSTANCE_ID_2, 5, 5)));
+        service.save(Arrays.asList(newBlock1));
         service.save(Arrays.asList(completedBlock));
-        service.save(Arrays.asList(new ContiguousIdBlock(CATEGORY_ID, INSTANCE_ID, 15, 5)));
+        service.save(Arrays.asList(newBlock2));
 
+        // get only uncompleted and unreserved for instanc_id
         List<ContiguousIdBlock> contiguousBlocks =
-                service.getUncompletedBlocksByCategoryIdAndApplicationInstanceIdOrderByEndAsc(CATEGORY_ID, INSTANCE_ID);
+                service.reserveUncompletedBlocksByCategoryIdAndApplicationInstanceIdOrderByEndAsc(CATEGORY_ID, INSTANCE_ID);
 
-        assertEquals(2, contiguousBlocks.size());
+        assertEquals(1, contiguousBlocks.size());
         assertEquals(0, contiguousBlocks.get(0).getFirstValue());
         assertEquals(4, contiguousBlocks.get(0).getLastValue());
-        assertEquals(15, contiguousBlocks.get(1).getFirstValue());
-        assertEquals(19, contiguousBlocks.get(1).getLastValue());
+
     }
 
     @Test
     public void testBlockSizeAndIntervalForCategory() {
         ContiguousIdBlock block1 = service.reserveNewBlock(CATEGORY_ID_2, INSTANCE_ID);
+        block1.releaseReserved();
         assertEquals(0, block1.getFirstValue());
         assertEquals(999, block1.getLastValue());
         ContiguousIdBlock block2 = service.reserveNewBlock(CATEGORY_ID_2, INSTANCE_ID);
+        block2.releaseReserved();
         assertEquals(2000, block2.getFirstValue());
         assertEquals(2999, block2.getLastValue());
 
         List<ContiguousIdBlock> contiguousBlocks = service
-                .getUncompletedBlocksByCategoryIdAndApplicationInstanceIdOrderByEndAsc(CATEGORY_ID_2, INSTANCE_ID);
+                .reserveUncompletedBlocksByCategoryIdAndApplicationInstanceIdOrderByEndAsc(CATEGORY_ID_2, INSTANCE_ID);
         assertEquals(2, contiguousBlocks.size());
         assertTrue(contiguousBlocks.get(0).isNotFull());
         assertTrue(contiguousBlocks.get(1).isNotFull());
