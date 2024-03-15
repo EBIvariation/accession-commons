@@ -25,6 +25,7 @@ import javax.persistence.Id;
 import javax.persistence.Index;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
+import java.time.LocalDateTime;
 
 /**
  * This class represents a block allocated by an application instance, in a monotonic sequence associated with a
@@ -63,6 +64,10 @@ public class ContiguousIdBlock implements Comparable<ContiguousIdBlock> {
 
     private long lastCommitted;
 
+    private Boolean reserved;
+
+    private LocalDateTime createdTimestamp;
+
     // Create / update dates
 
     ContiguousIdBlock() {
@@ -75,6 +80,8 @@ public class ContiguousIdBlock implements Comparable<ContiguousIdBlock> {
         this.firstValue = firstValue;
         this.lastValue = firstValue + size - 1;
         this.lastCommitted = firstValue - 1;
+        this.reserved = Boolean.TRUE;
+        this.createdTimestamp = LocalDateTime.now();
     }
 
     /**
@@ -141,6 +148,26 @@ public class ContiguousIdBlock implements Comparable<ContiguousIdBlock> {
 
     public long getLastValue() {
         return lastValue;
+    }
+
+    public Boolean isReserved() {
+        return reserved == Boolean.TRUE;
+    }
+
+    public Boolean isNotReserved() {
+        return reserved == Boolean.FALSE;
+    }
+
+    public void markAsReserved() {
+        this.reserved = Boolean.TRUE;
+    }
+
+    public void releaseReserved() {
+        this.reserved = Boolean.FALSE;
+    }
+
+    public boolean isFull() {
+        return lastCommitted == lastValue;
     }
 
     public boolean isNotFull() {

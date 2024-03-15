@@ -47,6 +47,8 @@ public class ContiguousIdBlockService {
 
     @Transactional
     public void save(Iterable<ContiguousIdBlock> blocks) {
+        // release block if full
+        blocks.forEach(block -> {if (block.isFull()) {block.releaseReserved();}});
         repository.saveAll(blocks);
         entityManager.flush();
     }
@@ -74,12 +76,18 @@ public class ContiguousIdBlockService {
         return categoryBlockInitializations.get(categoryId);
     }
 
-    @Transactional(readOnly = true)
-    public List<ContiguousIdBlock> getUncompletedBlocksByCategoryIdAndApplicationInstanceIdOrderByEndAsc(
+    @Transactional(isolation = Isolation.SERIALIZABLE)
+    public List<ContiguousIdBlock> reserveUncompletedBlocksByCategoryIdAndApplicationInstanceIdOrderByEndAsc(
             String categoryId, String applicationInstanceId) {
         try (Stream<ContiguousIdBlock> reservedBlocksOfThisInstance = repository
                 .findAllByCategoryIdAndApplicationInstanceIdOrderByLastValueAsc(categoryId, applicationInstanceId)) {
-            return reservedBlocksOfThisInstance.filter(ContiguousIdBlock::isNotFull).collect(Collectors.toList());
+            List<ContiguousIdBlock> blocksList = reservedBlocksOfThisInstance
+                    .filter(block -> block.isNotFull() && block.isNotReserved()).collect(Collectors.toList());
+
+            blocksList.stream().forEach(block -> block.markAsReserved());
+            save(blocksList);
+
+            return blocksList;
         }
     }
 }

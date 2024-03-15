@@ -19,6 +19,7 @@ package uk.ac.ebi.ampt2d.commons.accession.generators.monotonic;
 
 import uk.ac.ebi.ampt2d.commons.accession.block.initialization.BlockInitializationException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
+import uk.ac.ebi.ampt2d.commons.accession.exception.AccessionGeneratorShutDownException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionIsNotPendingException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.SaveResponse;
@@ -46,6 +47,8 @@ public class MonotonicAccessionGenerator<MODEL> implements AccessionGenerator<MO
     private final String categoryId;
     private final String applicationInstanceId;
     private final ContiguousIdBlockService blockService;
+
+    private Boolean SHUTDOWN = Boolean.FALSE;
 
     public MonotonicAccessionGenerator(String categoryId,
                                        String applicationInstanceId,
@@ -88,7 +91,7 @@ public class MonotonicAccessionGenerator<MODEL> implements AccessionGenerator<MO
         assertBlockParametersAreInitialized(blockService, categoryId);
         BlockManager blockManager = new BlockManager();
         List<ContiguousIdBlock> uncompletedBlocks = blockService
-                .getUncompletedBlocksByCategoryIdAndApplicationInstanceIdOrderByEndAsc(categoryId,
+                .reserveUncompletedBlocksByCategoryIdAndApplicationInstanceIdOrderByEndAsc(categoryId,
                         applicationInstanceId);
         //Insert as available ranges
         for (ContiguousIdBlock block : uncompletedBlocks) {
@@ -116,6 +119,7 @@ public class MonotonicAccessionGenerator<MODEL> implements AccessionGenerator<MO
 
     public synchronized long[] generateAccessions(int numAccessionsToGenerate)
             throws AccessionCouldNotBeGeneratedException {
+        checkAccessionGeneratorNotShutDown();
         long[] accessions = new long[numAccessionsToGenerate];
         reserveNewBlocksUntilSizeIs(numAccessionsToGenerate);
 
@@ -147,20 +151,24 @@ public class MonotonicAccessionGenerator<MODEL> implements AccessionGenerator<MO
     }
 
     public synchronized void commit(long... accessions) throws AccessionIsNotPendingException {
+        checkAccessionGeneratorNotShutDown();
         blockService.save(blockManager.commit(accessions));
     }
 
     public synchronized void release(long... accessions) throws AccessionIsNotPendingException {
+        checkAccessionGeneratorNotShutDown();
         blockManager.release(accessions);
     }
 
     public synchronized MonotonicRangePriorityQueue getAvailableRanges() {
+        checkAccessionGeneratorNotShutDown();
         return blockManager.getAvailableRanges();
     }
 
     @Override
     public <HASH> List<AccessionWrapper<MODEL, HASH, Long>> generateAccessions(Map<HASH, MODEL> messages)
             throws AccessionCouldNotBeGeneratedException {
+        checkAccessionGeneratorNotShutDown();
         long[] accessions = generateAccessions(messages.size());
         int i = 0;
         List<AccessionWrapper<MODEL, HASH, Long>> accessionedModels = new ArrayList<>();
@@ -174,8 +182,20 @@ public class MonotonicAccessionGenerator<MODEL> implements AccessionGenerator<MO
 
     @Override
     public synchronized void postSave(SaveResponse<Long> response) {
+        checkAccessionGeneratorNotShutDown();
         commit(response.getSavedAccessions().stream().mapToLong(l -> l).toArray());
         release(response.getSaveFailedAccessions().stream().mapToLong(l -> l).toArray());
+    }
+
+    public void shutDownAccessionGenerator(){
+        blockService.save(blockManager.shutDownBlockManager());
+        SHUTDOWN = Boolean.TRUE;
+    }
+
+    private void checkAccessionGeneratorNotShutDown(){
+        if(SHUTDOWN){
+            throw new AccessionGeneratorShutDownException("Accession Generator has been shut down and is no longer available");
+        }
     }
 
 }

@@ -168,4 +168,13 @@ class BlockManager {
         this.availableRanges.addAll(newAvailableRanges);
         return doCommit(committedElements);
     }
+
+    public List<ContiguousIdBlock> shutDownBlockManager() {
+        List<ContiguousIdBlock> blockList = assignedBlocks.stream().collect(Collectors.toList());
+        blockList.stream().forEach(block -> block.releaseReserved());
+        assignedBlocks.clear();
+        availableRanges.clear();
+        generatedAccessions.clear();
+        return blockList;
+    }
 }

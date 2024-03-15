@@ -80,7 +80,7 @@ public class BasicMonotonicAccessioningWithAlternateRangesTest {
         uncompletedBlocks.add(new ContiguousIdBlock(categoryId, instanceId2, 120, 10));
         contiguousIdBlockService.save(uncompletedBlocks);
 
-        assertEquals(3, contiguousIdBlockService.getUncompletedBlocksByCategoryIdAndApplicationInstanceIdOrderByEndAsc(categoryId, instanceId2).size());
+        assertEquals(3, contiguousIdBlockService.reserveUncompletedBlocksByCategoryIdAndApplicationInstanceIdOrderByEndAsc(categoryId, instanceId2).size());
 
         // create and save accessions in db (100 to 124) - save 2 sets of same accessions with different hashes
         List<AccessionWrapper<TestModel, String, Long>> accessionsSet1 = LongStream.range(100l, 125l)
@@ -101,8 +101,8 @@ public class BasicMonotonicAccessioningWithAlternateRangesTest {
         // block-1 (100 to 109) : fully complete
         // block-2 (110 to 119) : fully complete
         // block-3 (120 to 124) : partially complete
-        assertEquals(1, contiguousIdBlockService.getUncompletedBlocksByCategoryIdAndApplicationInstanceIdOrderByEndAsc(categoryId, instanceId2).size());
-        ContiguousIdBlock uncompletedBlock = contiguousIdBlockService.getUncompletedBlocksByCategoryIdAndApplicationInstanceIdOrderByEndAsc(categoryId, instanceId2).get(0);
+        assertEquals(1, contiguousIdBlockService.reserveUncompletedBlocksByCategoryIdAndApplicationInstanceIdOrderByEndAsc(categoryId, instanceId2).size());
+        ContiguousIdBlock uncompletedBlock = contiguousIdBlockService.reserveUncompletedBlocksByCategoryIdAndApplicationInstanceIdOrderByEndAsc(categoryId, instanceId2).get(0);
         assertEquals(120l, uncompletedBlock.getFirstValue());
         assertEquals(129l, uncompletedBlock.getLastValue());
         assertEquals(124l, uncompletedBlock.getLastCommitted());
@@ -127,7 +127,7 @@ public class BasicMonotonicAccessioningWithAlternateRangesTest {
         assertEquals(8, evaAccessions.get(8).getAccession().longValue());
         //BlockSize of 10 was reserved but only 9 elements have been accessioned
         assertEquals(1, contiguousIdBlockService
-                .getUncompletedBlocksByCategoryIdAndApplicationInstanceIdOrderByEndAsc(categoryId, INSTANCE_ID)
+                .reserveUncompletedBlocksByCategoryIdAndApplicationInstanceIdOrderByEndAsc(categoryId, INSTANCE_ID)
                 .size());
 
         //Get another service for same category
@@ -145,7 +145,7 @@ public class BasicMonotonicAccessioningWithAlternateRangesTest {
         assertEquals(40, evaAccessions.get(11).getAccession().longValue());
         assertEquals(48, evaAccessions.get(19).getAccession().longValue());
         //BlockSize if 10 was reserved but only 9 elements have been accessioned
-        assertEquals(1, contiguousIdBlockService.getUncompletedBlocksByCategoryIdAndApplicationInstanceIdOrderByEndAsc
+        assertEquals(1, contiguousIdBlockService.reserveUncompletedBlocksByCategoryIdAndApplicationInstanceIdOrderByEndAsc
                 (categoryId, INSTANCE_ID).size());
 
         //Get another service for same category but different Instance
@@ -157,7 +157,7 @@ public class BasicMonotonicAccessioningWithAlternateRangesTest {
         assertEquals(50, evaAccessions.get(0).getAccession().longValue());
         assertEquals(58, evaAccessions.get(8).getAccession().longValue());
         assertEquals(1, contiguousIdBlockService
-                .getUncompletedBlocksByCategoryIdAndApplicationInstanceIdOrderByEndAsc(categoryId, instanceId2).size());
+                .reserveUncompletedBlocksByCategoryIdAndApplicationInstanceIdOrderByEndAsc(categoryId, instanceId2).size());
 
         //Get previous uncompleted service from instance1 and create accessions
         evaAccessions = getAccessioningService(categoryId, INSTANCE_ID)
