@@ -19,7 +19,7 @@ package uk.ac.ebi.ampt2d.commons.accession.generators.monotonic;
 
 import uk.ac.ebi.ampt2d.commons.accession.block.initialization.BlockInitializationException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
-import uk.ac.ebi.ampt2d.commons.accession.exception.AccessionGeneratorShutDownException;
+import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionGeneratorShutDownException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionIsNotPendingException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.SaveResponse;
@@ -188,7 +188,10 @@ public class MonotonicAccessionGenerator<MODEL> implements AccessionGenerator<MO
     }
 
     public void shutDownAccessionGenerator(){
-        blockService.save(blockManager.shutDownBlockManager());
+        List<ContiguousIdBlock> blockList = blockManager.getAssignedBlocks();
+        blockList.stream().forEach(block -> block.releaseReserved());
+        blockService.save(blockList);
+        blockManager.shutDownBlockManager();
         SHUTDOWN = Boolean.TRUE;
     }
 
