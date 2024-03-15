@@ -90,4 +90,8 @@ public class ContiguousIdBlockService {
             return blocksList;
         }
     }
+
+    public ContiguousIdBlockRepository getRepository() {
+        return repository;
+    }
 }

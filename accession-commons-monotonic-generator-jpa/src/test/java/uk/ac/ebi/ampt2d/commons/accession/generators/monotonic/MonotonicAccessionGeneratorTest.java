@@ -302,6 +302,7 @@ public class MonotonicAccessionGeneratorTest {
     public void assertRecoverNoPendingCommit() throws Exception {
         MonotonicAccessionGenerator generator = getMonotonicAccessionGenerator();
         long[] accessions1 = generator.generateAccessions(BLOCK_SIZE);
+        generator.shutDownAccessionGenerator();
         // Now assume that the db layer has stored some elements and that the application has died and restarted.
 
         MonotonicAccessionGenerator generatorRecovering =
@@ -319,6 +320,7 @@ public class MonotonicAccessionGeneratorTest {
         MonotonicAccessionGenerator generator = getMonotonicAccessionGenerator();
         long[] accessions1 = generator.generateAccessions(BLOCK_SIZE);
         generator.commit(0, 1);
+        generator.shutDownAccessionGenerator();
         // Now assume that the db layer has stored some elements and that the application has died and restarted.
 
         MonotonicAccessionGenerator generatorRecovering = new MonotonicAccessionGenerator(
@@ -420,6 +422,7 @@ public class MonotonicAccessionGeneratorTest {
     public void assertRecoverInAlternateRanges() throws Exception {
         MonotonicAccessionGenerator generator = getMonotonicAccessionGeneratorForCategoryHavingBlockInterval();
         long[] accessions1 = generator.generateAccessions(NUM_OF_ACCESSIONS);
+        generator.shutDownAccessionGenerator();
         // Now assume that the db layer has stored some elements and that the application has died and restarted.
         MonotonicAccessionGenerator generatorRecovering =
                 new MonotonicAccessionGenerator(CATEGORY_ID_2, INSTANCE_ID, service, new long[]{2, 3});

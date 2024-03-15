@@ -37,6 +37,8 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
+import static uk.ac.ebi.ampt2d.commons.accession.util.ContiguousIdBlockUtil.getUncompletedBlocksByCategoryIdAndApplicationInstanceIdOrderByEndAsc;
+import static uk.ac.ebi.ampt2d.commons.accession.util.ContiguousIdBlockUtil.getUnreservedContiguousIdBlock;
 
 @RunWith(SpringRunner.class)
 @DataJpaTest
@@ -98,16 +100,13 @@ public class ContiguousIdBlockServiceTest {
     @Test
     public void testGetUncompleteBlocks() {
         // block: uncompleted and unreserved
-        ContiguousIdBlock uncompletedBlock = new ContiguousIdBlock(CATEGORY_ID, INSTANCE_ID, 0, 5);
-        uncompletedBlock.releaseReserved();
+        ContiguousIdBlock uncompletedBlock = getUnreservedContiguousIdBlock(CATEGORY_ID, INSTANCE_ID, 0, 5);
         // block: completed and unreserved
-        ContiguousIdBlock completedBlock = new ContiguousIdBlock(CATEGORY_ID, INSTANCE_ID, 10, 5);
+        ContiguousIdBlock completedBlock = getUnreservedContiguousIdBlock(CATEGORY_ID, INSTANCE_ID, 10, 5);
         completedBlock.setLastCommitted(14);
-        completedBlock.releaseReserved();
 
-        // block: different instance id
-        ContiguousIdBlock newBlock1 = new ContiguousIdBlock(CATEGORY_ID, INSTANCE_ID_2, 5, 5);
-        newBlock1.releaseReserved();
+        // block: uncompleted and unreserved but with different instance id
+        ContiguousIdBlock newBlock1 = getUnreservedContiguousIdBlock(CATEGORY_ID, INSTANCE_ID_2, 5, 5);
         // block: uncompleted but reserved
         ContiguousIdBlock newBlock2 = new ContiguousIdBlock(CATEGORY_ID, INSTANCE_ID, 15, 5);
 
@@ -129,16 +128,13 @@ public class ContiguousIdBlockServiceTest {
     @Test
     public void testBlockSizeAndIntervalForCategory() {
         ContiguousIdBlock block1 = service.reserveNewBlock(CATEGORY_ID_2, INSTANCE_ID);
-        block1.releaseReserved();
         assertEquals(0, block1.getFirstValue());
         assertEquals(999, block1.getLastValue());
         ContiguousIdBlock block2 = service.reserveNewBlock(CATEGORY_ID_2, INSTANCE_ID);
-        block2.releaseReserved();
         assertEquals(2000, block2.getFirstValue());
         assertEquals(2999, block2.getLastValue());
 
-        List<ContiguousIdBlock> contiguousBlocks = service
-                .reserveUncompletedBlocksByCategoryIdAndApplicationInstanceIdOrderByEndAsc(CATEGORY_ID_2, INSTANCE_ID);
+        List<ContiguousIdBlock> contiguousBlocks = getUncompletedBlocksByCategoryIdAndApplicationInstanceIdOrderByEndAsc(service.getRepository(),CATEGORY_ID_2, INSTANCE_ID);
         assertEquals(2, contiguousBlocks.size());
         assertTrue(contiguousBlocks.get(0).isNotFull());
         assertTrue(contiguousBlocks.get(1).isNotFull());
