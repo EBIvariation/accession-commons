@@ -31,6 +31,7 @@ import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicAccessio
 import uk.ac.ebi.ampt2d.commons.accession.generators.monotonic.MonotonicRangePriorityQueue;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.entities.ContiguousIdBlock;
+import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.repositories.ContiguousIdBlockRepository;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service.ContiguousIdBlockService;
 import uk.ac.ebi.ampt2d.commons.accession.service.BasicSpringDataRepositoryMonotonicDatabaseService;
 import uk.ac.ebi.ampt2d.test.configuration.TestMonotonicDatabaseServiceTestConfiguration;
@@ -102,7 +103,7 @@ public class BasicMonotonicAccessioningWithAlternateRangesTest {
         // block-1 (100 to 109) : fully complete
         // block-2 (110 to 119) : fully complete
         // block-3 (120 to 124) : partially complete
-        assertEquals(1, getUncompletedBlocksByCategoryIdAndApplicationInstanceIdOrderByEndAsc(contiguousIdBlockService.getRepository(),categoryId, instanceId2).size());
+        assertEquals(1, getUncompletedBlocksByCategoryIdAndApplicationInstanceIdOrderByEndAsc(contiguousIdBlockService.getRepository(), categoryId, instanceId2).size());
         ContiguousIdBlock uncompletedBlock = getUncompletedBlocksByCategoryIdAndApplicationInstanceIdOrderByEndAsc(contiguousIdBlockService.getRepository(), categoryId, instanceId2).get(0);
         assertEquals(120l, uncompletedBlock.getFirstValue());
         assertEquals(129l, uncompletedBlock.getLastValue());
@@ -127,7 +128,7 @@ public class BasicMonotonicAccessioningWithAlternateRangesTest {
         assertEquals(0, evaAccessions.get(0).getAccession().longValue());
         assertEquals(8, evaAccessions.get(8).getAccession().longValue());
         //BlockSize of 10 was reserved but only 9 elements have been accessioned
-        assertEquals(1, getUncompletedBlocksByCategoryIdAndApplicationInstanceIdOrderByEndAsc(contiguousIdBlockService.getRepository(),categoryId, INSTANCE_ID)
+        assertEquals(1, getUncompletedBlocksByCategoryIdAndApplicationInstanceIdOrderByEndAsc(contiguousIdBlockService.getRepository(), categoryId, INSTANCE_ID)
                 .size());
         accService1.shutDownAccessioning();
 
@@ -157,7 +158,7 @@ public class BasicMonotonicAccessioningWithAlternateRangesTest {
         assertNotEquals(80, evaAccessions.get(0).getAccession().longValue());
         assertEquals(50, evaAccessions.get(0).getAccession().longValue());
         assertEquals(58, evaAccessions.get(8).getAccession().longValue());
-        assertEquals(1, getUncompletedBlocksByCategoryIdAndApplicationInstanceIdOrderByEndAsc(contiguousIdBlockService.getRepository(),categoryId, instanceId2).size());
+        assertEquals(1, getUncompletedBlocksByCategoryIdAndApplicationInstanceIdOrderByEndAsc(contiguousIdBlockService.getRepository(), categoryId, instanceId2).size());
         accService3.shutDownAccessioning();
 
         //Get previous uncompleted service from instance1 and create accessions
@@ -167,6 +168,49 @@ public class BasicMonotonicAccessioningWithAlternateRangesTest {
         assertEquals(49, evaAccessions.get(0).getAccession().longValue());  //Block ended here
         //New Block with 20 interval from last block made in instanceId2
         assertEquals(80, evaAccessions.get(1).getAccession().longValue());
+    }
+
+    @Test
+    public void testInitializeBlockManagerInMonotonicAccessionGenerator() {
+        String categoryId = "eva_2";
+        String instanceId2 = "test-instance_2";
+        ContiguousIdBlockRepository repository = contiguousIdBlockService.getRepository();
+
+        ContiguousIdBlock block = getUnreservedContiguousIdBlock(categoryId, instanceId2, 0, 10);
+        repository.save(block);
+
+        // assert block is not full and not reserved
+        List<ContiguousIdBlock> blockInDBList = repository
+                .findAllByCategoryIdAndApplicationInstanceIdOrderByLastValueAsc(categoryId, instanceId2)
+                .collect(Collectors.toList());
+        assertEquals(1, blockInDBList.size());
+        List<ContiguousIdBlock> unreservedAndNotFullBlocks = blockInDBList.stream()
+                .filter(b -> b.isNotFull() && b.isNotReserved())
+                .collect(Collectors.toList());
+        assertEquals(1, unreservedAndNotFullBlocks.size());
+        assertEquals(9, unreservedAndNotFullBlocks.get(0).getLastValue());
+        assertEquals(-1, unreservedAndNotFullBlocks.get(0).getLastCommitted());
+        assertEquals(Boolean.FALSE, unreservedAndNotFullBlocks.get(0).isReserved());
+
+        // this will run the recover state
+        BasicAccessioningService accService = getAccessioningService(categoryId, instanceId2);
+
+        // assert block gets reserved after recover state
+        blockInDBList = repository
+                .findAllByCategoryIdAndApplicationInstanceIdOrderByLastValueAsc(categoryId, instanceId2)
+                .collect(Collectors.toList());
+        assertEquals(1, blockInDBList.size());
+        unreservedAndNotFullBlocks = blockInDBList.stream()
+                .filter(b -> b.isNotFull() && b.isNotReserved())
+                .collect(Collectors.toList());
+        assertEquals(0, unreservedAndNotFullBlocks.size());
+        List<ContiguousIdBlock> reservedAndNotFullBlocks = blockInDBList.stream()
+                .filter(b -> b.isNotFull() && b.isReserved())
+                .collect(Collectors.toList());
+        assertEquals(1, reservedAndNotFullBlocks.size());
+        assertEquals(9, reservedAndNotFullBlocks.get(0).getLastValue());
+        assertEquals(-1, reservedAndNotFullBlocks.get(0).getLastCommitted());
+        assertEquals(Boolean.TRUE, reservedAndNotFullBlocks.get(0).isReserved());
     }
 
     private List<TestModel> getObjectsForAccessionsInRange(int startRange, int endRange) {

@@ -26,6 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
+import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionGeneratorShutDownException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionIsNotPendingException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.SaveResponse;
@@ -40,6 +41,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.hamcrest.Matchers.contains;
 import static org.junit.Assert.assertEquals;
@@ -49,6 +51,7 @@ import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
+import static uk.ac.ebi.ampt2d.commons.accession.util.ContiguousIdBlockUtil.getUnreservedContiguousIdBlock;
 
 @RunWith(SpringRunner.class)
 @DataJpaTest
@@ -453,5 +456,67 @@ public class MonotonicAccessionGeneratorTest {
         when(mockService.reserveNewBlock(anyString(), anyString())).thenThrow(ConstraintViolationException.class);
         assertThrows(ExponentialBackOffMaxRetriesRuntimeException.class, () -> mockGenerator.generateAccessions(1));
         assertEquals(0, repository.count());
+    }
+
+    @Test
+    public void testInitializeBlockManager() {
+        ContiguousIdBlock block = getUnreservedContiguousIdBlock(CATEGORY_ID_2, INSTANCE_ID, 0, 10);
+        repository.save(block);
+
+        // To start with Block is UnCompleted and UnReserved
+        List<ContiguousIdBlock> blockInDBList = repository
+                .findAllByCategoryIdAndApplicationInstanceIdOrderByLastValueAsc(CATEGORY_ID_2, INSTANCE_ID)
+                .collect(Collectors.toList());
+        assertEquals(1, blockInDBList.size());
+        List<ContiguousIdBlock> unreservedBlocks = blockInDBList.stream()
+                .filter(b -> b.isNotFull() && b.isNotReserved())
+                .collect(Collectors.toList());
+        assertEquals(1, unreservedBlocks.size());
+        assertEquals(0, unreservedBlocks.get(0).getFirstValue());
+        assertEquals(9, unreservedBlocks.get(0).getLastValue());
+        assertEquals(-1, unreservedBlocks.get(0).getLastCommitted());
+        assertEquals(Boolean.FALSE, unreservedBlocks.get(0).isReserved());
+
+        // Generator 1 starts and its recover state reserves the UnCompleted block
+        MonotonicAccessionGenerator generator1 = new MonotonicAccessionGenerator(CATEGORY_ID_2, INSTANCE_ID, service, new long[]{});
+        assertEquals(1, generator1.getAvailableRanges().size());
+        assertEquals(new MonotonicRange(0, 9), generator1.getAvailableRanges().peek());
+
+        // Block is currently reserved by Generator-1
+        blockInDBList = repository
+                .findAllByCategoryIdAndApplicationInstanceIdOrderByLastValueAsc(CATEGORY_ID_2, INSTANCE_ID)
+                .collect(Collectors.toList());
+        assertEquals(1, blockInDBList.size());
+        List<ContiguousIdBlock> reservedBlocks = blockInDBList.stream()
+                .filter(b -> b.isNotFull() && b.isReserved())
+                .collect(Collectors.toList());
+        assertEquals(1, reservedBlocks.size());
+        assertEquals(0, reservedBlocks.get(0).getFirstValue());
+        assertEquals(9, reservedBlocks.get(0).getLastValue());
+        assertEquals(-1, reservedBlocks.get(0).getLastCommitted());
+        assertEquals(Boolean.TRUE, reservedBlocks.get(0).isReserved());
+
+        // Generator-2 will not be able to reserve the un-completed block as it is currently reserved by Generator-1
+        MonotonicAccessionGenerator generator2 = new MonotonicAccessionGenerator(CATEGORY_ID_2, INSTANCE_ID, service, new long[]{});
+        assertEquals(0, generator2.getAvailableRanges().size());
+
+        // Generator-3 can reserve the same Uncompleted block, once Generator-1 releases it
+        generator1.shutDownAccessionGenerator();
+        MonotonicAccessionGenerator generator3 = new MonotonicAccessionGenerator(CATEGORY_ID_2, INSTANCE_ID, service, new long[]{});
+        assertEquals(1, generator3.getAvailableRanges().size());
+        assertEquals(new MonotonicRange(0, 9), generator3.getAvailableRanges().peek());
+    }
+
+    @Test
+    public void testShutDownAccessionGenerator() {
+        MonotonicAccessionGenerator generator = getMonotonicAccessionGeneratorForCategoryHavingBlockInterval();
+        generator.shutDownAccessionGenerator();
+
+        assertThrows(AccessionGeneratorShutDownException.class, () -> generator.generateAccessions(24));
+        assertThrows(AccessionGeneratorShutDownException.class, () -> generator.generateAccessions(new HashMap()));
+        assertThrows(AccessionGeneratorShutDownException.class, () -> generator.commit());
+        assertThrows(AccessionGeneratorShutDownException.class, () -> generator.release());
+        assertThrows(AccessionGeneratorShutDownException.class, () -> generator.postSave(new SaveResponse<>()));
+        assertThrows(AccessionGeneratorShutDownException.class, () -> generator.getAvailableRanges());
     }
 }

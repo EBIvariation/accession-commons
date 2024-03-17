@@ -195,6 +195,10 @@ public class MonotonicAccessionGenerator<MODEL> implements AccessionGenerator<MO
         SHUTDOWN = Boolean.TRUE;
     }
 
+    /**
+     * Before doing any operation on Accession Generator, we need to make sure it has not been shut down.
+     * We should make the check by calling this method as the first thing in all public methods of this class
+     */
     private void checkAccessionGeneratorNotShutDown(){
         if(SHUTDOWN){
             throw new AccessionGeneratorShutDownException("Accession Generator has been shut down and is no longer available");
