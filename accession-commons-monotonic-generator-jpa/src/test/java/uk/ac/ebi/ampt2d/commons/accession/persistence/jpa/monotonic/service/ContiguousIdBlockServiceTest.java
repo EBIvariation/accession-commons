@@ -32,12 +32,13 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.PersistenceException;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
-import static uk.ac.ebi.ampt2d.commons.accession.util.ContiguousIdBlockUtil.getUncompletedBlocksByCategoryIdAndApplicationInstanceIdOrderByEndAsc;
 import static uk.ac.ebi.ampt2d.commons.accession.util.ContiguousIdBlockUtil.getUnreservedContiguousIdBlock;
 
 @RunWith(SpringRunner.class)
@@ -134,10 +135,19 @@ public class ContiguousIdBlockServiceTest {
         assertEquals(2000, block2.getFirstValue());
         assertEquals(2999, block2.getLastValue());
 
-        List<ContiguousIdBlock> contiguousBlocks = getUncompletedBlocksByCategoryIdAndApplicationInstanceIdOrderByEndAsc(service.getRepository(),CATEGORY_ID_2, INSTANCE_ID);
+        List<ContiguousIdBlock> contiguousBlocks = service.getRepository()
+                .findAllByCategoryIdAndApplicationInstanceIdOrderByLastValueAsc(CATEGORY_ID_2, INSTANCE_ID)
+                .sorted(Comparator.comparing(block->block.getFirstValue()))
+                .collect(Collectors.toList());
         assertEquals(2, contiguousBlocks.size());
         assertTrue(contiguousBlocks.get(0).isNotFull());
+        assertEquals(0, contiguousBlocks.get(0).getFirstValue());
+        assertEquals(-1, contiguousBlocks.get(0).getLastCommitted());
+        assertEquals(999, contiguousBlocks.get(0).getLastValue());
         assertTrue(contiguousBlocks.get(1).isNotFull());
+        assertEquals(2000, contiguousBlocks.get(1).getFirstValue());
+        assertEquals(1999, contiguousBlocks.get(1).getLastCommitted());
+        assertEquals(2999, contiguousBlocks.get(1).getLastValue());
     }
 
     @Test
