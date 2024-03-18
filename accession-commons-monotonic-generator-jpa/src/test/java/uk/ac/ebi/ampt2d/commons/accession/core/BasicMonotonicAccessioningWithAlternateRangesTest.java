@@ -190,7 +190,7 @@ public class BasicMonotonicAccessioningWithAlternateRangesTest {
         assertEquals(1, unreservedAndNotFullBlocks.size());
         assertEquals(9, unreservedAndNotFullBlocks.get(0).getLastValue());
         assertEquals(-1, unreservedAndNotFullBlocks.get(0).getLastCommitted());
-        assertEquals(Boolean.FALSE, unreservedAndNotFullBlocks.get(0).isReserved());
+        assertEquals(false, unreservedAndNotFullBlocks.get(0).isReserved());
 
         // this will run the recover state
         BasicAccessioningService accService = getAccessioningService(categoryId, instanceId2);
@@ -210,7 +210,7 @@ public class BasicMonotonicAccessioningWithAlternateRangesTest {
         assertEquals(1, reservedAndNotFullBlocks.size());
         assertEquals(9, reservedAndNotFullBlocks.get(0).getLastValue());
         assertEquals(-1, reservedAndNotFullBlocks.get(0).getLastCommitted());
-        assertEquals(Boolean.TRUE, reservedAndNotFullBlocks.get(0).isReserved());
+        assertEquals(true, reservedAndNotFullBlocks.get(0).isReserved());
     }
 
     private List<TestModel> getObjectsForAccessionsInRange(int startRange, int endRange) {

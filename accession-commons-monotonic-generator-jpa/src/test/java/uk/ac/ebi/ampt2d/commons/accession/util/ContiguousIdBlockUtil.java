@@ -22,9 +22,9 @@ public class ContiguousIdBlockUtil {
 
     public static List<ContiguousIdBlock> getUncompletedBlocksByCategoryIdAndApplicationInstanceIdOrderByEndAsc(ContiguousIdBlockRepository repository,
             String categoryId, String applicationInstanceId) {
-        try (Stream<ContiguousIdBlock> reservedBlocksOfThisInstance = repository
+        try (Stream<ContiguousIdBlock> allBlocksForTheCategoryIdAndInstanceId = repository
                 .findAllByCategoryIdAndApplicationInstanceIdOrderByLastValueAsc(categoryId, applicationInstanceId)) {
-            List<ContiguousIdBlock> blocksList = reservedBlocksOfThisInstance.filter(block -> block.isNotFull())
+            List<ContiguousIdBlock> blocksList = allBlocksForTheCategoryIdAndInstanceId.filter(block -> block.isNotFull())
                     .collect(Collectors.toList());
 
             return blocksList;

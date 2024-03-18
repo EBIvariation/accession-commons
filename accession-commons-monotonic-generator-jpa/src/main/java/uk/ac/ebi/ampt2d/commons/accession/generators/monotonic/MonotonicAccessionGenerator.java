@@ -48,7 +48,7 @@ public class MonotonicAccessionGenerator<MODEL> implements AccessionGenerator<MO
     private final String applicationInstanceId;
     private final ContiguousIdBlockService blockService;
 
-    private Boolean SHUTDOWN = Boolean.FALSE;
+    private boolean SHUTDOWN = false;
 
     public MonotonicAccessionGenerator(String categoryId,
                                        String applicationInstanceId,
@@ -192,7 +192,7 @@ public class MonotonicAccessionGenerator<MODEL> implements AccessionGenerator<MO
         blockList.stream().forEach(block -> block.releaseReserved());
         blockService.save(blockList);
         blockManager.shutDownBlockManager();
-        SHUTDOWN = Boolean.TRUE;
+        SHUTDOWN = true;
     }
 
     /**

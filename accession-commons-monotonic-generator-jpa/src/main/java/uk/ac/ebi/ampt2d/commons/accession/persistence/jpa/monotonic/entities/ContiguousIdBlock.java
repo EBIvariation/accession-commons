@@ -64,7 +64,7 @@ public class ContiguousIdBlock implements Comparable<ContiguousIdBlock> {
 
     private long lastCommitted;
 
-    private Boolean reserved;
+    private boolean reserved;
 
     private LocalDateTime createdTimestamp;
 
@@ -80,7 +80,7 @@ public class ContiguousIdBlock implements Comparable<ContiguousIdBlock> {
         this.firstValue = firstValue;
         this.lastValue = firstValue + size - 1;
         this.lastCommitted = firstValue - 1;
-        this.reserved = Boolean.TRUE;
+        this.reserved = true;
         this.createdTimestamp = LocalDateTime.now();
     }
 
@@ -150,20 +150,20 @@ public class ContiguousIdBlock implements Comparable<ContiguousIdBlock> {
         return lastValue;
     }
 
-    public Boolean isReserved() {
-        return reserved == Boolean.TRUE;
+    public boolean isReserved() {
+        return reserved == true;
     }
 
-    public Boolean isNotReserved() {
-        return reserved == Boolean.FALSE;
+    public boolean isNotReserved() {
+        return reserved == false;
     }
 
     public void markAsReserved() {
-        this.reserved = Boolean.TRUE;
+        this.reserved = true;
     }
 
     public void releaseReserved() {
-        this.reserved = Boolean.FALSE;
+        this.reserved = false;
     }
 
     public boolean isFull() {

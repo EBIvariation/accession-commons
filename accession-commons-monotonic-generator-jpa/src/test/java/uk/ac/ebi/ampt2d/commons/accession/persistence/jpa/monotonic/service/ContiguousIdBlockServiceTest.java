@@ -98,7 +98,7 @@ public class ContiguousIdBlockServiceTest {
     }
 
     @Test
-    public void testGetUncompleteBlocks() {
+    public void testGetUncompletedBlocks() {
         // block: uncompleted and unreserved
         ContiguousIdBlock uncompletedBlock = getUnreservedContiguousIdBlock(CATEGORY_ID, INSTANCE_ID, 0, 5);
         // block: completed and unreserved
@@ -106,16 +106,16 @@ public class ContiguousIdBlockServiceTest {
         completedBlock.setLastCommitted(14);
 
         // block: uncompleted and unreserved but with different instance id
-        ContiguousIdBlock newBlock1 = getUnreservedContiguousIdBlock(CATEGORY_ID, INSTANCE_ID_2, 5, 5);
+        ContiguousIdBlock blockWithDifferentInstanceId = getUnreservedContiguousIdBlock(CATEGORY_ID, INSTANCE_ID_2, 5, 5);
         // block: uncompleted but reserved
-        ContiguousIdBlock newBlock2 = new ContiguousIdBlock(CATEGORY_ID, INSTANCE_ID, 15, 5);
+        ContiguousIdBlock UncompletedButReservedBlock = new ContiguousIdBlock(CATEGORY_ID, INSTANCE_ID, 15, 5);
 
         service.save(Arrays.asList(uncompletedBlock));
-        service.save(Arrays.asList(newBlock1));
+        service.save(Arrays.asList(blockWithDifferentInstanceId));
         service.save(Arrays.asList(completedBlock));
-        service.save(Arrays.asList(newBlock2));
+        service.save(Arrays.asList(UncompletedButReservedBlock));
 
-        // get only uncompleted and unreserved for instanc_id
+        // Reserve Uncompleted blocks - should only reserve uncompleted and unreserved for instance_id
         List<ContiguousIdBlock> contiguousBlocks =
                 service.reserveUncompletedBlocksByCategoryIdAndApplicationInstanceIdOrderByEndAsc(CATEGORY_ID, INSTANCE_ID);
 

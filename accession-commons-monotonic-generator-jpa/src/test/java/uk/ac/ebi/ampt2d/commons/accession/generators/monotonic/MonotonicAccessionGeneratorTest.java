@@ -475,7 +475,7 @@ public class MonotonicAccessionGeneratorTest {
         assertEquals(0, unreservedBlocks.get(0).getFirstValue());
         assertEquals(9, unreservedBlocks.get(0).getLastValue());
         assertEquals(-1, unreservedBlocks.get(0).getLastCommitted());
-        assertEquals(Boolean.FALSE, unreservedBlocks.get(0).isReserved());
+        assertEquals(false, unreservedBlocks.get(0).isReserved());
 
         // Generator 1 starts and its recover state reserves the UnCompleted block
         MonotonicAccessionGenerator generator1 = new MonotonicAccessionGenerator(CATEGORY_ID_2, INSTANCE_ID, service, new long[]{});
@@ -494,7 +494,7 @@ public class MonotonicAccessionGeneratorTest {
         assertEquals(0, reservedBlocks.get(0).getFirstValue());
         assertEquals(9, reservedBlocks.get(0).getLastValue());
         assertEquals(-1, reservedBlocks.get(0).getLastCommitted());
-        assertEquals(Boolean.TRUE, reservedBlocks.get(0).isReserved());
+        assertEquals(true, reservedBlocks.get(0).isReserved());
 
         // Generator-2 will not be able to reserve the un-completed block as it is currently reserved by Generator-1
         MonotonicAccessionGenerator generator2 = new MonotonicAccessionGenerator(CATEGORY_ID_2, INSTANCE_ID, service, new long[]{});
