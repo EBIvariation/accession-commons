@@ -27,8 +27,6 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * The ContiguousIdBlockService is used by AccessionGenerator to enter/update block information in DB.
@@ -102,18 +100,14 @@ public class ContiguousIdBlockService {
     }
 
     @Transactional(isolation = Isolation.SERIALIZABLE)
-    public List<ContiguousIdBlock> reserveUncompletedBlocksByCategoryIdAndApplicationInstanceIdOrderByEndAsc(
-            String categoryId, String applicationInstanceId) {
-        try (Stream<ContiguousIdBlock> reservedBlocksOfThisInstance = repository
-                .findAllByCategoryIdAndApplicationInstanceIdOrderByLastValueAsc(categoryId, applicationInstanceId)) {
-            List<ContiguousIdBlock> blocksList = reservedBlocksOfThisInstance
-                    .filter(block -> block.isNotFull() && block.isNotReserved()).collect(Collectors.toList());
-
-            blocksList.stream().forEach(block -> block.markAsReserved());
-            save(blocksList);
-
-            return blocksList;
-        }
+    public List<ContiguousIdBlock> reserveUncompletedBlocksForCategoryIdAndApplicationInstanceId(String categoryId, String applicationInstanceId) {
+        List<ContiguousIdBlock> blockList = repository.findUncompletedAndUnreservedBlocksOrderByLastValueAsc(categoryId);
+        blockList.stream().forEach(block -> {
+            block.setApplicationInstanceId(applicationInstanceId);
+            block.markAsReserved();
+        });
+        save(blockList);
+        return blockList;
     }
 
     public ContiguousIdBlockRepository getRepository() {

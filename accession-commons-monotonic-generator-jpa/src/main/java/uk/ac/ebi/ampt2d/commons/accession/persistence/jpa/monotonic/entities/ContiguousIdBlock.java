@@ -142,6 +142,14 @@ public class ContiguousIdBlock implements Comparable<ContiguousIdBlock> {
         this.lastCommitted = lastCommitted;
     }
 
+    public String getApplicationInstanceId() {
+        return applicationInstanceId;
+    }
+
+    public void setApplicationInstanceId(String applicationInstanceId) {
+        this.applicationInstanceId = applicationInstanceId;
+    }
+
     public long getFirstValue() {
         return firstValue;
     }

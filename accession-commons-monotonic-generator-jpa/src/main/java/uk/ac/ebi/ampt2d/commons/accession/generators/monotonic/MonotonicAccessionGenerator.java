@@ -91,8 +91,7 @@ public class MonotonicAccessionGenerator<MODEL> implements AccessionGenerator<MO
         assertBlockParametersAreInitialized(blockService, categoryId);
         BlockManager blockManager = new BlockManager();
         List<ContiguousIdBlock> uncompletedBlocks = blockService
-                .reserveUncompletedBlocksByCategoryIdAndApplicationInstanceIdOrderByEndAsc(categoryId,
-                        applicationInstanceId);
+                .reserveUncompletedBlocksForCategoryIdAndApplicationInstanceId(categoryId, applicationInstanceId);
         //Insert as available ranges
         for (ContiguousIdBlock block : uncompletedBlocks) {
             blockManager.addBlock(block);
