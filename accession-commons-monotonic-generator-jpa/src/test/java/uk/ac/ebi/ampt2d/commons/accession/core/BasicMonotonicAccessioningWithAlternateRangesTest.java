@@ -46,7 +46,8 @@ import java.util.stream.LongStream;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
-import static uk.ac.ebi.ampt2d.commons.accession.util.ContiguousIdBlockUtil.getUncompletedBlocksByCategoryIdAndApplicationInstanceIdOrderByEndAsc;
+import static uk.ac.ebi.ampt2d.commons.accession.util.ContiguousIdBlockUtil.getAllBlocksForCategoryId;
+import static uk.ac.ebi.ampt2d.commons.accession.util.ContiguousIdBlockUtil.getAllUncompletedBlocksForCategoryId;
 import static uk.ac.ebi.ampt2d.commons.accession.util.ContiguousIdBlockUtil.getUnreservedContiguousIdBlock;
 
 @RunWith(SpringRunner.class)
@@ -61,6 +62,9 @@ public class BasicMonotonicAccessioningWithAlternateRangesTest {
 
     @Autowired
     private ContiguousIdBlockService contiguousIdBlockService;
+
+    @Autowired
+    private ContiguousIdBlockRepository contiguousIdBlockRepository;
 
     @Test(expected = BlockInitializationException.class)
     public void testUnknownCategory() throws AccessionCouldNotBeGeneratedException {
@@ -82,7 +86,7 @@ public class BasicMonotonicAccessioningWithAlternateRangesTest {
         uncompletedBlocks.add(getUnreservedContiguousIdBlock(categoryId, instanceId2, 120, 10));
         contiguousIdBlockService.save(uncompletedBlocks);
 
-        assertEquals(3, getUncompletedBlocksByCategoryIdAndApplicationInstanceIdOrderByEndAsc(contiguousIdBlockService.getRepository(), categoryId, instanceId2).size());
+        assertEquals(3, getAllUncompletedBlocksForCategoryId(contiguousIdBlockRepository, categoryId).size());
 
         // create and save accessions in db (100 to 124) - save 2 sets of same accessions with different hashes
         List<AccessionWrapper<TestModel, String, Long>> accessionsSet1 = LongStream.range(100l, 125l)
@@ -103,8 +107,8 @@ public class BasicMonotonicAccessioningWithAlternateRangesTest {
         // block-1 (100 to 109) : fully complete
         // block-2 (110 to 119) : fully complete
         // block-3 (120 to 124) : partially complete
-        assertEquals(1, getUncompletedBlocksByCategoryIdAndApplicationInstanceIdOrderByEndAsc(contiguousIdBlockService.getRepository(), categoryId, instanceId2).size());
-        ContiguousIdBlock uncompletedBlock = getUncompletedBlocksByCategoryIdAndApplicationInstanceIdOrderByEndAsc(contiguousIdBlockService.getRepository(), categoryId, instanceId2).get(0);
+        assertEquals(1, getAllUncompletedBlocksForCategoryId(contiguousIdBlockRepository, categoryId).size());
+        ContiguousIdBlock uncompletedBlock = getAllUncompletedBlocksForCategoryId(contiguousIdBlockRepository, categoryId).get(0);
         assertEquals(120l, uncompletedBlock.getFirstValue());
         assertEquals(129l, uncompletedBlock.getLastValue());
         assertEquals(124l, uncompletedBlock.getLastCommitted());
@@ -119,7 +123,7 @@ public class BasicMonotonicAccessioningWithAlternateRangesTest {
     public void testAlternateRangesWithDifferentGenerators() throws AccessionCouldNotBeGeneratedException {
         /* blockStartValue= 0, blockSize= 10 , nextBlockInterval= 20
           the new blocks are interleaved or jumped for each 20 items accessioned
-          so the accesions will be in the range of 0-19,40-59,80-99 */
+          so the accessions will be in the range of 0-19,40-59,80-99 */
         String categoryId = "eva_2";
         String instanceId2 = "test-instance_2";
         BasicAccessioningService accService1 = getAccessioningService(categoryId, INSTANCE_ID);
@@ -128,8 +132,7 @@ public class BasicMonotonicAccessioningWithAlternateRangesTest {
         assertEquals(0, evaAccessions.get(0).getAccession().longValue());
         assertEquals(8, evaAccessions.get(8).getAccession().longValue());
         //BlockSize of 10 was reserved but only 9 elements have been accessioned
-        assertEquals(1, getUncompletedBlocksByCategoryIdAndApplicationInstanceIdOrderByEndAsc(contiguousIdBlockService.getRepository(), categoryId, INSTANCE_ID)
-                .size());
+        assertEquals(1, getAllUncompletedBlocksForCategoryId(contiguousIdBlockRepository, categoryId).size());
         accService1.shutDownAccessioning();
 
         //Get another service for same category
@@ -147,7 +150,7 @@ public class BasicMonotonicAccessioningWithAlternateRangesTest {
         assertEquals(40, evaAccessions.get(11).getAccession().longValue());
         assertEquals(48, evaAccessions.get(19).getAccession().longValue());
         //BlockSize if 10 was reserved but only 9 elements have been accessioned
-        assertEquals(1, getUncompletedBlocksByCategoryIdAndApplicationInstanceIdOrderByEndAsc(contiguousIdBlockService.getRepository(), categoryId, INSTANCE_ID).size());
+        assertEquals(1, getAllUncompletedBlocksForCategoryId(contiguousIdBlockRepository, categoryId).size());
         accService2.shutDownAccessioning();
 
         //Get another service for same category but different Instance
@@ -156,33 +159,30 @@ public class BasicMonotonicAccessioningWithAlternateRangesTest {
         assertEquals(9, evaAccessions.size());
         //New Block from different instance have not jumped as still blocks are available before interleaving point
         assertNotEquals(80, evaAccessions.get(0).getAccession().longValue());
-        assertEquals(50, evaAccessions.get(0).getAccession().longValue());
-        assertEquals(58, evaAccessions.get(8).getAccession().longValue());
-        assertEquals(1, getUncompletedBlocksByCategoryIdAndApplicationInstanceIdOrderByEndAsc(contiguousIdBlockService.getRepository(), categoryId, instanceId2).size());
+        assertEquals(49, evaAccessions.get(0).getAccession().longValue());
+        assertEquals(57, evaAccessions.get(8).getAccession().longValue());
+        assertEquals(1, getAllUncompletedBlocksForCategoryId(contiguousIdBlockRepository, categoryId).size());
         accService3.shutDownAccessioning();
 
         //Get previous uncompleted service from instance1 and create accessions
         BasicAccessioningService accService4 = getAccessioningService(categoryId, INSTANCE_ID);
-        evaAccessions = accService4.getOrCreate(getObjectsForAccessionsInRange(40, 41));
-        assertEquals(2, evaAccessions.size());
-        assertEquals(49, evaAccessions.get(0).getAccession().longValue());  //Block ended here
+        evaAccessions = accService4.getOrCreate(getObjectsForAccessionsInRange(40, 42));
+        assertEquals(3, evaAccessions.size());
+        assertEquals(58, evaAccessions.get(0).getAccession().longValue());  //Block ended here
         //New Block with 20 interval from last block made in instanceId2
-        assertEquals(80, evaAccessions.get(1).getAccession().longValue());
+        assertEquals(80, evaAccessions.get(2).getAccession().longValue());
     }
 
     @Test
     public void testInitializeBlockManagerInMonotonicAccessionGenerator() {
         String categoryId = "eva_2";
         String instanceId2 = "test-instance_2";
-        ContiguousIdBlockRepository repository = contiguousIdBlockService.getRepository();
 
         ContiguousIdBlock block = getUnreservedContiguousIdBlock(categoryId, instanceId2, 0, 10);
-        repository.save(block);
+        contiguousIdBlockRepository.save(block);
 
         // assert block is not full and not reserved
-        List<ContiguousIdBlock> blockInDBList = repository
-                .findAllByCategoryIdAndApplicationInstanceIdOrderByLastValueAsc(categoryId, instanceId2)
-                .collect(Collectors.toList());
+        List<ContiguousIdBlock> blockInDBList = getAllBlocksForCategoryId(contiguousIdBlockRepository, categoryId);
         assertEquals(1, blockInDBList.size());
         List<ContiguousIdBlock> unreservedAndNotFullBlocks = blockInDBList.stream()
                 .filter(b -> b.isNotFull() && b.isNotReserved())
@@ -196,9 +196,7 @@ public class BasicMonotonicAccessioningWithAlternateRangesTest {
         BasicAccessioningService accService = getAccessioningService(categoryId, instanceId2);
 
         // assert block gets reserved after recover state
-        blockInDBList = repository
-                .findAllByCategoryIdAndApplicationInstanceIdOrderByLastValueAsc(categoryId, instanceId2)
-                .collect(Collectors.toList());
+        blockInDBList = getAllBlocksForCategoryId(contiguousIdBlockRepository, categoryId);
         assertEquals(1, blockInDBList.size());
         unreservedAndNotFullBlocks = blockInDBList.stream()
                 .filter(b -> b.isNotFull() && b.isNotReserved())

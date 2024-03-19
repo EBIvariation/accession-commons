@@ -134,6 +134,10 @@ public class ContiguousIdBlock implements Comparable<ContiguousIdBlock> {
         return id;
     }
 
+    public String getCategoryId() {
+        return categoryId;
+    }
+
     public long getLastCommitted() {
         return lastCommitted;
     }

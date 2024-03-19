@@ -110,7 +110,4 @@ public class ContiguousIdBlockService {
         return blockList;
     }
 
-    public ContiguousIdBlockRepository getRepository() {
-        return repository;
-    }
 }

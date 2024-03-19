@@ -36,6 +36,7 @@ import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service.Cont
 import uk.ac.ebi.ampt2d.commons.accession.utils.exceptions.ExponentialBackOffMaxRetriesRuntimeException;
 import uk.ac.ebi.ampt2d.test.configuration.MonotonicAccessionGeneratorTestConfiguration;
 
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -51,6 +52,7 @@ import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
+import static uk.ac.ebi.ampt2d.commons.accession.util.ContiguousIdBlockUtil.getAllBlocksForCategoryId;
 import static uk.ac.ebi.ampt2d.commons.accession.util.ContiguousIdBlockUtil.getUnreservedContiguousIdBlock;
 
 @RunWith(SpringRunner.class)
@@ -112,14 +114,14 @@ public class MonotonicAccessionGeneratorTest {
 
         generator1.generateAccessions(TENTH_BLOCK_SIZE);
         assertEquals(1, repository.count());
-        block = repository.findFirstByCategoryIdAndApplicationInstanceIdOrderByLastValueDesc(CATEGORY_ID, INSTANCE_ID);
+        block = findFirstByCategoryIdAndApplicationInstanceIdOrderByLastValueDesc(CATEGORY_ID);
         assertEquals(0, block.getFirstValue());
         assertEquals(BLOCK_SIZE - 1, block.getLastValue());
         assertEquals(-1, block.getLastCommitted());
 
         generator2.generateAccessions(TENTH_BLOCK_SIZE);
         assertEquals(2, repository.count());
-        block = repository.findFirstByCategoryIdAndApplicationInstanceIdOrderByLastValueDesc(CATEGORY_ID, INSTANCE_2_ID);
+        block = findFirstByCategoryIdAndApplicationInstanceIdOrderByLastValueDesc(CATEGORY_ID);
         assertEquals(BLOCK_SIZE, block.getFirstValue());
         assertEquals(2 * BLOCK_SIZE - 1, block.getLastValue());
         assertEquals(BLOCK_SIZE - 1, block.getLastCommitted());
@@ -162,8 +164,7 @@ public class MonotonicAccessionGeneratorTest {
 
         generator.commit(accessions);
 
-        ContiguousIdBlock block =
-                repository.findFirstByCategoryIdAndApplicationInstanceIdOrderByLastValueDesc(CATEGORY_ID, INSTANCE_ID);
+        ContiguousIdBlock block = findFirstByCategoryIdAndApplicationInstanceIdOrderByLastValueDesc(CATEGORY_ID);
         assertEquals(TENTH_BLOCK_SIZE - 1, block.getLastCommitted());
     }
 
@@ -172,8 +173,7 @@ public class MonotonicAccessionGeneratorTest {
         MonotonicAccessionGenerator generator = getMonotonicAccessionGenerator();
         long[] accessions = generator.generateAccessions(TENTH_BLOCK_SIZE);
 
-        ContiguousIdBlock block =
-                repository.findFirstByCategoryIdAndApplicationInstanceIdOrderByLastValueDesc(CATEGORY_ID, INSTANCE_ID);
+        ContiguousIdBlock block = findFirstByCategoryIdAndApplicationInstanceIdOrderByLastValueDesc(CATEGORY_ID);
         assertEquals(-1, block.getLastCommitted());
     }
 
@@ -185,13 +185,12 @@ public class MonotonicAccessionGeneratorTest {
 
         generator.commit(accessions2);
 
-        ContiguousIdBlock block =
-                repository.findFirstByCategoryIdAndApplicationInstanceIdOrderByLastValueDesc(CATEGORY_ID, INSTANCE_ID);
+        ContiguousIdBlock block = findFirstByCategoryIdAndApplicationInstanceIdOrderByLastValueDesc(CATEGORY_ID);
         assertEquals(-1, block.getLastCommitted());
 
         generator.commit(accessions1);
 
-        block = repository.findFirstByCategoryIdAndApplicationInstanceIdOrderByLastValueDesc(CATEGORY_ID, INSTANCE_ID);
+        block = findFirstByCategoryIdAndApplicationInstanceIdOrderByLastValueDesc(CATEGORY_ID);
         assertEquals(2 * TENTH_BLOCK_SIZE - 1, block.getLastCommitted());
     }
 
@@ -204,14 +203,13 @@ public class MonotonicAccessionGeneratorTest {
 
         generator.commit(accessions2);
 
-        ContiguousIdBlock block =
-                repository.findFirstByCategoryIdAndApplicationInstanceIdOrderByLastValueDesc(CATEGORY_ID, INSTANCE_ID);
+        ContiguousIdBlock block = findFirstByCategoryIdAndApplicationInstanceIdOrderByLastValueDesc(CATEGORY_ID);
         assertEquals(BLOCK_SIZE, block.getFirstValue());
         assertEquals(BLOCK_SIZE - 1, block.getLastCommitted());
 
         generator.commit(accessions1);
 
-        block = repository.findFirstByCategoryIdAndApplicationInstanceIdOrderByLastValueDesc(CATEGORY_ID, INSTANCE_ID);
+        block = findFirstByCategoryIdAndApplicationInstanceIdOrderByLastValueDesc(CATEGORY_ID);
         assertEquals(BLOCK_SIZE, block.getFirstValue());
         assertEquals(BLOCK_SIZE + 2 * TENTH_BLOCK_SIZE - 1, block.getLastCommitted());
     }
@@ -274,8 +272,7 @@ public class MonotonicAccessionGeneratorTest {
         generator.release(8, 9, 10);
         generator.commit(getLongArray(12, 998));
         //999 is waiting somewhere taking a big nap and no elements have been confirmed due to element 0 being released
-        ContiguousIdBlock block =
-                repository.findFirstByCategoryIdAndApplicationInstanceIdOrderByLastValueDesc(CATEGORY_ID, INSTANCE_ID);
+        ContiguousIdBlock block = findFirstByCategoryIdAndApplicationInstanceIdOrderByLastValueDesc(CATEGORY_ID);
         assertEquals(-1, block.getLastCommitted());
 
         long[] accessions2 = generator.generateAccessions(BLOCK_SIZE);
@@ -297,7 +294,7 @@ public class MonotonicAccessionGeneratorTest {
         assertEquals(998, blockResult.get().getLastCommitted());
         // 999 is committed and then the remaining elements get confirmed
         generator.commit(999);
-        block = repository.findFirstByCategoryIdAndApplicationInstanceIdOrderByLastValueDesc(CATEGORY_ID, INSTANCE_ID);
+        block = findFirstByCategoryIdAndApplicationInstanceIdOrderByLastValueDesc(CATEGORY_ID);
         assertEquals(1991, block.getLastCommitted());
     }
 
@@ -310,8 +307,7 @@ public class MonotonicAccessionGeneratorTest {
 
         MonotonicAccessionGenerator generatorRecovering =
                 new MonotonicAccessionGenerator(CATEGORY_ID, INSTANCE_ID, service, new long[]{2, 3, 5});
-        ContiguousIdBlock block =
-                repository.findFirstByCategoryIdAndApplicationInstanceIdOrderByLastValueDesc(CATEGORY_ID, INSTANCE_ID);
+        ContiguousIdBlock block = findFirstByCategoryIdAndApplicationInstanceIdOrderByLastValueDesc(CATEGORY_ID);
         assertEquals(-1, block.getLastCommitted());
         assertFalse(generatorRecovering.getAvailableRanges().isEmpty());
         assertThat(generatorRecovering.getAvailableRanges(),
@@ -328,8 +324,7 @@ public class MonotonicAccessionGeneratorTest {
 
         MonotonicAccessionGenerator generatorRecovering = new MonotonicAccessionGenerator(
                 CATEGORY_ID, INSTANCE_ID, service, new long[]{2, 3, 5});
-        ContiguousIdBlock block =
-                repository.findFirstByCategoryIdAndApplicationInstanceIdOrderByLastValueDesc(CATEGORY_ID, INSTANCE_ID);
+        ContiguousIdBlock block = findFirstByCategoryIdAndApplicationInstanceIdOrderByLastValueDesc(CATEGORY_ID);
         assertEquals(3, block.getLastCommitted());
         assertThat(generatorRecovering.getAvailableRanges(),
                 contains(new MonotonicRange(4, 4), new MonotonicRange(6, BLOCK_SIZE - 1)));
@@ -464,9 +459,7 @@ public class MonotonicAccessionGeneratorTest {
         repository.save(block);
 
         // To start with Block is UnCompleted and UnReserved
-        List<ContiguousIdBlock> blockInDBList = repository
-                .findAllByCategoryIdAndApplicationInstanceIdOrderByLastValueAsc(CATEGORY_ID_2, INSTANCE_ID)
-                .collect(Collectors.toList());
+        List<ContiguousIdBlock> blockInDBList = findAllByCategoryIdAndApplicationInstanceIdOrderByLastValueAsc(CATEGORY_ID_2);
         assertEquals(1, blockInDBList.size());
         List<ContiguousIdBlock> unreservedBlocks = blockInDBList.stream()
                 .filter(b -> b.isNotFull() && b.isNotReserved())
@@ -483,9 +476,7 @@ public class MonotonicAccessionGeneratorTest {
         assertEquals(new MonotonicRange(0, 9), generator1.getAvailableRanges().peek());
 
         // Block is currently reserved by Generator-1
-        blockInDBList = repository
-                .findAllByCategoryIdAndApplicationInstanceIdOrderByLastValueAsc(CATEGORY_ID_2, INSTANCE_ID)
-                .collect(Collectors.toList());
+        blockInDBList = findAllByCategoryIdAndApplicationInstanceIdOrderByLastValueAsc(CATEGORY_ID_2);
         assertEquals(1, blockInDBList.size());
         List<ContiguousIdBlock> reservedBlocks = blockInDBList.stream()
                 .filter(b -> b.isNotFull() && b.isReserved())
@@ -519,4 +510,17 @@ public class MonotonicAccessionGeneratorTest {
         assertThrows(AccessionGeneratorShutDownException.class, () -> generator.postSave(new SaveResponse<>()));
         assertThrows(AccessionGeneratorShutDownException.class, () -> generator.getAvailableRanges());
     }
+
+    private List<ContiguousIdBlock> findAllByCategoryIdAndApplicationInstanceIdOrderByLastValueAsc(String categoryId) {
+        return getAllBlocksForCategoryId(repository, categoryId).stream()
+                .sorted(Comparator.comparing(ContiguousIdBlock::getLastValue))
+                .collect(Collectors.toList());
+    }
+
+    private ContiguousIdBlock findFirstByCategoryIdAndApplicationInstanceIdOrderByLastValueDesc(String categoryId) {
+        return getAllBlocksForCategoryId(repository, categoryId).stream()
+                .sorted(Comparator.comparing(ContiguousIdBlock::getLastValue).reversed())
+                .findFirst().get();
+    }
+
 }
