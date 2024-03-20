@@ -21,7 +21,7 @@ public class ContiguousIdBlockUtil {
         return block;
     }
 
-    public static List<ContiguousIdBlock> getAllBlocksInDB(ContiguousIdBlockRepository repository, String categoryId) {
+    public static List<ContiguousIdBlock> getAllBlocksInDB(ContiguousIdBlockRepository repository) {
         return StreamSupport.stream(repository.findAll().spliterator(), false)
                 .sorted(Comparator.comparing(ContiguousIdBlock::getFirstValue))
                 .collect(Collectors.toList());
