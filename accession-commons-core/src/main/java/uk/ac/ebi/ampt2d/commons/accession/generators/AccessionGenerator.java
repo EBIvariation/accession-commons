@@ -50,9 +50,4 @@ public interface AccessionGenerator<MODEL, ACCESSION> {
      * @param response DB response
      */
     void postSave(SaveResponse<ACCESSION> response);
-
-    /**
-     * This method should be used to shut-down the generator and release resources
-     */
-    void shutDownAccessionGenerator();
 }

@@ -39,7 +39,7 @@ import uk.ac.ebi.ampt2d.test.persistence.TestMonotonicRepository;
 @Configuration
 @EnableSpringDataContiguousIdService
 @EntityScan("uk.ac.ebi.ampt2d.test.persistence")
-@EnableJpaRepositories(basePackages = {"uk.ac.ebi.ampt2d.test.persistence", "uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.repositories"})
+@EnableJpaRepositories(basePackages = "uk.ac.ebi.ampt2d.test.persistence")
 public class TestMonotonicDatabaseServiceTestConfiguration {
 
     private static final String CATEGORY_ID = "category-id-monotonic-test";

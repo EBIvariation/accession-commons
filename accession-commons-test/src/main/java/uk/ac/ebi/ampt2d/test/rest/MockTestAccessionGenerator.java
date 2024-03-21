@@ -72,8 +72,4 @@ public class MockTestAccessionGenerator implements AccessionGenerator<TestModel,
         // Do nothing
     }
 
-    @Override
-    public void shutDownAccessionGenerator() {
-        // Do nothing
-    }
 }

@@ -27,32 +27,9 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-/**
- * The ContiguousIdBlockService is used by AccessionGenerator to enter/update block information in DB.
- *
- * In case of multiprocessing, we need to make sure a block is used by only one AccessionGenerator at any point of time.
- * To prevent a block from being used by multiple AccessionGenerator, we mark the block as reserved (using column reserved)
- * when they are in use by an AccessionGenerator. A block, marked as reserved implies it is currently being used by an
- * AccessionGenerator and should not be picked up for use by any other AccessionGenerator.
- *
- * Whenever an AccessionGenerator asks for a block from the ContiguousIdBlockService for using the accessions in it, we
- * should reserve the block for the calling Accession Generator.
- *
- * Existing Uncompleted Blocks
- *      When an AccessionGenerator starts, it asks for Uncompleted Blocks, in order to use the remaining accessions
- *      in them. As these blocks, will be used by the calling AccessionGenerator, we need to explicitly mark them
- *      as reserved in DB.
- *      (see method @reserveUncompletedBlocksByCategoryIdAndApplicationInstanceIdOrderByEndAsc)
- * New Block
- *      When an AccessionGenerator asks for a new block, we create a new block with correct values (based on the given
- *      parameters and existing blocks) and save it in DB. A newly created block is implicitly marked as reserved.
- *      (see method @reserveNewBlock)
- *
- * Also, when saving the blocks, we need to check for the block's last committed value.
- * If it's last committed value is same as last value, we should release the block in DB
- *
- */
 public class ContiguousIdBlockService {
 
     private ContiguousIdBlockRepository repository;
@@ -70,8 +47,6 @@ public class ContiguousIdBlockService {
 
     @Transactional
     public void save(Iterable<ContiguousIdBlock> blocks) {
-        // release block if full
-        blocks.forEach(block -> {if (block.isFull()) {block.releaseReserved();}});
         repository.saveAll(blocks);
         entityManager.flush();
     }
@@ -99,15 +74,12 @@ public class ContiguousIdBlockService {
         return categoryBlockInitializations.get(categoryId);
     }
 
-    @Transactional(isolation = Isolation.SERIALIZABLE)
-    public List<ContiguousIdBlock> reserveUncompletedBlocksForCategoryIdAndApplicationInstanceId(String categoryId, String applicationInstanceId) {
-        List<ContiguousIdBlock> blockList = repository.findUncompletedAndUnreservedBlocksOrderByLastValueAsc(categoryId);
-        blockList.stream().forEach(block -> {
-            block.setApplicationInstanceId(applicationInstanceId);
-            block.markAsReserved();
-        });
-        save(blockList);
-        return blockList;
+    @Transactional(readOnly = true)
+    public List<ContiguousIdBlock> getUncompletedBlocksByCategoryIdAndApplicationInstanceIdOrderByEndAsc(
+            String categoryId, String applicationInstanceId) {
+        try (Stream<ContiguousIdBlock> reservedBlocksOfThisInstance = repository
+                .findAllByCategoryIdAndApplicationInstanceIdOrderByLastValueAsc(categoryId, applicationInstanceId)) {
+            return reservedBlocksOfThisInstance.filter(ContiguousIdBlock::isNotFull).collect(Collectors.toList());
+        }
     }
-
 }

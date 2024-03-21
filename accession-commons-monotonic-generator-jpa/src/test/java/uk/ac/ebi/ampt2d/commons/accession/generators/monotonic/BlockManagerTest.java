@@ -153,25 +153,4 @@ public class BlockManagerTest {
         manager.commit(accessions2);
     }
 
-    @Test
-    public void testGetAssignedBlocks(){
-        BlockManager manager = new BlockManager();
-        manager.addBlock(new ContiguousIdBlock(CATEGORY_ID, INSTANCE_ID, 0, 10));
-        manager.addBlock(new ContiguousIdBlock(CATEGORY_ID, INSTANCE_ID, 10, 10));
-
-        assertEquals(2, manager.getAssignedBlocks().size());
-    }
-
-    @Test
-    public void testShutDownBlockManager(){
-        BlockManager manager = new BlockManager();
-        manager.addBlock(new ContiguousIdBlock(CATEGORY_ID, INSTANCE_ID, 0, 10));
-        manager.addBlock(new ContiguousIdBlock(CATEGORY_ID, INSTANCE_ID, 10, 10));
-        manager.shutDownBlockManager();
-
-        assertEquals(0, manager.getAssignedBlocks().size());
-        assertEquals(0, manager.getAvailableRanges().size());
-
-    }
-
 }

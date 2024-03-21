@@ -25,7 +25,6 @@ import javax.persistence.Id;
 import javax.persistence.Index;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
-import java.time.LocalDateTime;
 
 /**
  * This class represents a block allocated by an application instance, in a monotonic sequence associated with a
@@ -64,10 +63,6 @@ public class ContiguousIdBlock implements Comparable<ContiguousIdBlock> {
 
     private long lastCommitted;
 
-    private boolean reserved;
-
-    private LocalDateTime createdTimestamp;
-
     // Create / update dates
 
     ContiguousIdBlock() {
@@ -80,8 +75,6 @@ public class ContiguousIdBlock implements Comparable<ContiguousIdBlock> {
         this.firstValue = firstValue;
         this.lastValue = firstValue + size - 1;
         this.lastCommitted = firstValue - 1;
-        this.reserved = true;
-        this.createdTimestamp = LocalDateTime.now();
     }
 
     /**
@@ -134,10 +127,6 @@ public class ContiguousIdBlock implements Comparable<ContiguousIdBlock> {
         return id;
     }
 
-    public String getCategoryId() {
-        return categoryId;
-    }
-
     public long getLastCommitted() {
         return lastCommitted;
     }
@@ -146,40 +135,12 @@ public class ContiguousIdBlock implements Comparable<ContiguousIdBlock> {
         this.lastCommitted = lastCommitted;
     }
 
-    public String getApplicationInstanceId() {
-        return applicationInstanceId;
-    }
-
-    public void setApplicationInstanceId(String applicationInstanceId) {
-        this.applicationInstanceId = applicationInstanceId;
-    }
-
     public long getFirstValue() {
         return firstValue;
     }
 
     public long getLastValue() {
         return lastValue;
-    }
-
-    public boolean isReserved() {
-        return reserved == true;
-    }
-
-    public boolean isNotReserved() {
-        return reserved == false;
-    }
-
-    public void markAsReserved() {
-        this.reserved = true;
-    }
-
-    public void releaseReserved() {
-        this.reserved = false;
-    }
-
-    public boolean isFull() {
-        return lastCommitted == lastValue;
     }
 
     public boolean isNotFull() {

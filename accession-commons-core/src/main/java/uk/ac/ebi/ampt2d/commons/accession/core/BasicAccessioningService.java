@@ -177,10 +177,6 @@ public class BasicAccessioningService<MODEL, HASH, ACCESSION extends Serializabl
         dbService.merge(accessionOrigin, mergeInto, reason);
     }
 
-    public void shutDownAccessioning() {
-        accessionGenerator.shutDownAccessionGenerator();
-    }
-
     protected AccessionGenerator<MODEL, ACCESSION> getAccessionGenerator() {
         return accessionGenerator;
     }
