@@ -67,4 +67,8 @@ public class SingleAccessionGenerator<MODEL, ACCESSION> implements AccessionGene
         return ofHashAccessionGenerator(summaryFunction, new SHA1HashingFunction());
     }
 
+    @Override
+    public void shutDownAccessionGenerator() {
+        // Do nothing - no resources to release
+    }
 }
