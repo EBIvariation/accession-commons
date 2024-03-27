@@ -23,6 +23,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Index;
+import javax.persistence.PreUpdate;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import java.time.LocalDateTime;
@@ -58,15 +59,20 @@ public class ContiguousIdBlock implements Comparable<ContiguousIdBlock> {
     @Column(nullable = false, length = 255)
     private String applicationInstanceId;
 
+    @Column(nullable = false)
     private long firstValue;
 
+    @Column(nullable = false)
     private long lastValue;
 
+    @Column(nullable = false)
     private long lastCommitted;
 
+    @Column(nullable = false)
     private boolean reserved;
 
-    private LocalDateTime createdTimestamp;
+    @Column(nullable = false)
+    private LocalDateTime lastUpdatedTimestamp;
 
     // Create / update dates
 
@@ -81,7 +87,7 @@ public class ContiguousIdBlock implements Comparable<ContiguousIdBlock> {
         this.lastValue = firstValue + size - 1;
         this.lastCommitted = firstValue - 1;
         this.reserved = true;
-        this.createdTimestamp = LocalDateTime.now();
+        this.lastUpdatedTimestamp = LocalDateTime.now();
     }
 
     /**
@@ -186,8 +192,17 @@ public class ContiguousIdBlock implements Comparable<ContiguousIdBlock> {
         return lastCommitted != lastValue;
     }
 
+    public LocalDateTime getLastUpdatedTimestamp() {
+        return lastUpdatedTimestamp;
+    }
+
     @Override
     public int compareTo(ContiguousIdBlock contiguousIdBlock) {
         return Long.compare(firstValue, contiguousIdBlock.getFirstValue());
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.lastUpdatedTimestamp = LocalDateTime.now();
     }
 }
