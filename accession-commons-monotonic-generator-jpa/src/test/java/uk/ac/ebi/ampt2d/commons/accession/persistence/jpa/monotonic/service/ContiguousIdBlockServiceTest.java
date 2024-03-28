@@ -31,6 +31,7 @@ import uk.ac.ebi.ampt2d.test.configuration.MonotonicAccessionGeneratorTestConfig
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.PersistenceException;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 
@@ -264,6 +265,66 @@ public class ContiguousIdBlockServiceTest {
 
         Throwable exception = assertThrows(PersistenceException.class, () -> entityManager.flush());
         assertTrue(exception.getCause() instanceof ConstraintViolationException);
+    }
+
+    @Test
+    public void testLastUpdateTimeStampAutoUpdate() {
+        // block saved with initial value
+        ContiguousIdBlock block = new ContiguousIdBlock(CATEGORY_ID, INSTANCE_ID, 100, 1000);
+        repository.save(block);
+        entityManager.flush();
+
+        // assert block values
+        ContiguousIdBlock blockInDB = repository.findById(1L).get();
+        assertEquals(1L, blockInDB.getId());
+        assertEquals(CATEGORY_ID, blockInDB.getCategoryId());
+        assertEquals(INSTANCE_ID, blockInDB.getApplicationInstanceId());
+        assertEquals(100, blockInDB.getFirstValue());
+        assertEquals(1099, blockInDB.getLastValue());
+        assertEquals(99, blockInDB.getLastCommitted());
+
+        LocalDateTime blockInsertTime = blockInDB.getLastUpdatedTimestamp();
+
+        // block updated with last committed 100
+        block.setLastCommitted(100);
+        repository.save(block);
+        entityManager.flush();
+        blockInDB = repository.findById(1L).get();
+        assertEquals(100, blockInDB.getLastCommitted());
+
+        LocalDateTime blockLastCommittedUpdateTime = blockInDB.getLastUpdatedTimestamp();
+
+        // block updated with new instance id
+        block.setApplicationInstanceId(INSTANCE_ID_2);
+        repository.save(block);
+        entityManager.flush();
+        blockInDB = repository.findById(1L).get();
+        assertEquals(INSTANCE_ID_2, blockInDB.getApplicationInstanceId());
+
+        LocalDateTime blockApplicationInstanceUpdateTime = blockInDB.getLastUpdatedTimestamp();
+
+        // block updated - release reserved
+        block.releaseReserved();
+        repository.save(block);
+        entityManager.flush();
+        blockInDB = repository.findById(1L).get();
+        assertTrue(blockInDB.isNotReserved());
+
+        LocalDateTime blockReleaseAsReservedUpdateTime = blockInDB.getLastUpdatedTimestamp();
+
+        // block update - mark as reserved
+        block.markAsReserved();
+        repository.save(block);
+        entityManager.flush();
+        blockInDB = repository.findById(1L).get();
+        assertTrue(blockInDB.isReserved());
+
+        LocalDateTime blockMarkAsReservedUpdateTime = blockInDB.getLastUpdatedTimestamp();
+
+        assertTrue(blockInsertTime.isBefore(blockLastCommittedUpdateTime));
+        assertTrue(blockLastCommittedUpdateTime.isBefore(blockApplicationInstanceUpdateTime));
+        assertTrue(blockApplicationInstanceUpdateTime.isBefore(blockReleaseAsReservedUpdateTime));
+        assertTrue(blockReleaseAsReservedUpdateTime.isBefore(blockMarkAsReservedUpdateTime));
     }
 
 }
