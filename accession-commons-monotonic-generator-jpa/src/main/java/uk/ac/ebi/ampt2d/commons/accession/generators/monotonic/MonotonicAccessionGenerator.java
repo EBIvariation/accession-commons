@@ -47,61 +47,48 @@ public class MonotonicAccessionGenerator<MODEL> implements AccessionGenerator<MO
     private final String categoryId;
     private final String applicationInstanceId;
     private final ContiguousIdBlockService blockService;
+    private MonotonicDatabaseService monotonicDatabaseService;
 
     private boolean SHUTDOWN = false;
+    private boolean RUN_RECOVERY = true;
 
     public MonotonicAccessionGenerator(String categoryId,
                                        String applicationInstanceId,
                                        ContiguousIdBlockService contiguousIdBlockService,
-                                       MonotonicDatabaseService databaseService) {
-        this(categoryId, applicationInstanceId, contiguousIdBlockService);
-        // As we are going through the available ranges and at the same time we are also going to manipulate/update them
-        // Need to make a copy of the original for iteration to avoid ConcurrentModificationException
-        MonotonicRangePriorityQueue copyOfAvailableRanges = new MonotonicRangePriorityQueue();
-        for (MonotonicRange range : getAvailableRanges()) {
-            copyOfAvailableRanges.offer(range);
-        }
-        for (MonotonicRange monotonicRange : copyOfAvailableRanges) {
-            recoverState(databaseService.getAccessionsInRanges(Collections.singletonList(monotonicRange)));
-        }
-    }
-
-    public MonotonicAccessionGenerator(String categoryId,
-                                       String applicationInstanceId,
-                                       ContiguousIdBlockService contiguousIdBlockService,
-                                       long[] initializedAccessions) {
-        this(categoryId, applicationInstanceId, contiguousIdBlockService);
-        if (initializedAccessions != null) {
-            recoverState(initializedAccessions);
-        }
-    }
-
-    //Package protected for testing without initialized Accessions
-    MonotonicAccessionGenerator(String categoryId,
-                                String applicationInstanceId,
-                                ContiguousIdBlockService contiguousIdBlockService) {
+                                       MonotonicDatabaseService monotonicDatabaseService) {
         this.categoryId = categoryId;
         this.applicationInstanceId = applicationInstanceId;
         this.blockService = contiguousIdBlockService;
-        this.blockManager = initializeBlockManager(blockService, categoryId, applicationInstanceId);
-    }
-
-    private static BlockManager initializeBlockManager(ContiguousIdBlockService blockService, String categoryId,
-                                                       String applicationInstanceId) {
+        this.monotonicDatabaseService = monotonicDatabaseService;
         assertBlockParametersAreInitialized(blockService, categoryId);
-        BlockManager blockManager = new BlockManager();
-        List<ContiguousIdBlock> uncompletedBlocks = blockService
-                .reserveUncompletedBlocksForCategoryIdAndApplicationInstanceId(categoryId, applicationInstanceId);
-        //Insert as available ranges
-        for (ContiguousIdBlock block : uncompletedBlocks) {
-            blockManager.addBlock(block);
-        }
-        return blockManager;
+        this.blockManager = new BlockManager();
     }
 
     private static void assertBlockParametersAreInitialized(ContiguousIdBlockService blockService, String categoryId) {
         if (blockService.getBlockParameters(categoryId) == null) {
             throw new BlockInitializationException("BlockParameters not initialized for category '" + categoryId + "'");
+        }
+    }
+
+    private void recoverState() {
+        if (RUN_RECOVERY && monotonicDatabaseService != null) {
+            List<ContiguousIdBlock> uncompletedBlocks = blockService
+                    .reserveUncompletedBlocksForCategoryIdAndApplicationInstanceId(categoryId, applicationInstanceId);
+            //Insert as available ranges
+            for (ContiguousIdBlock block : uncompletedBlocks) {
+                blockManager.addBlock(block);
+            }
+            // As we are going through the available ranges and at the same time we are also going to manipulate/update them
+            // Need to make a copy of the original for iteration to avoid ConcurrentModificationException
+            MonotonicRangePriorityQueue copyOfAvailableRanges = new MonotonicRangePriorityQueue();
+            for (MonotonicRange range : getAvailableRanges()) {
+                copyOfAvailableRanges.offer(range);
+            }
+            for (MonotonicRange monotonicRange : copyOfAvailableRanges) {
+                recoverStateForElements(monotonicDatabaseService.getAccessionsInRanges(Collections.singletonList(monotonicRange)));
+            }
+
+            RUN_RECOVERY = false;
         }
     }
 
@@ -112,13 +99,14 @@ public class MonotonicAccessionGenerator<MODEL> implements AccessionGenerator<MO
      * @param committedElements
      * @throws AccessionIsNotPendingException
      */
-    private void recoverState(long[] committedElements) throws AccessionIsNotPendingException {
+    private void recoverStateForElements(long[] committedElements) throws AccessionIsNotPendingException {
         blockService.save(blockManager.recoverState(committedElements));
     }
 
     public synchronized long[] generateAccessions(int numAccessionsToGenerate)
             throws AccessionCouldNotBeGeneratedException {
         checkAccessionGeneratorNotShutDown();
+        recoverState();
         long[] accessions = new long[numAccessionsToGenerate];
         reserveNewBlocksUntilSizeIs(numAccessionsToGenerate);
 
@@ -186,7 +174,7 @@ public class MonotonicAccessionGenerator<MODEL> implements AccessionGenerator<MO
         release(response.getSaveFailedAccessions().stream().mapToLong(l -> l).toArray());
     }
 
-    public void shutDownAccessionGenerator(){
+    public void shutDownAccessionGenerator() {
         List<ContiguousIdBlock> blockList = blockManager.getAssignedBlocks();
         blockList.stream().forEach(block -> block.releaseReserved());
         blockService.save(blockList);
@@ -198,8 +186,8 @@ public class MonotonicAccessionGenerator<MODEL> implements AccessionGenerator<MO
      * Before doing any operation on Accession Generator, we need to make sure it has not been shut down.
      * We should make the check by calling this method as the first thing in all public methods of this class
      */
-    private void checkAccessionGeneratorNotShutDown(){
-        if(SHUTDOWN){
+    private void checkAccessionGeneratorNotShutDown() {
+        if (SHUTDOWN) {
             throw new AccessionGeneratorShutDownException("Accession Generator has been shut down and is no longer available");
         }
     }

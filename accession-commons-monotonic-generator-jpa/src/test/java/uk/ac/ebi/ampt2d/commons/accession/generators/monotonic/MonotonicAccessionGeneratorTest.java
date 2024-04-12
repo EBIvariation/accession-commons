@@ -26,6 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
+import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionGeneratorShutDownException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionIsNotPendingException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
@@ -33,8 +34,10 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.SaveResponse;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.entities.ContiguousIdBlock;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.repositories.ContiguousIdBlockRepository;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service.ContiguousIdBlockService;
+import uk.ac.ebi.ampt2d.commons.accession.service.BasicSpringDataRepositoryMonotonicDatabaseService;
 import uk.ac.ebi.ampt2d.commons.accession.utils.exceptions.ExponentialBackOffMaxRetriesRuntimeException;
 import uk.ac.ebi.ampt2d.test.configuration.MonotonicAccessionGeneratorTestConfiguration;
+import uk.ac.ebi.ampt2d.test.configuration.TestMonotonicDatabaseServiceTestConfiguration;
 
 import java.util.Comparator;
 import java.util.HashMap;
@@ -44,10 +47,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static org.hamcrest.Matchers.contains;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -57,7 +58,7 @@ import static uk.ac.ebi.ampt2d.commons.accession.util.ContiguousIdBlockUtil.getU
 
 @RunWith(SpringRunner.class)
 @DataJpaTest
-@ContextConfiguration(classes = {MonotonicAccessionGeneratorTestConfiguration.class})
+@ContextConfiguration(classes = {MonotonicAccessionGeneratorTestConfiguration.class, TestMonotonicDatabaseServiceTestConfiguration.class})
 public class MonotonicAccessionGeneratorTest {
 
     private static final int BLOCK_SIZE = 1000;
@@ -73,6 +74,9 @@ public class MonotonicAccessionGeneratorTest {
 
     @Autowired
     private ContiguousIdBlockService service;
+
+    @Autowired
+    private BasicSpringDataRepositoryMonotonicDatabaseService monotonicDBService;
 
     @Test
     public void assertNoBlockGeneratedAtLoadIfNoneExists() throws Exception {
@@ -97,7 +101,7 @@ public class MonotonicAccessionGeneratorTest {
         repository.save(new ContiguousIdBlock(CATEGORY_ID, INSTANCE_ID, 0, BLOCK_SIZE));
         assertEquals(1, repository.count());
         MonotonicAccessionGenerator generator = new MonotonicAccessionGenerator(
-                CATEGORY_ID, INSTANCE_ID, service);
+                CATEGORY_ID, INSTANCE_ID, service, monotonicDBService);
 
         assertEquals(1, repository.count());
     }
@@ -108,9 +112,9 @@ public class MonotonicAccessionGeneratorTest {
         assertEquals(0, repository.count());
 
         MonotonicAccessionGenerator generator1 = new MonotonicAccessionGenerator(
-                CATEGORY_ID, INSTANCE_ID, service);
+                CATEGORY_ID, INSTANCE_ID, service, monotonicDBService);
         MonotonicAccessionGenerator generator2 = new MonotonicAccessionGenerator(
-                CATEGORY_ID, INSTANCE_2_ID, service);
+                CATEGORY_ID, INSTANCE_2_ID, service, monotonicDBService);
 
         generator1.generateAccessions(TENTH_BLOCK_SIZE);
         assertEquals(1, repository.count());
@@ -306,12 +310,11 @@ public class MonotonicAccessionGeneratorTest {
         // Now assume that the db layer has stored some elements and that the application has died and restarted.
 
         MonotonicAccessionGenerator generatorRecovering =
-                new MonotonicAccessionGenerator(CATEGORY_ID, INSTANCE_ID, service, new long[]{2, 3, 5});
+                new MonotonicAccessionGenerator(CATEGORY_ID, INSTANCE_ID, service, monotonicDBService);
         ContiguousIdBlock block = findFirstByCategoryIdAndApplicationInstanceIdOrderByLastValueDesc(CATEGORY_ID);
         assertEquals(-1, block.getLastCommitted());
+        generatorRecovering.generateAccessions(0);
         assertFalse(generatorRecovering.getAvailableRanges().isEmpty());
-        assertThat(generatorRecovering.getAvailableRanges(),
-                contains(new MonotonicRange(0, 1), new MonotonicRange(4, 4), new MonotonicRange(6, BLOCK_SIZE - 1)));
     }
 
     @Test
@@ -323,11 +326,14 @@ public class MonotonicAccessionGeneratorTest {
         // Now assume that the db layer has stored some elements and that the application has died and restarted.
 
         MonotonicAccessionGenerator generatorRecovering = new MonotonicAccessionGenerator(
-                CATEGORY_ID, INSTANCE_ID, service, new long[]{2, 3, 5});
+                CATEGORY_ID, INSTANCE_ID, service, monotonicDBService);
         ContiguousIdBlock block = findFirstByCategoryIdAndApplicationInstanceIdOrderByLastValueDesc(CATEGORY_ID);
-        assertEquals(3, block.getLastCommitted());
-        assertThat(generatorRecovering.getAvailableRanges(),
-                contains(new MonotonicRange(4, 4), new MonotonicRange(6, BLOCK_SIZE - 1)));
+        assertEquals(1, block.getLastCommitted());
+        generatorRecovering.generateAccessions(0);
+        assertEquals(1, generatorRecovering.getAvailableRanges().size());
+        MonotonicRange monotonicRange = generatorRecovering.getAvailableRanges().peek();
+        assertEquals(2, monotonicRange.getStart());
+        assertEquals(BLOCK_SIZE - 1, monotonicRange.getEnd());
     }
 
     @Test(expected = AccessionIsNotPendingException.class)
@@ -368,7 +374,7 @@ public class MonotonicAccessionGeneratorTest {
         assertEquals(0, repository.count());
 
         MonotonicAccessionGenerator<String> generator =
-                new MonotonicAccessionGenerator(CATEGORY_ID, INSTANCE_ID, service);
+                new MonotonicAccessionGenerator(CATEGORY_ID, INSTANCE_ID, service, monotonicDBService);
 
         HashMap<String, String> objects = new HashMap<>();
         objects.put("hash1", "object2");
@@ -419,42 +425,44 @@ public class MonotonicAccessionGeneratorTest {
     @Test
     public void assertRecoverInAlternateRanges() throws Exception {
         MonotonicAccessionGenerator generator = getMonotonicAccessionGeneratorForCategoryHavingBlockInterval();
-        long[] accessions1 = generator.generateAccessions(NUM_OF_ACCESSIONS);
+        long[] accessions1 = generator.generateAccessions(6);
         generator.shutDownAccessionGenerator();
         // Now assume that the db layer has stored some elements and that the application has died and restarted.
         MonotonicAccessionGenerator generatorRecovering =
-                new MonotonicAccessionGenerator(CATEGORY_ID_2, INSTANCE_ID, service, new long[]{2, 3});
-        long[] accessions2 = generatorRecovering.generateAccessions(NUM_OF_ACCESSIONS);
+                new MonotonicAccessionGenerator(CATEGORY_ID_2, INSTANCE_ID, service, monotonicDBService);
+        long[] accessions2 = generatorRecovering.generateAccessions(6);
         assertEquals(1, accessions2[0]);
-        assertEquals(4, accessions2[1]);
-        assertEquals(5, accessions2[2]);
-        assertEquals(11, accessions2[3]);
+        assertEquals(2, accessions2[1]);
+        assertEquals(3, accessions2[2]);
+        assertEquals(4, accessions2[3]);
+        assertEquals(5, accessions2[4]);
+        assertEquals(11, accessions2[5]);
     }
 
     private MonotonicAccessionGenerator getMonotonicAccessionGenerator() throws Exception {
         assertEquals(0, repository.count());
 
         MonotonicAccessionGenerator generator = new MonotonicAccessionGenerator(
-                CATEGORY_ID, INSTANCE_ID, service);
+                CATEGORY_ID, INSTANCE_ID, service, monotonicDBService);
         return generator;
     }
 
     private MonotonicAccessionGenerator getMonotonicAccessionGeneratorForCategoryHavingBlockInterval() {
         assertEquals(0, repository.count());
-        return new MonotonicAccessionGenerator(CATEGORY_ID_2, INSTANCE_ID, service);
+        return new MonotonicAccessionGenerator(CATEGORY_ID_2, INSTANCE_ID, service, monotonicDBService);
     }
 
     @Test
     public void assertAbortExecutionWhenDBConstraintExceptionThrown() {
         ContiguousIdBlockService mockService = Mockito.mock(ContiguousIdBlockService.class, Answers.RETURNS_DEEP_STUBS);
-        MonotonicAccessionGenerator mockGenerator = new MonotonicAccessionGenerator(CATEGORY_ID, INSTANCE_ID, mockService);
+        MonotonicAccessionGenerator mockGenerator = new MonotonicAccessionGenerator(CATEGORY_ID, INSTANCE_ID, mockService, monotonicDBService);
         when(mockService.reserveNewBlock(anyString(), anyString())).thenThrow(ConstraintViolationException.class);
         assertThrows(ExponentialBackOffMaxRetriesRuntimeException.class, () -> mockGenerator.generateAccessions(1));
         assertEquals(0, repository.count());
     }
 
     @Test
-    public void testInitializeBlockManager() {
+    public void testInitializeBlockManager() throws AccessionCouldNotBeGeneratedException {
         ContiguousIdBlock block = getUnreservedContiguousIdBlock(CATEGORY_ID_2, INSTANCE_ID, 0, 10);
         repository.save(block);
 
@@ -470,8 +478,11 @@ public class MonotonicAccessionGeneratorTest {
         assertEquals(-1, unreservedBlocks.get(0).getLastCommitted());
         assertEquals(false, unreservedBlocks.get(0).isReserved());
 
-        // Generator 1 starts and its recover state reserves the UnCompleted block
-        MonotonicAccessionGenerator generator1 = new MonotonicAccessionGenerator(CATEGORY_ID_2, INSTANCE_ID, service, new long[]{});
+        // Generator 1 starts
+        MonotonicAccessionGenerator generator1 = new MonotonicAccessionGenerator(CATEGORY_ID_2, INSTANCE_ID, service, monotonicDBService);
+        assertEquals(0, generator1.getAvailableRanges().size());
+        // its recover state reserves the UnCompleted block
+        generator1.generateAccessions(0);
         assertEquals(1, generator1.getAvailableRanges().size());
         assertEquals(new MonotonicRange(0, 9), generator1.getAvailableRanges().peek());
 
@@ -488,12 +499,14 @@ public class MonotonicAccessionGeneratorTest {
         assertEquals(true, reservedBlocks.get(0).isReserved());
 
         // Generator-2 will not be able to reserve the un-completed block as it is currently reserved by Generator-1
-        MonotonicAccessionGenerator generator2 = new MonotonicAccessionGenerator(CATEGORY_ID_2, INSTANCE_ID, service, new long[]{});
+        MonotonicAccessionGenerator generator2 = new MonotonicAccessionGenerator(CATEGORY_ID_2, INSTANCE_ID, service, monotonicDBService);
+        generator2.generateAccessions(0);
         assertEquals(0, generator2.getAvailableRanges().size());
 
         // Generator-3 can reserve the same Uncompleted block, once Generator-1 releases it
         generator1.shutDownAccessionGenerator();
-        MonotonicAccessionGenerator generator3 = new MonotonicAccessionGenerator(CATEGORY_ID_2, INSTANCE_ID, service, new long[]{});
+        MonotonicAccessionGenerator generator3 = new MonotonicAccessionGenerator(CATEGORY_ID_2, INSTANCE_ID, service, monotonicDBService);
+        generator3.generateAccessions(0);
         assertEquals(1, generator3.getAvailableRanges().size());
         assertEquals(new MonotonicRange(0, 9), generator3.getAvailableRanges().peek());
     }
