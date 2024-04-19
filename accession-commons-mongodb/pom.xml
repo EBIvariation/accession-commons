@@ -3,13 +3,13 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>accession-commons-mongodb</artifactId>
-    <version>0.7.13-SNAPSHOT</version>
+    <version>0.7.13</version>
     <packaging>jar</packaging>
 
     <parent>
         <artifactId>accession-commons</artifactId>
         <groupId>uk.ac.ebi.ampt2d</groupId>
-        <version>0.7.13-SNAPSHOT</version>
+        <version>0.7.13</version>
     </parent>
 
     <properties>
@@ -20,13 +20,13 @@
         <dependency>
             <groupId>uk.ac.ebi.ampt2d</groupId>
             <artifactId>accession-commons-test</artifactId>
-            <version>0.7.13-SNAPSHOT</version>
+            <version>0.7.13</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>uk.ac.ebi.ampt2d</groupId>
             <artifactId>accession-commons-core</artifactId>
-            <version>0.7.13-SNAPSHOT</version>
+            <version>0.7.13</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
