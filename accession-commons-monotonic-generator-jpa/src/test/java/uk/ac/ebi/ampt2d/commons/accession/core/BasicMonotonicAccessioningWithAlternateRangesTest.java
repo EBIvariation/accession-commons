@@ -74,7 +74,7 @@ public class BasicMonotonicAccessioningWithAlternateRangesTest {
     }
 
     @Test
-    public void testRecoverState() {
+    public void testRecoverState() throws AccessionCouldNotBeGeneratedException {
         String categoryId = "eva_2";
         String instanceId2 = "test-instance_2";
 
@@ -102,6 +102,7 @@ public class BasicMonotonicAccessioningWithAlternateRangesTest {
 
         // run recover state
         MonotonicAccessionGenerator generator = getGenerator(categoryId, instanceId2);
+        generator.generateAccessions(0);
 
         // As we have already saved accessions in db from 100 to 124, the status should be
         // block-1 (100 to 109) : fully complete
@@ -174,7 +175,7 @@ public class BasicMonotonicAccessioningWithAlternateRangesTest {
     }
 
     @Test
-    public void testInitializeBlockManagerInMonotonicAccessionGenerator() {
+    public void testInitializeBlockManagerInMonotonicAccessionGenerator() throws AccessionCouldNotBeGeneratedException {
         String categoryId = "eva_2";
         String instanceId2 = "test-instance_2";
 
@@ -193,7 +194,8 @@ public class BasicMonotonicAccessioningWithAlternateRangesTest {
         assertEquals(false, unreservedAndNotFullBlocks.get(0).isReserved());
 
         // this will run the recover state
-        BasicAccessioningService accService = getAccessioningService(categoryId, instanceId2);
+        MonotonicAccessionGenerator monotonicAccessionGenerator = getGenerator(categoryId, instanceId2);
+        monotonicAccessionGenerator.generateAccessions(0);
 
         // assert block gets reserved after recover state
         blockInDBList = getAllBlocksForCategoryId(contiguousIdBlockRepository, categoryId);
