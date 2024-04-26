@@ -87,7 +87,7 @@ public class MonotonicAccessionGeneratorTest {
     @Test
     public void assertBlockGeneratedAtGenerateOperationIfNoBlockExists() throws Exception {
         MonotonicAccessionGenerator generator = getMonotonicAccessionGenerator();
-        generator.generateAccessions(TENTH_BLOCK_SIZE);
+        generator.generateAccessions(TENTH_BLOCK_SIZE, INSTANCE_ID);
         assertEquals(1, repository.count());
         ContiguousIdBlock block = repository.findFirstByCategoryIdOrderByLastValueDesc(CATEGORY_ID);
         assertEquals(0, block.getFirstValue());
@@ -101,7 +101,7 @@ public class MonotonicAccessionGeneratorTest {
         repository.save(new ContiguousIdBlock(CATEGORY_ID, INSTANCE_ID, 0, BLOCK_SIZE));
         assertEquals(1, repository.count());
         MonotonicAccessionGenerator generator = new MonotonicAccessionGenerator(
-                CATEGORY_ID, INSTANCE_ID, service, monotonicDBService);
+                CATEGORY_ID, service, monotonicDBService);
 
         assertEquals(1, repository.count());
     }
@@ -112,18 +112,18 @@ public class MonotonicAccessionGeneratorTest {
         assertEquals(0, repository.count());
 
         MonotonicAccessionGenerator generator1 = new MonotonicAccessionGenerator(
-                CATEGORY_ID, INSTANCE_ID, service, monotonicDBService);
+                CATEGORY_ID, service, monotonicDBService);
         MonotonicAccessionGenerator generator2 = new MonotonicAccessionGenerator(
-                CATEGORY_ID, INSTANCE_2_ID, service, monotonicDBService);
+                CATEGORY_ID, service, monotonicDBService);
 
-        generator1.generateAccessions(TENTH_BLOCK_SIZE);
+        generator1.generateAccessions(TENTH_BLOCK_SIZE, INSTANCE_ID);
         assertEquals(1, repository.count());
         block = findFirstByCategoryIdAndApplicationInstanceIdOrderByLastValueDesc(CATEGORY_ID);
         assertEquals(0, block.getFirstValue());
         assertEquals(BLOCK_SIZE - 1, block.getLastValue());
         assertEquals(-1, block.getLastCommitted());
 
-        generator2.generateAccessions(TENTH_BLOCK_SIZE);
+        generator2.generateAccessions(TENTH_BLOCK_SIZE, INSTANCE_2_ID);
         assertEquals(2, repository.count());
         block = findFirstByCategoryIdAndApplicationInstanceIdOrderByLastValueDesc(CATEGORY_ID);
         assertEquals(BLOCK_SIZE, block.getFirstValue());
@@ -135,7 +135,7 @@ public class MonotonicAccessionGeneratorTest {
     public void assertGenerateAccessions() throws Exception {
         MonotonicAccessionGenerator generator = getMonotonicAccessionGenerator();
 
-        long[] accessions = generator.generateAccessions(TENTH_BLOCK_SIZE);
+        long[] accessions = generator.generateAccessions(TENTH_BLOCK_SIZE, INSTANCE_ID);
         assertEquals(TENTH_BLOCK_SIZE, accessions.length);
     }
 
@@ -145,10 +145,10 @@ public class MonotonicAccessionGeneratorTest {
 
         //Generate BLOCK_SIZE accessions in BLOCK_SIZE/10 increments
         for (int i = 0; i < 10; i++) {
-            long[] accessions = generator.generateAccessions(TENTH_BLOCK_SIZE);
+            long[] accessions = generator.generateAccessions(TENTH_BLOCK_SIZE, INSTANCE_ID);
             assertEquals(i * TENTH_BLOCK_SIZE, accessions[0]);
         }
-        long[] accessions = generator.generateAccessions(TENTH_BLOCK_SIZE);
+        long[] accessions = generator.generateAccessions(TENTH_BLOCK_SIZE, INSTANCE_ID);
         assertEquals(BLOCK_SIZE, accessions[0]);
         assertEquals(2, repository.count());
     }
@@ -156,7 +156,7 @@ public class MonotonicAccessionGeneratorTest {
     @Test
     public void assertGenerateMoreAccessionsThanBlockSizeGeneratesInOneCall() throws Exception {
         MonotonicAccessionGenerator generator = getMonotonicAccessionGenerator();
-        long[] accessions = generator.generateAccessions(BLOCK_SIZE + (BLOCK_SIZE / 2));
+        long[] accessions = generator.generateAccessions(BLOCK_SIZE + (BLOCK_SIZE / 2), INSTANCE_ID);
 
         assertEquals(2, repository.count());
     }
@@ -164,7 +164,7 @@ public class MonotonicAccessionGeneratorTest {
     @Test
     public void assertCommitModifiesLastCommitted() throws Exception {
         MonotonicAccessionGenerator generator = getMonotonicAccessionGenerator();
-        long[] accessions = generator.generateAccessions(TENTH_BLOCK_SIZE);
+        long[] accessions = generator.generateAccessions(TENTH_BLOCK_SIZE, INSTANCE_ID);
 
         generator.commit(accessions);
 
@@ -175,7 +175,7 @@ public class MonotonicAccessionGeneratorTest {
     @Test
     public void assertNotCommittingDoesNotModifyLastCommitted() throws Exception {
         MonotonicAccessionGenerator generator = getMonotonicAccessionGenerator();
-        long[] accessions = generator.generateAccessions(TENTH_BLOCK_SIZE);
+        long[] accessions = generator.generateAccessions(TENTH_BLOCK_SIZE, INSTANCE_ID);
 
         ContiguousIdBlock block = findFirstByCategoryIdAndApplicationInstanceIdOrderByLastValueDesc(CATEGORY_ID);
         assertEquals(-1, block.getLastCommitted());
@@ -184,8 +184,8 @@ public class MonotonicAccessionGeneratorTest {
     @Test
     public void assertCommitOutOfOrderDoesNotModifyLastCommittedUntilTheSequenceIsComplete() throws Exception {
         MonotonicAccessionGenerator generator = getMonotonicAccessionGenerator();
-        long[] accessions1 = generator.generateAccessions(TENTH_BLOCK_SIZE);
-        long[] accessions2 = generator.generateAccessions(TENTH_BLOCK_SIZE);
+        long[] accessions1 = generator.generateAccessions(TENTH_BLOCK_SIZE, INSTANCE_ID);
+        long[] accessions2 = generator.generateAccessions(TENTH_BLOCK_SIZE, INSTANCE_ID);
 
         generator.commit(accessions2);
 
@@ -202,8 +202,8 @@ public class MonotonicAccessionGeneratorTest {
     public void assertCommitOutOfOrderDoesNotModifyLastCommittedUntilTheSequenceIsCompleteMultipleBlocks() throws
             Exception {
         MonotonicAccessionGenerator generator = getMonotonicAccessionGenerator();
-        long[] accessions1 = generator.generateAccessions(BLOCK_SIZE + TENTH_BLOCK_SIZE);
-        long[] accessions2 = generator.generateAccessions(TENTH_BLOCK_SIZE);
+        long[] accessions1 = generator.generateAccessions(BLOCK_SIZE + TENTH_BLOCK_SIZE, INSTANCE_ID);
+        long[] accessions2 = generator.generateAccessions(TENTH_BLOCK_SIZE, INSTANCE_ID);
 
         generator.commit(accessions2);
 
@@ -221,26 +221,26 @@ public class MonotonicAccessionGeneratorTest {
     @Test
     public void assertGenerateDoesNotReuseIds() throws Exception {
         MonotonicAccessionGenerator generator = getMonotonicAccessionGenerator();
-        generator.generateAccessions(TENTH_BLOCK_SIZE);
-        long[] accessions2 = generator.generateAccessions(TENTH_BLOCK_SIZE);
+        generator.generateAccessions(TENTH_BLOCK_SIZE, INSTANCE_ID);
+        long[] accessions2 = generator.generateAccessions(TENTH_BLOCK_SIZE, INSTANCE_ID);
         assertEquals(TENTH_BLOCK_SIZE, accessions2[0]);
     }
 
     @Test
     public void assertReleaseMakesGenerateReuseIds() throws Exception {
         MonotonicAccessionGenerator generator = getMonotonicAccessionGenerator();
-        long[] accessions1 = generator.generateAccessions(TENTH_BLOCK_SIZE);
+        long[] accessions1 = generator.generateAccessions(TENTH_BLOCK_SIZE, INSTANCE_ID);
         generator.release(accessions1);
-        long[] accessions2 = generator.generateAccessions(TENTH_BLOCK_SIZE);
+        long[] accessions2 = generator.generateAccessions(TENTH_BLOCK_SIZE, INSTANCE_ID);
         assertEquals(0, accessions2[0]);
     }
 
     @Test
     public void assertReleaseSomeIdsMakesGenerateReuseReleasedIdsAndNewOnes() throws Exception {
         MonotonicAccessionGenerator generator = getMonotonicAccessionGenerator();
-        generator.generateAccessions(TENTH_BLOCK_SIZE);
+        generator.generateAccessions(TENTH_BLOCK_SIZE, INSTANCE_ID);
         generator.release(0, 1);
-        long[] accessions2 = generator.generateAccessions(TENTH_BLOCK_SIZE);
+        long[] accessions2 = generator.generateAccessions(TENTH_BLOCK_SIZE, INSTANCE_ID);
         assertEquals(0, accessions2[0]);
         assertEquals(1, accessions2[1]);
         assertEquals(TENTH_BLOCK_SIZE, accessions2[2]);
@@ -249,11 +249,11 @@ public class MonotonicAccessionGeneratorTest {
     @Test
     public void assertMultipleReleaseSomeIdsMakesGenerateReuseReleasedIdsAndNewOnes() throws Exception {
         MonotonicAccessionGenerator generator = getMonotonicAccessionGenerator();
-        long[] accessions1 = generator.generateAccessions(TENTH_BLOCK_SIZE);
+        long[] accessions1 = generator.generateAccessions(TENTH_BLOCK_SIZE, INSTANCE_ID);
         generator.release(0, 1);
         generator.release(3, 4, 5);
         generator.release(8, 9, 10);
-        long[] accessions2 = generator.generateAccessions(TENTH_BLOCK_SIZE);
+        long[] accessions2 = generator.generateAccessions(TENTH_BLOCK_SIZE, INSTANCE_ID);
         assertEquals(0, accessions2[0]);
         assertEquals(1, accessions2[1]);
         assertEquals(3, accessions2[2]);
@@ -268,7 +268,7 @@ public class MonotonicAccessionGeneratorTest {
     @Test
     public void assertMultipleReleaseAndCommitsWorks() throws Exception {
         MonotonicAccessionGenerator generator = getMonotonicAccessionGenerator();
-        generator.generateAccessions(BLOCK_SIZE);
+        generator.generateAccessions(BLOCK_SIZE, INSTANCE_ID);
         generator.commit(2);
         generator.release(0, 1);
         generator.release(3, 4, 5);
@@ -279,7 +279,7 @@ public class MonotonicAccessionGeneratorTest {
         ContiguousIdBlock block = findFirstByCategoryIdAndApplicationInstanceIdOrderByLastValueDesc(CATEGORY_ID);
         assertEquals(-1, block.getLastCommitted());
 
-        long[] accessions2 = generator.generateAccessions(BLOCK_SIZE);
+        long[] accessions2 = generator.generateAccessions(BLOCK_SIZE, INSTANCE_ID);
         assertEquals(0, accessions2[0]);
         assertEquals(1, accessions2[1]);
         assertEquals(3, accessions2[2]);
@@ -305,31 +305,31 @@ public class MonotonicAccessionGeneratorTest {
     @Test
     public void assertRecoverNoPendingCommit() throws Exception {
         MonotonicAccessionGenerator generator = getMonotonicAccessionGenerator();
-        long[] accessions1 = generator.generateAccessions(BLOCK_SIZE);
+        long[] accessions1 = generator.generateAccessions(BLOCK_SIZE, INSTANCE_ID);
         generator.shutDownAccessionGenerator();
         // Now assume that the db layer has stored some elements and that the application has died and restarted.
 
         MonotonicAccessionGenerator generatorRecovering =
-                new MonotonicAccessionGenerator(CATEGORY_ID, INSTANCE_ID, service, monotonicDBService);
+                new MonotonicAccessionGenerator(CATEGORY_ID, service, monotonicDBService);
         ContiguousIdBlock block = findFirstByCategoryIdAndApplicationInstanceIdOrderByLastValueDesc(CATEGORY_ID);
         assertEquals(-1, block.getLastCommitted());
-        generatorRecovering.generateAccessions(0);
+        generatorRecovering.generateAccessions(0, INSTANCE_ID);
         assertFalse(generatorRecovering.getAvailableRanges().isEmpty());
     }
 
     @Test
     public void assertRecoverPendingCommit() throws Exception {
         MonotonicAccessionGenerator generator = getMonotonicAccessionGenerator();
-        long[] accessions1 = generator.generateAccessions(BLOCK_SIZE);
+        long[] accessions1 = generator.generateAccessions(BLOCK_SIZE, INSTANCE_ID);
         generator.commit(0, 1);
         generator.shutDownAccessionGenerator();
         // Now assume that the db layer has stored some elements and that the application has died and restarted.
 
         MonotonicAccessionGenerator generatorRecovering = new MonotonicAccessionGenerator(
-                CATEGORY_ID, INSTANCE_ID, service, monotonicDBService);
+                CATEGORY_ID, service, monotonicDBService);
         ContiguousIdBlock block = findFirstByCategoryIdAndApplicationInstanceIdOrderByLastValueDesc(CATEGORY_ID);
         assertEquals(1, block.getLastCommitted());
-        generatorRecovering.generateAccessions(0);
+        generatorRecovering.generateAccessions(0, INSTANCE_ID);
         assertEquals(1, generatorRecovering.getAvailableRanges().size());
         MonotonicRange monotonicRange = generatorRecovering.getAvailableRanges().peek();
         assertEquals(2, monotonicRange.getStart());
@@ -339,7 +339,7 @@ public class MonotonicAccessionGeneratorTest {
     @Test(expected = AccessionIsNotPendingException.class)
     public void assertReleaseAndCommitSameElement() throws Exception {
         MonotonicAccessionGenerator generator = getMonotonicAccessionGenerator();
-        generator.generateAccessions(BLOCK_SIZE);
+        generator.generateAccessions(BLOCK_SIZE, INSTANCE_ID);
         generator.release(2);
         generator.commit(2);
     }
@@ -347,7 +347,7 @@ public class MonotonicAccessionGeneratorTest {
     @Test(expected = AccessionIsNotPendingException.class)
     public void assertCommitAndReleaseSameElement() throws Exception {
         MonotonicAccessionGenerator generator = getMonotonicAccessionGenerator();
-        generator.generateAccessions(BLOCK_SIZE);
+        generator.generateAccessions(BLOCK_SIZE, INSTANCE_ID);
         generator.commit(2);
         generator.release(2);
     }
@@ -355,7 +355,7 @@ public class MonotonicAccessionGeneratorTest {
     @Test(expected = AccessionIsNotPendingException.class)
     public void releaseSomeIdsTwice() throws Exception {
         MonotonicAccessionGenerator generator = getMonotonicAccessionGenerator();
-        generator.generateAccessions(TENTH_BLOCK_SIZE);
+        generator.generateAccessions(TENTH_BLOCK_SIZE, INSTANCE_ID);
         generator.release(0, 1);
         generator.release(0, 1);
     }
@@ -374,13 +374,13 @@ public class MonotonicAccessionGeneratorTest {
         assertEquals(0, repository.count());
 
         MonotonicAccessionGenerator<String> generator =
-                new MonotonicAccessionGenerator(CATEGORY_ID, INSTANCE_ID, service, monotonicDBService);
+                new MonotonicAccessionGenerator(CATEGORY_ID, service, monotonicDBService);
 
         HashMap<String, String> objects = new HashMap<>();
         objects.put("hash1", "object2");
         objects.put("hash2", "object2");
 
-        List<AccessionWrapper<String, String, Long>> generatedAccessions = generator.generateAccessions(objects);
+        List<AccessionWrapper<String, String, Long>> generatedAccessions = generator.generateAccessions(objects, INSTANCE_ID);
 
         assertEquals(1, repository.count());
         assertEquals(0L, (long) generatedAccessions.get(0).getAccession());
@@ -390,7 +390,7 @@ public class MonotonicAccessionGeneratorTest {
     @Test
     public void postSaveAction() throws Exception {
         MonotonicAccessionGenerator generator = getMonotonicAccessionGenerator();
-        generator.generateAccessions(BLOCK_SIZE);
+        generator.generateAccessions(BLOCK_SIZE, INSTANCE_ID);
         Set<Long> committed = new HashSet<>();
         committed.add(0L);
         committed.add(1L);
@@ -400,7 +400,7 @@ public class MonotonicAccessionGeneratorTest {
         released.add(2L);
         released.add(5L);
         generator.postSave(new SaveResponse(committed, released));
-        long[] accessions = generator.generateAccessions(BLOCK_SIZE);
+        long[] accessions = generator.generateAccessions(BLOCK_SIZE, INSTANCE_ID);
         assertEquals(2, accessions[0]);
         assertEquals(5, accessions[1]);
         assertEquals(BLOCK_SIZE, accessions[2]);
@@ -409,13 +409,13 @@ public class MonotonicAccessionGeneratorTest {
     @Test
     public void assertReleaseInAlternateRanges() throws Exception {
         MonotonicAccessionGenerator generator = getMonotonicAccessionGeneratorForCategoryHavingBlockInterval();
-        long[] accessions1 = generator.generateAccessions(NUM_OF_ACCESSIONS);
+        long[] accessions1 = generator.generateAccessions(NUM_OF_ACCESSIONS, INSTANCE_ID);
         assertEquals(1, accessions1[0]);
         assertEquals(2, accessions1[1]);
         assertEquals(3, accessions1[2]);
         assertEquals(4, accessions1[3]);
         generator.release(new long[]{2, 3});
-        long[] accessions2 = generator.generateAccessions(NUM_OF_ACCESSIONS);
+        long[] accessions2 = generator.generateAccessions(NUM_OF_ACCESSIONS, INSTANCE_ID);
         assertEquals(2, accessions2[0]);
         assertEquals(3, accessions2[1]);
         assertEquals(5, accessions2[2]);
@@ -425,12 +425,12 @@ public class MonotonicAccessionGeneratorTest {
     @Test
     public void assertRecoverInAlternateRanges() throws Exception {
         MonotonicAccessionGenerator generator = getMonotonicAccessionGeneratorForCategoryHavingBlockInterval();
-        long[] accessions1 = generator.generateAccessions(6);
+        long[] accessions1 = generator.generateAccessions(6, INSTANCE_ID);
         generator.shutDownAccessionGenerator();
         // Now assume that the db layer has stored some elements and that the application has died and restarted.
         MonotonicAccessionGenerator generatorRecovering =
-                new MonotonicAccessionGenerator(CATEGORY_ID_2, INSTANCE_ID, service, monotonicDBService);
-        long[] accessions2 = generatorRecovering.generateAccessions(6);
+                new MonotonicAccessionGenerator(CATEGORY_ID_2, service, monotonicDBService);
+        long[] accessions2 = generatorRecovering.generateAccessions(6, INSTANCE_ID);
         assertEquals(1, accessions2[0]);
         assertEquals(2, accessions2[1]);
         assertEquals(3, accessions2[2]);
@@ -443,21 +443,21 @@ public class MonotonicAccessionGeneratorTest {
         assertEquals(0, repository.count());
 
         MonotonicAccessionGenerator generator = new MonotonicAccessionGenerator(
-                CATEGORY_ID, INSTANCE_ID, service, monotonicDBService);
+                CATEGORY_ID, service, monotonicDBService);
         return generator;
     }
 
     private MonotonicAccessionGenerator getMonotonicAccessionGeneratorForCategoryHavingBlockInterval() {
         assertEquals(0, repository.count());
-        return new MonotonicAccessionGenerator(CATEGORY_ID_2, INSTANCE_ID, service, monotonicDBService);
+        return new MonotonicAccessionGenerator(CATEGORY_ID_2, service, monotonicDBService);
     }
 
     @Test
     public void assertAbortExecutionWhenDBConstraintExceptionThrown() {
         ContiguousIdBlockService mockService = Mockito.mock(ContiguousIdBlockService.class, Answers.RETURNS_DEEP_STUBS);
-        MonotonicAccessionGenerator mockGenerator = new MonotonicAccessionGenerator(CATEGORY_ID, INSTANCE_ID, mockService, monotonicDBService);
+        MonotonicAccessionGenerator mockGenerator = new MonotonicAccessionGenerator(CATEGORY_ID, mockService, monotonicDBService);
         when(mockService.reserveNewBlock(anyString(), anyString())).thenThrow(ConstraintViolationException.class);
-        assertThrows(ExponentialBackOffMaxRetriesRuntimeException.class, () -> mockGenerator.generateAccessions(1));
+        assertThrows(ExponentialBackOffMaxRetriesRuntimeException.class, () -> mockGenerator.generateAccessions(1, INSTANCE_ID));
         assertEquals(0, repository.count());
     }
 
@@ -479,10 +479,10 @@ public class MonotonicAccessionGeneratorTest {
         assertEquals(false, unreservedBlocks.get(0).isReserved());
 
         // Generator 1 starts
-        MonotonicAccessionGenerator generator1 = new MonotonicAccessionGenerator(CATEGORY_ID_2, INSTANCE_ID, service, monotonicDBService);
+        MonotonicAccessionGenerator generator1 = new MonotonicAccessionGenerator(CATEGORY_ID_2, service, monotonicDBService);
         assertEquals(0, generator1.getAvailableRanges().size());
         // its recover state reserves the UnCompleted block
-        generator1.generateAccessions(0);
+        generator1.generateAccessions(0, INSTANCE_ID);
         assertEquals(1, generator1.getAvailableRanges().size());
         assertEquals(new MonotonicRange(0, 9), generator1.getAvailableRanges().peek());
 
@@ -499,14 +499,14 @@ public class MonotonicAccessionGeneratorTest {
         assertEquals(true, reservedBlocks.get(0).isReserved());
 
         // Generator-2 will not be able to reserve the un-completed block as it is currently reserved by Generator-1
-        MonotonicAccessionGenerator generator2 = new MonotonicAccessionGenerator(CATEGORY_ID_2, INSTANCE_ID, service, monotonicDBService);
-        generator2.generateAccessions(0);
+        MonotonicAccessionGenerator generator2 = new MonotonicAccessionGenerator(CATEGORY_ID_2, service, monotonicDBService);
+        generator2.generateAccessions(0, INSTANCE_ID);
         assertEquals(0, generator2.getAvailableRanges().size());
 
         // Generator-3 can reserve the same Uncompleted block, once Generator-1 releases it
         generator1.shutDownAccessionGenerator();
-        MonotonicAccessionGenerator generator3 = new MonotonicAccessionGenerator(CATEGORY_ID_2, INSTANCE_ID, service, monotonicDBService);
-        generator3.generateAccessions(0);
+        MonotonicAccessionGenerator generator3 = new MonotonicAccessionGenerator(CATEGORY_ID_2, service, monotonicDBService);
+        generator3.generateAccessions(0, INSTANCE_ID);
         assertEquals(1, generator3.getAvailableRanges().size());
         assertEquals(new MonotonicRange(0, 9), generator3.getAvailableRanges().peek());
     }
@@ -516,8 +516,8 @@ public class MonotonicAccessionGeneratorTest {
         MonotonicAccessionGenerator generator = getMonotonicAccessionGeneratorForCategoryHavingBlockInterval();
         generator.shutDownAccessionGenerator();
 
-        assertThrows(AccessionGeneratorShutDownException.class, () -> generator.generateAccessions(24));
-        assertThrows(AccessionGeneratorShutDownException.class, () -> generator.generateAccessions(new HashMap()));
+        assertThrows(AccessionGeneratorShutDownException.class, () -> generator.generateAccessions(24, INSTANCE_ID));
+        assertThrows(AccessionGeneratorShutDownException.class, () -> generator.generateAccessions(new HashMap(), INSTANCE_ID));
         assertThrows(AccessionGeneratorShutDownException.class, () -> generator.commit());
         assertThrows(AccessionGeneratorShutDownException.class, () -> generator.release());
         assertThrows(AccessionGeneratorShutDownException.class, () -> generator.postSave(new SaveResponse<>()));

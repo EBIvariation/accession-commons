@@ -45,6 +45,7 @@ import static org.junit.Assert.assertTrue;
 @ContextConfiguration(classes = {TestMonotonicDatabaseServiceTestConfiguration.class})
 public class BasicMonotonicAccessioningWithInitValuesTest {
 
+    private static String APPLICATION_INSTANCE_ID = "TEST_APPPLICATION_INSTANCE_ID";
     @Autowired
     private TestMonotonicRepository repository;
 
@@ -63,7 +64,7 @@ public class BasicMonotonicAccessioningWithInitValuesTest {
                         TestModel.of("service-test-1"),
                         TestModel.of("service-test-2"),
                         TestModel.of("service-test-3")
-                ));
+                ), APPLICATION_INSTANCE_ID);
 
         assertEquals(3, accessions.size());
         accessions.stream().forEach(entry -> assertTrue(entry.getAccession() >= 100L));
@@ -88,7 +89,7 @@ public class BasicMonotonicAccessioningWithInitValuesTest {
                         TestModel.of("service-test-2"),
                         TestModel.of("service-test-2"),
                         TestModel.of("service-test-3")
-                ));
+                ), APPLICATION_INSTANCE_ID);
         assertEquals(3, accessions.size());
         accessions.stream().forEach(entry -> assertTrue(entry.getAccession() >= 100L));
     }
@@ -140,7 +141,7 @@ public class BasicMonotonicAccessioningWithInitValuesTest {
                         TestModel.of("service-test-1"),
                         TestModel.of("service-test-2"),
                         TestModel.of("service-test-3")
-                ));
+                ), APPLICATION_INSTANCE_ID);
         assertEquals(3, accessions.size());
         accessions.stream().forEach(entry ->
                 assertTrue(entry.getAccession() == 0L || entry.getAccession() >= 100L));

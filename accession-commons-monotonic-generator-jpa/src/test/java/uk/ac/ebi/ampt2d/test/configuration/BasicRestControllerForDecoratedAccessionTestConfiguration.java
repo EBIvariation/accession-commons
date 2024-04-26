@@ -106,7 +106,7 @@ public class BasicRestControllerForDecoratedAccessionTestConfiguration {
     @Bean
     public AccessioningService<TestModel, String, Long> analysisAccessionService() {
         return new BasicAccessioningService<>(
-                new MonotonicAccessionGenerator<>(CATEGORY_ID, INSTANCE_ID, contiguousIdBlockService,
+                new MonotonicAccessionGenerator<>(CATEGORY_ID, contiguousIdBlockService,
                         getDatabaseService()),
                 getDatabaseService(),
                 analysis -> analysis.getValue(),

@@ -45,7 +45,6 @@ public class MonotonicAccessionGenerator<MODEL> implements AccessionGenerator<MO
 
     private final BlockManager blockManager;
     private final String categoryId;
-    private final String applicationInstanceId;
     private final ContiguousIdBlockService blockService;
     private MonotonicDatabaseService monotonicDatabaseService;
 
@@ -53,11 +52,9 @@ public class MonotonicAccessionGenerator<MODEL> implements AccessionGenerator<MO
     private boolean RUN_RECOVERY = true;
 
     public MonotonicAccessionGenerator(String categoryId,
-                                       String applicationInstanceId,
                                        ContiguousIdBlockService contiguousIdBlockService,
                                        MonotonicDatabaseService monotonicDatabaseService) {
         this.categoryId = categoryId;
-        this.applicationInstanceId = applicationInstanceId;
         this.blockService = contiguousIdBlockService;
         this.monotonicDatabaseService = monotonicDatabaseService;
         assertBlockParametersAreInitialized(blockService, categoryId);
@@ -70,7 +67,7 @@ public class MonotonicAccessionGenerator<MODEL> implements AccessionGenerator<MO
         }
     }
 
-    private void recoverState() {
+    private void recoverState(String applicationInstanceId) {
         if (RUN_RECOVERY && monotonicDatabaseService != null) {
             List<ContiguousIdBlock> uncompletedBlocks = blockService
                     .reserveUncompletedBlocksForCategoryIdAndApplicationInstanceId(categoryId, applicationInstanceId);
@@ -103,12 +100,12 @@ public class MonotonicAccessionGenerator<MODEL> implements AccessionGenerator<MO
         blockService.save(blockManager.recoverState(committedElements));
     }
 
-    public synchronized long[] generateAccessions(int numAccessionsToGenerate)
+    public synchronized long[] generateAccessions(int numAccessionsToGenerate, String applicationInstanceId)
             throws AccessionCouldNotBeGeneratedException {
         checkAccessionGeneratorNotShutDown();
-        recoverState();
+        recoverState(applicationInstanceId);
         long[] accessions = new long[numAccessionsToGenerate];
-        reserveNewBlocksUntilSizeIs(numAccessionsToGenerate);
+        reserveNewBlocksUntilSizeIs(numAccessionsToGenerate, applicationInstanceId);
 
         int i = 0;
         while (i < numAccessionsToGenerate) {
@@ -127,7 +124,7 @@ public class MonotonicAccessionGenerator<MODEL> implements AccessionGenerator<MO
      *
      * @param totalAccessionsToGenerate
      */
-    private synchronized void reserveNewBlocksUntilSizeIs(int totalAccessionsToGenerate) {
+    private synchronized void reserveNewBlocksUntilSizeIs(int totalAccessionsToGenerate, String applicationInstanceId) {
         while (!blockManager.hasAvailableAccessions(totalAccessionsToGenerate)) {
             ExponentialBackOff.execute(() -> reserveNewBlock(categoryId, applicationInstanceId), 10, 30);
         }
@@ -153,10 +150,10 @@ public class MonotonicAccessionGenerator<MODEL> implements AccessionGenerator<MO
     }
 
     @Override
-    public <HASH> List<AccessionWrapper<MODEL, HASH, Long>> generateAccessions(Map<HASH, MODEL> messages)
+    public <HASH> List<AccessionWrapper<MODEL, HASH, Long>> generateAccessions(Map<HASH, MODEL> messages, String applicationInstanceId)
             throws AccessionCouldNotBeGeneratedException {
         checkAccessionGeneratorNotShutDown();
-        long[] accessions = generateAccessions(messages.size());
+        long[] accessions = generateAccessions(messages.size(), applicationInstanceId);
         int i = 0;
         List<AccessionWrapper<MODEL, HASH, Long>> accessionedModels = new ArrayList<>();
         for (Map.Entry<HASH, ? extends MODEL> entry : messages.entrySet()) {

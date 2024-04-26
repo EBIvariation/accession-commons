@@ -70,7 +70,7 @@ public class BasicMonotonicAccessioningWithAlternateRangesTest {
     public void testUnknownCategory() throws AccessionCouldNotBeGeneratedException {
         List<GetOrCreateAccessionWrapper<TestModel, String, Long>> evaAccessions =
                 getAccessioningService("unknown-category", INSTANCE_ID)
-                        .getOrCreate(getObjectsForAccessionsInRange(1, 10));
+                        .getOrCreate(getObjectsForAccessionsInRange(1, 10), INSTANCE_ID);
     }
 
     @Test
@@ -102,7 +102,7 @@ public class BasicMonotonicAccessioningWithAlternateRangesTest {
 
         // run recover state
         MonotonicAccessionGenerator generator = getGenerator(categoryId, instanceId2);
-        generator.generateAccessions(0);
+        generator.generateAccessions(0, INSTANCE_ID);
 
         // As we have already saved accessions in db from 100 to 124, the status should be
         // block-1 (100 to 109) : fully complete
@@ -128,7 +128,7 @@ public class BasicMonotonicAccessioningWithAlternateRangesTest {
         String categoryId = "eva_2";
         String instanceId2 = "test-instance_2";
         BasicAccessioningService accService1 = getAccessioningService(categoryId, INSTANCE_ID);
-        List<GetOrCreateAccessionWrapper<TestModel, String, Long>> evaAccessions = accService1.getOrCreate(getObjectsForAccessionsInRange(1, 9));
+        List<GetOrCreateAccessionWrapper<TestModel, String, Long>> evaAccessions = accService1.getOrCreate(getObjectsForAccessionsInRange(1, 9), INSTANCE_ID);
         assertEquals(9, evaAccessions.size());
         assertEquals(0, evaAccessions.get(0).getAccession().longValue());
         assertEquals(8, evaAccessions.get(8).getAccession().longValue());
@@ -138,7 +138,7 @@ public class BasicMonotonicAccessioningWithAlternateRangesTest {
 
         //Get another service for same category
         BasicAccessioningService accService2 = getAccessioningService(categoryId, INSTANCE_ID);
-        evaAccessions = accService2.getOrCreate(getObjectsForAccessionsInRange(11, 30));
+        evaAccessions = accService2.getOrCreate(getObjectsForAccessionsInRange(11, 30), INSTANCE_ID);
         assertEquals(20, evaAccessions.size());
         //Previous block ended here as only 9 elements were accessioned out of a blocksize of 10
         assertEquals(9, evaAccessions.get(0).getAccession().longValue());
@@ -156,7 +156,7 @@ public class BasicMonotonicAccessioningWithAlternateRangesTest {
 
         //Get another service for same category but different Instance
         BasicAccessioningService accService3 = getAccessioningService(categoryId, instanceId2);
-        evaAccessions = accService3.getOrCreate(getObjectsForAccessionsInRange(31, 39));
+        evaAccessions = accService3.getOrCreate(getObjectsForAccessionsInRange(31, 39), INSTANCE_ID);
         assertEquals(9, evaAccessions.size());
         //New Block from different instance have not jumped as still blocks are available before interleaving point
         assertNotEquals(80, evaAccessions.get(0).getAccession().longValue());
@@ -167,7 +167,7 @@ public class BasicMonotonicAccessioningWithAlternateRangesTest {
 
         //Get previous uncompleted service from instance1 and create accessions
         BasicAccessioningService accService4 = getAccessioningService(categoryId, INSTANCE_ID);
-        evaAccessions = accService4.getOrCreate(getObjectsForAccessionsInRange(40, 42));
+        evaAccessions = accService4.getOrCreate(getObjectsForAccessionsInRange(40, 42), INSTANCE_ID);
         assertEquals(3, evaAccessions.size());
         assertEquals(58, evaAccessions.get(0).getAccession().longValue());  //Block ended here
         //New Block with 20 interval from last block made in instanceId2
@@ -195,7 +195,7 @@ public class BasicMonotonicAccessioningWithAlternateRangesTest {
 
         // this will run the recover state
         MonotonicAccessionGenerator monotonicAccessionGenerator = getGenerator(categoryId, instanceId2);
-        monotonicAccessionGenerator.generateAccessions(0);
+        monotonicAccessionGenerator.generateAccessions(0, INSTANCE_ID);
 
         // assert block gets reserved after recover state
         blockInDBList = getAllBlocksForCategoryId(contiguousIdBlockRepository, categoryId);
@@ -229,7 +229,7 @@ public class BasicMonotonicAccessioningWithAlternateRangesTest {
     }
 
     private MonotonicAccessionGenerator<TestModel> getGenerator(String categoryId, String instanceId) {
-        return new MonotonicAccessionGenerator<>(categoryId, instanceId, contiguousIdBlockService, databaseService);
+        return new MonotonicAccessionGenerator<>(categoryId, contiguousIdBlockService, databaseService);
     }
 }
 

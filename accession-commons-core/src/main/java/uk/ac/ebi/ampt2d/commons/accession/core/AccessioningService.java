@@ -46,7 +46,7 @@ public interface AccessioningService<MODEL, HASH, ACCESSION> {
      * @return List of wrapper objects containing the accessioned objects and their associated accessions and hashes
      * @throws AccessionCouldNotBeGeneratedException when accession could not be generated
      */
-    List<GetOrCreateAccessionWrapper<MODEL, HASH, ACCESSION>> getOrCreate(List<? extends MODEL> messages)
+    List<GetOrCreateAccessionWrapper<MODEL, HASH, ACCESSION>> getOrCreate(List<? extends MODEL> messages, String applicationInstanceId)
             throws AccessionCouldNotBeGeneratedException;
 
     /**
