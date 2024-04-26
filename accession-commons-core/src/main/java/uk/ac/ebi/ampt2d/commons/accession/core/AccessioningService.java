@@ -43,6 +43,8 @@ public interface AccessioningService<MODEL, HASH, ACCESSION> {
      * stored in the repository.
      *
      * @param messages List of objects to be accessioned or already accessioned
+     * @param applicationInstanceId The id of the application(instance) that is trying to generate the accessions.
+     *        This id will be used by the underlying Accession generator when reserving blocks for generating accessions.
      * @return List of wrapper objects containing the accessioned objects and their associated accessions and hashes
      * @throws AccessionCouldNotBeGeneratedException when accession could not be generated
      */

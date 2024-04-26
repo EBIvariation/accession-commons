@@ -123,6 +123,7 @@ public class MonotonicAccessionGenerator<MODEL> implements AccessionGenerator<MO
      * Ensures that the available ranges queue hold @param totalAccessionsToGenerate or more elements
      *
      * @param totalAccessionsToGenerate
+     * @param applicationInstanceId - The id of the application(instance) that is trying to reserve the block
      */
     private synchronized void reserveNewBlocksUntilSizeIs(int totalAccessionsToGenerate, String applicationInstanceId) {
         while (!blockManager.hasAvailableAccessions(totalAccessionsToGenerate)) {
