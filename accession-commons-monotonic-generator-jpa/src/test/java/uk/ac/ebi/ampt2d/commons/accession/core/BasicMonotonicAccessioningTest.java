@@ -46,6 +46,8 @@ import static org.junit.Assert.assertEquals;
 @ContextConfiguration(classes = {TestMonotonicDatabaseServiceTestConfiguration.class})
 public class BasicMonotonicAccessioningTest {
 
+    private static String APPLICATION_INSTANCE_ID = "TEST_APPPLICATION_INSTANCE_ID";
+
     @Autowired
     private TestMonotonicRepository repository;
 
@@ -64,7 +66,7 @@ public class BasicMonotonicAccessioningTest {
                         TestModel.of("service-test-1"),
                         TestModel.of("service-test-2"),
                         TestModel.of("service-test-3")
-                ));
+                ), APPLICATION_INSTANCE_ID);
         assertEquals(3, accessions.size());
     }
 
@@ -88,7 +90,7 @@ public class BasicMonotonicAccessioningTest {
                         TestModel.of("service-test-2"),
                         TestModel.of("service-test-2"),
                         TestModel.of("service-test-3")
-                ));
+                ), APPLICATION_INSTANCE_ID);
         assertEquals(3, accessions.size());
     }
 
@@ -112,7 +114,7 @@ public class BasicMonotonicAccessioningTest {
         List<GetOrCreateAccessionWrapper<TestModel, String, Long>> accessions1 = accessioningService.getOrCreate(
                 Arrays.asList(
                         TestModel.of("service-test-3")
-                ));
+                ), APPLICATION_INSTANCE_ID);
         assertEquals(1, accessions1.size());
 
         List<AccessionWrapper<TestModel, String, Long>> accessions2 = accessioningService.get(
@@ -133,7 +135,7 @@ public class BasicMonotonicAccessioningTest {
         List<GetOrCreateAccessionWrapper<TestModel, String, Long>> accessions1 = accessioningService.getOrCreate(
                 Arrays.asList(
                         TestModel.of("service-test-3")
-                ));
+                ), APPLICATION_INSTANCE_ID);
         assertEquals(1, accessions1.size());
 
         AccessionWrapper<TestModel, String, Long> accession2 =
@@ -148,7 +150,7 @@ public class BasicMonotonicAccessioningTest {
         List<GetOrCreateAccessionWrapper<TestModel, String, Long>> accessions1 = accessioningService.getOrCreate(
                 Arrays.asList(
                         TestModel.of("service-test-3")
-                ));
+                ), APPLICATION_INSTANCE_ID);
         assertEquals(1, accessions1.size());
         assertEquals(true, accessions1.get(0).isNewAccession());
         TestTransaction.end();
@@ -158,7 +160,7 @@ public class BasicMonotonicAccessioningTest {
                         TestModel.of("service-test-1"),
                         TestModel.of("service-test-2"),
                         TestModel.of("service-test-3")
-                ));
+                ), APPLICATION_INSTANCE_ID);
         assertEquals(3, accessions2.size());
         accessions2.stream().forEach(wrapper -> {
             if (!wrapper.isNewAccession()) {

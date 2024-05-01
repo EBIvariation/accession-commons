@@ -43,7 +43,7 @@ public class SingleAccessionGenerator<MODEL, ACCESSION> implements AccessionGene
     }
 
     @Override
-    public <HASH> List<AccessionWrapper<MODEL, HASH, ACCESSION>> generateAccessions(Map<HASH, MODEL> messages) {
+    public <HASH> List<AccessionWrapper<MODEL, HASH, ACCESSION>> generateAccessions(Map<HASH, MODEL> messages, String applicationInstanceId) {
         return messages.entrySet()
                 .stream()
                 .map(entry -> new AccessionWrapper<>(generateAccessionFunction.apply(entry.getValue()), entry.getKey(),

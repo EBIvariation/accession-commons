@@ -57,9 +57,9 @@ public class DecoratedAccessioningService<MODEL, HASH, DB_ACCESSION, ACCESSION>
     }
 
     @Override
-    public List<GetOrCreateAccessionWrapper<MODEL, HASH, ACCESSION>> getOrCreate(List<? extends MODEL> messages)
+    public List<GetOrCreateAccessionWrapper<MODEL, HASH, ACCESSION>> getOrCreate(List<? extends MODEL> messages, String applicationInstanceId)
             throws AccessionCouldNotBeGeneratedException {
-        return getOrCreateDecorate(service.getOrCreate(messages));
+        return getOrCreateDecorate(service.getOrCreate(messages, applicationInstanceId));
     }
 
     private List<GetOrCreateAccessionWrapper<MODEL, HASH, ACCESSION>> getOrCreateDecorate(

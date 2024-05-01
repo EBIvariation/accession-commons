@@ -43,7 +43,7 @@ import static org.junit.Assert.assertEquals;
 @DataJpaTest
 @ContextConfiguration(classes = {TestJpaDatabaseServiceTestConfiguration.class})
 public class DecoratedAccessioningServiceTest {
-
+    private static String APPLICATION_INSTANCE_ID = "TEST_APPPLICATION_INSTANCE_ID";
     @Autowired
     private AccessioningService<TestModel, String, String> accessioningService;
 
@@ -52,7 +52,7 @@ public class DecoratedAccessioningServiceTest {
         List<GetOrCreateAccessionWrapper<TestModel, String, String>> accessions = getPrefixedService().getOrCreate(
                 Arrays.asList(
                         TestModel.of("service-test-1")
-                ));
+                ), APPLICATION_INSTANCE_ID);
         assertEquals(1, accessions.size());
         assertEquals("prefix-id-service-service-test-1", accessions.get(0).getAccession());
     }
@@ -138,7 +138,7 @@ public class DecoratedAccessioningServiceTest {
                 Arrays.asList(
                         TestModel.of("service-test-1"),
                         TestModel.of("service-test-2")
-                ));
+                ), APPLICATION_INSTANCE_ID);
         assertEquals(2, accessions.size());
         getPrefixedService().merge("prefix-id-service-service-test-1", "prefix-id-service-service-test-2", "reason");
     }

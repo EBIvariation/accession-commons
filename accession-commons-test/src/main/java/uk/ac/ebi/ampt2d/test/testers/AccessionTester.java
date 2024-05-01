@@ -29,6 +29,7 @@ import uk.ac.ebi.ampt2d.test.models.TestModel;
 import java.util.Arrays;
 
 public class AccessionTester {
+    private static String APPLICATION_INSTANCE_ID = "TEST_APPPLICATION_INSTANCE_ID";
 
     private AccessioningService<TestModel, String, String> accessioningService;
 
@@ -37,7 +38,7 @@ public class AccessionTester {
     }
 
     public SingleAccessionTester accession(String value) throws AccessionCouldNotBeGeneratedException {
-        return new SingleAccessionTester(accessioningService.getOrCreate(Arrays.asList(TestModel.of(value))).get(0));
+        return new SingleAccessionTester(accessioningService.getOrCreate(Arrays.asList(TestModel.of(value)), APPLICATION_INSTANCE_ID).get(0));
     }
 
     public class SingleAccessionTester {

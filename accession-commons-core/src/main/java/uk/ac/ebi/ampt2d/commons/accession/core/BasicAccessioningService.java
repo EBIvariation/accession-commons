@@ -69,9 +69,10 @@ public class BasicAccessioningService<MODEL, HASH, ACCESSION extends Serializabl
     }
 
     @Override
-    public List<GetOrCreateAccessionWrapper<MODEL, HASH, ACCESSION>> getOrCreate(List<? extends MODEL> messages)
+    public List<GetOrCreateAccessionWrapper<MODEL, HASH, ACCESSION>> getOrCreate(List<? extends MODEL> messages,
+                                                                                 String applicationInstanceId)
             throws AccessionCouldNotBeGeneratedException {
-        return saveAccessions(accessionGenerator.generateAccessions(mapHashOfMessages(messages)));
+        return saveAccessions(accessionGenerator.generateAccessions(mapHashOfMessages(messages), applicationInstanceId));
     }
 
     /**

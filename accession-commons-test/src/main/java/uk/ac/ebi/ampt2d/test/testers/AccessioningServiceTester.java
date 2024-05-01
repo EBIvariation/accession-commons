@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class AccessioningServiceTester {
+    private static String APPLICATION_INSTANCE_ID = "TEST_APPPLICATION_INSTANCE_ID";
 
     private final AccessioningService<TestModel, String, String> accessioningService;
 
@@ -52,7 +53,7 @@ public class AccessioningServiceTester {
 
     public AccessioningServiceTester getOrCreate(List<TestModel> models) {
         addToCollection(singleVersionResults,
-                new AccessionWrapperCollectionTester(() -> accessioningService.getOrCreate(models)));
+                new AccessionWrapperCollectionTester(() -> accessioningService.getOrCreate(models, APPLICATION_INSTANCE_ID)));
         return this;
     }
 

@@ -92,7 +92,7 @@ public class BasicRestControllerTest {
     private ResultActions doAccession(ResultMatcher resultMatcher, String... values) throws Exception {
         final BasicRestModel[] restModels = Arrays.stream(values).map(s -> new BasicRestModel(s))
                 .toArray(size -> new BasicRestModel[size]);
-        return mockMvc.perform(post("/v1/test")
+        return mockMvc.perform(post("/v1/test/" + "applicationInstanceId")
                 .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON)
                 .content(jsonModelList.write(Arrays.asList(restModels)).getJson()))
                 .andExpect(resultMatcher);

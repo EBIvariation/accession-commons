@@ -57,11 +57,12 @@ public class BasicRestController<DTO extends MODEL, MODEL, HASH, ACCESSION> {
         return modelToDTO;
     }
 
-    @RequestMapping(method = RequestMethod.POST, produces = "application/json",
+    @RequestMapping(value = "/{applicationInstanceId}", method = RequestMethod.POST, produces = "application/json",
             consumes = "application/json")
     public List<GetOrCreateAccessionResponseDTO<DTO, MODEL, HASH, ACCESSION>> generateAccessions(
-            @RequestBody @Valid List<DTO> dtos) throws AccessionCouldNotBeGeneratedException {
-        return service.getOrCreate(dtos).stream()
+            @PathVariable String applicationInstanceId, @RequestBody @Valid List<DTO> dtos)
+            throws AccessionCouldNotBeGeneratedException {
+        return service.getOrCreate(dtos, applicationInstanceId).stream()
                 .map(accessionModel -> new GetOrCreateAccessionResponseDTO<>(accessionModel, modelToDTO))
                 .collect(Collectors.toList());
     }

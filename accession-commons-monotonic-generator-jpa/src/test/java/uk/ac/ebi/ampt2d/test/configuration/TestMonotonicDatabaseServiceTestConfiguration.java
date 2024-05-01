@@ -70,7 +70,6 @@ public class TestMonotonicDatabaseServiceTestConfiguration {
     public MonotonicAccessionGenerator<TestModel> monotonicAccessionGenerator() {
         return new MonotonicAccessionGenerator<>(
                 CATEGORY_ID,
-                INSTANCE_ID,
                 contiguousIdBlockService,
                 getDatabaseService());
     }

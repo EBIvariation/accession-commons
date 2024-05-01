@@ -39,7 +39,7 @@ public class MockTestAccessionGenerator implements AccessionGenerator<TestModel,
     }
 
     @Override
-    public <HASH> List<AccessionWrapper<TestModel, HASH, String>> generateAccessions(Map<HASH, TestModel> messages)
+    public <HASH> List<AccessionWrapper<TestModel, HASH, String>> generateAccessions(Map<HASH, TestModel> messages, String applicationInstanceId)
             throws AccessionCouldNotBeGeneratedException {
         List<AccessionWrapper<TestModel, HASH, String>> accessions = new ArrayList<>();
         for (Map.Entry<HASH, TestModel> entry : messages.entrySet()) {

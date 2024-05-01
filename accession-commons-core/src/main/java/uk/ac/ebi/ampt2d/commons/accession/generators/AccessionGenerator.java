@@ -40,7 +40,7 @@ public interface AccessionGenerator<MODEL, ACCESSION> {
      * @return List of wrapper objects containing the accessioned objects and their associated accessions and hashes
      * @throws AccessionCouldNotBeGeneratedException when accession could not be generated
      */
-    <HASH> List<AccessionWrapper<MODEL, HASH, ACCESSION>> generateAccessions(Map<HASH, MODEL> messages)
+    <HASH> List<AccessionWrapper<MODEL, HASH, ACCESSION>> generateAccessions(Map<HASH, MODEL> messages, String applicationInstanceId)
             throws AccessionCouldNotBeGeneratedException;
 
     /**
