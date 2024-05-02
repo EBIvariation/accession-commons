@@ -4,7 +4,7 @@
 
     <groupId>uk.ac.ebi.ampt2d</groupId>
     <artifactId>accession-commons</artifactId>
-    <version>0.7.14</version>
+    <version>0.7.15-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <modules>
