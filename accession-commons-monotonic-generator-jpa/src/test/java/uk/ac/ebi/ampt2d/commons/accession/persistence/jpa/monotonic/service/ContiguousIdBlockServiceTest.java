@@ -34,6 +34,8 @@ import javax.persistence.PersistenceException;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
@@ -275,8 +277,10 @@ public class ContiguousIdBlockServiceTest {
         entityManager.flush();
 
         // assert block values
-        ContiguousIdBlock blockInDB = repository.findById(1L).get();
-        assertEquals(1L, blockInDB.getId());
+        List<ContiguousIdBlock> blockInDBList = StreamSupport.stream(repository.findAll().spliterator(), false)
+                .collect(Collectors.toList());
+        assertEquals(1, blockInDBList.size());
+        ContiguousIdBlock blockInDB = blockInDBList.get(0);
         assertEquals(CATEGORY_ID, blockInDB.getCategoryId());
         assertEquals(INSTANCE_ID, blockInDB.getApplicationInstanceId());
         assertEquals(100, blockInDB.getFirstValue());
@@ -289,7 +293,7 @@ public class ContiguousIdBlockServiceTest {
         block.setLastCommitted(100);
         repository.save(block);
         entityManager.flush();
-        blockInDB = repository.findById(1L).get();
+        blockInDB = repository.findAll().iterator().next();
         assertEquals(100, blockInDB.getLastCommitted());
 
         LocalDateTime blockLastCommittedUpdateTime = blockInDB.getLastUpdatedTimestamp();
@@ -298,7 +302,7 @@ public class ContiguousIdBlockServiceTest {
         block.setApplicationInstanceId(INSTANCE_ID_2);
         repository.save(block);
         entityManager.flush();
-        blockInDB = repository.findById(1L).get();
+        blockInDB = repository.findAll().iterator().next();
         assertEquals(INSTANCE_ID_2, blockInDB.getApplicationInstanceId());
 
         LocalDateTime blockApplicationInstanceUpdateTime = blockInDB.getLastUpdatedTimestamp();
@@ -307,7 +311,7 @@ public class ContiguousIdBlockServiceTest {
         block.releaseReserved();
         repository.save(block);
         entityManager.flush();
-        blockInDB = repository.findById(1L).get();
+        blockInDB = repository.findAll().iterator().next();
         assertTrue(blockInDB.isNotReserved());
 
         LocalDateTime blockReleaseAsReservedUpdateTime = blockInDB.getLastUpdatedTimestamp();
@@ -316,7 +320,7 @@ public class ContiguousIdBlockServiceTest {
         block.markAsReserved();
         repository.save(block);
         entityManager.flush();
-        blockInDB = repository.findById(1L).get();
+        blockInDB = repository.findAll().iterator().next();
         assertTrue(blockInDB.isReserved());
 
         LocalDateTime blockMarkAsReservedUpdateTime = blockInDB.getLastUpdatedTimestamp();
@@ -325,6 +329,36 @@ public class ContiguousIdBlockServiceTest {
         assertTrue(blockLastCommittedUpdateTime.isBefore(blockApplicationInstanceUpdateTime));
         assertTrue(blockApplicationInstanceUpdateTime.isBefore(blockReleaseAsReservedUpdateTime));
         assertTrue(blockReleaseAsReservedUpdateTime.isBefore(blockMarkAsReservedUpdateTime));
+    }
+
+    @Test
+    public void testGetBlocksWithLastUpdatedTimeStampLessThan() throws InterruptedException {
+        // reserved
+        ContiguousIdBlock block1 = new ContiguousIdBlock(CATEGORY_ID, INSTANCE_ID, 0, 100);
+        // reserved
+        ContiguousIdBlock block2 = new ContiguousIdBlock(CATEGORY_ID, INSTANCE_ID, 100, 100);
+        // not reserved
+        ContiguousIdBlock block3 = getUnreservedContiguousIdBlock(CATEGORY_ID, INSTANCE_ID, 200, 100);
+        // reserved but different category
+        ContiguousIdBlock block4 = new ContiguousIdBlock(CATEGORY_ID_2, INSTANCE_ID, 300, 100);
+        // reserved but after timestamp
+        Thread.sleep(2000L);
+        ContiguousIdBlock block5 = new ContiguousIdBlock(CATEGORY_ID, INSTANCE_ID, 400, 100);
+        repository.save(block1);
+        repository.save(block2);
+        repository.save(block3);
+        repository.save(block4);
+        repository.save(block5);
+        entityManager.flush();
+
+        LocalDateTime cutOffTimestamp = block4.getLastUpdatedTimestamp();
+        List<ContiguousIdBlock> blocksList = service.allBlocksForCategoryIdReservedBeforeTheGivenTimeFrame(CATEGORY_ID, cutOffTimestamp);
+
+        assertEquals(2, blocksList.size());
+        assertTrue(blocksList.get(0).isReserved());
+        assertEquals(0, blocksList.get(0).getFirstValue());
+        assertTrue(blocksList.get(1).isReserved());
+        assertEquals(100, blocksList.get(1).getFirstValue());
     }
 
 }
