@@ -205,4 +205,18 @@ public class ContiguousIdBlock implements Comparable<ContiguousIdBlock> {
     protected void onUpdate() {
         this.lastUpdatedTimestamp = LocalDateTime.now();
     }
+
+    @Override
+    public String toString() {
+        return "ContiguousIdBlock{" +
+                "id=" + id +
+                ", categoryId='" + categoryId + '\'' +
+                ", applicationInstanceId='" + applicationInstanceId + '\'' +
+                ", firstValue=" + firstValue +
+                ", lastValue=" + lastValue +
+                ", lastCommitted=" + lastCommitted +
+                ", reserved=" + reserved +
+                ", lastUpdatedTimestamp=" + lastUpdatedTimestamp +
+                '}';
+    }
 }

@@ -23,6 +23,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.entities.ContiguousIdBlock;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -31,4 +32,7 @@ public interface ContiguousIdBlockRepository extends CrudRepository<ContiguousId
     List<ContiguousIdBlock> findUncompletedAndUnreservedBlocksOrderByLastValueAsc(@Param("categoryId") String categoryId);
 
     ContiguousIdBlock findFirstByCategoryIdOrderByLastValueDesc(String categoryId);
+
+    List<ContiguousIdBlock> findByCategoryIdAndReservedIsTrueAndLastUpdatedTimestampLessThanEqualOrderByLastValueAsc(
+            String categoryId, LocalDateTime lastUpdatedTime);
 }

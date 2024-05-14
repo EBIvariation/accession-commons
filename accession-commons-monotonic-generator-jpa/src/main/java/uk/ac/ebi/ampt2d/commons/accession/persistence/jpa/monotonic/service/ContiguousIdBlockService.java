@@ -25,6 +25,7 @@ import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.repositories
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -76,6 +77,16 @@ public class ContiguousIdBlockService {
         entityManager.flush();
     }
 
+    @Transactional
+    public void save(ContiguousIdBlock block) {
+        // release block if full
+        if (block.isFull()) {
+            block.releaseReserved();
+        }
+        repository.save(block);
+        entityManager.flush();
+    }
+
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public ContiguousIdBlock reserveNewBlock(String categoryId, String instanceId) {
         ContiguousIdBlock lastBlock = repository.findFirstByCategoryIdOrderByLastValueDesc(categoryId);
@@ -108,6 +119,11 @@ public class ContiguousIdBlockService {
         });
         save(blockList);
         return blockList;
+    }
+
+    public List<ContiguousIdBlock> allBlocksForCategoryIdReservedBeforeTheGivenTimeFrame(String categoryId,
+                                                                                         LocalDateTime lastUpdatedTimeStamp) {
+        return repository.findByCategoryIdAndReservedIsTrueAndLastUpdatedTimestampLessThanEqualOrderByLastValueAsc(categoryId, lastUpdatedTimeStamp);
     }
 
 }
