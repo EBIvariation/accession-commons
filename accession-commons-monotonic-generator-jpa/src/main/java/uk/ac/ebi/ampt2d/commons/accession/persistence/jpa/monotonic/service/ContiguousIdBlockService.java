@@ -69,7 +69,7 @@ public class ContiguousIdBlockService {
         this.categoryBlockInitializations = categoryBlockInitializations;
     }
 
-    @Transactional
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     public void save(Iterable<ContiguousIdBlock> blocks) {
         // release block if full
         blocks.forEach(block -> {if (block.isFull()) {block.releaseReserved();}});
@@ -77,7 +77,7 @@ public class ContiguousIdBlockService {
         entityManager.flush();
     }
 
-    @Transactional
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     public void save(ContiguousIdBlock block) {
         // release block if full
         if (block.isFull()) {
