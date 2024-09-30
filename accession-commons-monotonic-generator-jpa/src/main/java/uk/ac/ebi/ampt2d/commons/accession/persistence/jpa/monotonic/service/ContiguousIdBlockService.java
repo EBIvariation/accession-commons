@@ -53,8 +53,8 @@ import java.util.Map;
  * Also, when saving the blocks, we need to check for the block's last committed value.
  * If its last committed value is same as last value, we should release the block in DB.
  *
- * To guarantee safe multiprocessing, all methods in ContiguousIdBlockService that access the DB must use the
- * SERIALIZABLE transaction isolation level.
+ * To guarantee safe multiprocessing in PostgreSQL, all methods in ContiguousIdBlockService that access the DB must use
+ * the SERIALIZABLE transaction isolation level.
  * See here for details: https://wiki.postgresql.org/wiki/Serializable#PostgreSQL_Implementation
  *
  */
