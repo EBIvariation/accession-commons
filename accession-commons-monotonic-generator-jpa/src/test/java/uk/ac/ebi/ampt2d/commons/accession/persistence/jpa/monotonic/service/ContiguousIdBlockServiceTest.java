@@ -22,14 +22,14 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.entities.ContiguousIdBlock;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.repositories.ContiguousIdBlockRepository;
 import uk.ac.ebi.ampt2d.test.configuration.MonotonicAccessionGeneratorTestConfiguration;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 import javax.persistence.PersistenceException;
 import java.time.LocalDateTime;
 import java.util.Arrays;
@@ -46,6 +46,7 @@ import static uk.ac.ebi.ampt2d.commons.accession.util.ContiguousIdBlockUtil.getU
 @RunWith(SpringRunner.class)
 @DataJpaTest
 @ContextConfiguration(classes = {MonotonicAccessionGeneratorTestConfiguration.class})
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 public class ContiguousIdBlockServiceTest {
 
     private static final String CATEGORY_ID = "cat-test";
@@ -59,8 +60,8 @@ public class ContiguousIdBlockServiceTest {
     @Autowired
     private ContiguousIdBlockService service;
 
-    @PersistenceContext
-    EntityManager entityManager;
+    @Autowired
+    private TestEntityManager testEntityManager;
 
     @Test
     public void testReserveNewBlocks() {
@@ -78,6 +79,9 @@ public class ContiguousIdBlockServiceTest {
     public void testReserveWithExistingData() {
         //Save a block
         service.save(Arrays.asList(new ContiguousIdBlock(CATEGORY_ID, INSTANCE_ID, 0, 5)));
+        testEntityManager.flush();
+        testEntityManager.getEntityManager().getTransaction().commit();
+
         ContiguousIdBlock block = service.reserveNewBlock(CATEGORY_ID, INSTANCE_ID);
         assertEquals(5, block.getFirstValue());
         assertEquals(1004, block.getLastValue());
@@ -166,10 +170,14 @@ public class ContiguousIdBlockServiceTest {
         ContiguousIdBlock block2 = service.reserveNewBlock(CATEGORY_ID_2, INSTANCE_ID_2);
         assertEquals(2000, block2.getFirstValue());
         assertEquals(2999, block2.getLastValue());
-        assertEquals(block2, repository.findFirstByCategoryIdOrderByLastValueDesc(CATEGORY_ID_2));
+        ContiguousIdBlock block2InDB = repository.findFirstByCategoryIdOrderByLastValueDesc(CATEGORY_ID_2);
+        assertEquals(2000, block2InDB.getFirstValue());
+        assertEquals(2999, block2InDB.getLastValue());
 
         //Manually save a block of size 500, so for the current range only a block size of 500 reserved
         repository.save(new ContiguousIdBlock(CATEGORY_ID_2, INSTANCE_ID, 4000, 500));
+        testEntityManager.flush();
+        testEntityManager.getEntityManager().getTransaction().commit();
         //Reserve a new block with size 1000
         ContiguousIdBlock block3 = service.reserveNewBlock(CATEGORY_ID_2, INSTANCE_ID_2);
 
@@ -260,12 +268,12 @@ public class ContiguousIdBlockServiceTest {
     public void testBlocksWithDuplicateCategoryAndFirstValue() {
         ContiguousIdBlock block1 = new ContiguousIdBlock(CATEGORY_ID, INSTANCE_ID, 100, 1000);
         repository.save(block1);
-        entityManager.flush();
+        testEntityManager.flush();
 
         ContiguousIdBlock block2 = new ContiguousIdBlock(CATEGORY_ID, INSTANCE_ID_2, 100, 2000);
         repository.save(block2);
 
-        Throwable exception = assertThrows(PersistenceException.class, () -> entityManager.flush());
+        Throwable exception = assertThrows(PersistenceException.class, () -> testEntityManager.flush());
         assertTrue(exception.getCause() instanceof ConstraintViolationException);
     }
 
@@ -274,7 +282,7 @@ public class ContiguousIdBlockServiceTest {
         // block saved with initial value
         ContiguousIdBlock block = new ContiguousIdBlock(CATEGORY_ID, INSTANCE_ID, 100, 1000);
         repository.save(block);
-        entityManager.flush();
+        testEntityManager.flush();
 
         // assert block values
         List<ContiguousIdBlock> blockInDBList = StreamSupport.stream(repository.findAll().spliterator(), false)
@@ -292,7 +300,7 @@ public class ContiguousIdBlockServiceTest {
         // block updated with last committed 100
         block.setLastCommitted(100);
         repository.save(block);
-        entityManager.flush();
+        testEntityManager.flush();
         blockInDB = repository.findAll().iterator().next();
         assertEquals(100, blockInDB.getLastCommitted());
 
@@ -301,7 +309,7 @@ public class ContiguousIdBlockServiceTest {
         // block updated with new instance id
         block.setApplicationInstanceId(INSTANCE_ID_2);
         repository.save(block);
-        entityManager.flush();
+        testEntityManager.flush();
         blockInDB = repository.findAll().iterator().next();
         assertEquals(INSTANCE_ID_2, blockInDB.getApplicationInstanceId());
 
@@ -310,7 +318,7 @@ public class ContiguousIdBlockServiceTest {
         // block updated - release reserved
         block.releaseReserved();
         repository.save(block);
-        entityManager.flush();
+        testEntityManager.flush();
         blockInDB = repository.findAll().iterator().next();
         assertTrue(blockInDB.isNotReserved());
 
@@ -319,7 +327,7 @@ public class ContiguousIdBlockServiceTest {
         // block update - mark as reserved
         block.markAsReserved();
         repository.save(block);
-        entityManager.flush();
+        testEntityManager.flush();
         blockInDB = repository.findAll().iterator().next();
         assertTrue(blockInDB.isReserved());
 
@@ -349,7 +357,7 @@ public class ContiguousIdBlockServiceTest {
         repository.save(block3);
         repository.save(block4);
         repository.save(block5);
-        entityManager.flush();
+        testEntityManager.flush();
 
         LocalDateTime cutOffTimestamp = block4.getLastUpdatedTimestamp();
         List<ContiguousIdBlock> blocksList = service.allBlocksForCategoryIdReservedBeforeTheGivenTimeFrame(CATEGORY_ID, cutOffTimestamp);
