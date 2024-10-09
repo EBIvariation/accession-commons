@@ -18,6 +18,7 @@
 package uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service;
 
 import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import uk.ac.ebi.ampt2d.commons.accession.block.initialization.BlockParameters;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.entities.ContiguousIdBlock;
@@ -91,7 +92,7 @@ public class ContiguousIdBlockService {
         entityManager.flush();
     }
 
-    @Transactional(isolation = Isolation.SERIALIZABLE)
+    @Transactional(isolation = Isolation.SERIALIZABLE, propagation = Propagation.REQUIRES_NEW)
     public ContiguousIdBlock reserveNewBlock(String categoryId, String instanceId) {
         ContiguousIdBlock lastBlock = repository.findFirstByCategoryIdOrderByLastValueDesc(categoryId);
         BlockParameters blockParameters = getBlockParameters(categoryId);

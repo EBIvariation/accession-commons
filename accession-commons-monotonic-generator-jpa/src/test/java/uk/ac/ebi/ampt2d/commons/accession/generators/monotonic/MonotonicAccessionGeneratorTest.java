@@ -24,6 +24,7 @@ import org.mockito.Answers;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
@@ -59,6 +60,7 @@ import static uk.ac.ebi.ampt2d.commons.accession.util.ContiguousIdBlockUtil.getU
 @RunWith(SpringRunner.class)
 @DataJpaTest
 @ContextConfiguration(classes = {MonotonicAccessionGeneratorTestConfiguration.class, TestMonotonicDatabaseServiceTestConfiguration.class})
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 public class MonotonicAccessionGeneratorTest {
 
     private static final int BLOCK_SIZE = 1000;
