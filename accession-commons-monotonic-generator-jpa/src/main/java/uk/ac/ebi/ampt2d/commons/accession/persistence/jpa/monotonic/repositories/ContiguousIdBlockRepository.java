@@ -17,18 +17,21 @@
  */
 package uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.repositories;
 
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.entities.ContiguousIdBlock;
 
+import javax.persistence.LockModeType;
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
 public interface ContiguousIdBlockRepository extends CrudRepository<ContiguousIdBlock, Long> {
     @Query("SELECT cib FROM ContiguousIdBlock cib WHERE cib.categoryId = :categoryId AND cib.lastCommitted != cib.lastValue AND (cib.reserved IS NULL OR cib.reserved IS FALSE) ORDER BY cib.lastValue asc")
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     List<ContiguousIdBlock> findUncompletedAndUnreservedBlocksOrderByLastValueAsc(@Param("categoryId") String categoryId);
 
     ContiguousIdBlock findFirstByCategoryIdOrderByLastValueDesc(String categoryId);
