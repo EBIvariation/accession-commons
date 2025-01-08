@@ -31,6 +31,12 @@ import java.util.List;
 @Repository
 public interface ContiguousIdBlockRepository extends CrudRepository<ContiguousIdBlock, Long> {
     @Query("SELECT cib FROM ContiguousIdBlock cib WHERE cib.categoryId = :categoryId AND cib.lastCommitted != cib.lastValue AND (cib.reserved IS NULL OR cib.reserved IS FALSE) ORDER BY cib.lastValue asc")
+    // The pessimistic write lock ("select for update" in SQL) ensures that multiple application instances running
+    // concurrently won't reserve the same incomplete blocks. This will prevent any other application from accessing
+    // these rows until the transaction is either rolled back or committed (i.e., other applications using this method
+    // will be blocked).
+    // Note that application instances reserving the same new blocks is prevented by the uniqueness constraint in the
+    // database and subsequent retry in the accession generator.
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     List<ContiguousIdBlock> findUncompletedAndUnreservedBlocksOrderByLastValueAsc(@Param("categoryId") String categoryId);
 
