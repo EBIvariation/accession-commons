@@ -17,6 +17,8 @@
  */
 package uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -61,6 +63,8 @@ import java.util.Map;
  */
 public class ContiguousIdBlockService {
 
+    private static final Logger logger = LoggerFactory.getLogger(ContiguousIdBlockService.class);
+
     private ContiguousIdBlockRepository repository;
 
     private Map<String, BlockParameters> categoryBlockInitializations;
@@ -76,24 +80,37 @@ public class ContiguousIdBlockService {
 
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public void save(Iterable<ContiguousIdBlock> blocks) {
+        logger.trace("Inside blockService save (multiple)");
         // release block if full
-        blocks.forEach(block -> {if (block.isFull()) {block.releaseReserved();}});
+        blocks.forEach(block -> {
+            logger.trace("Block: {}", block);
+            if (block.isFull()) {
+                logger.trace("Releasing block");
+                block.releaseReserved();
+            }
+        });
         repository.saveAll(blocks);
+        logger.trace("All blocks saved");
         entityManager.flush();
     }
 
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public void save(ContiguousIdBlock block) {
+        logger.trace("Inside blockService save (single)");
+        logger.trace("Block: {}", block);
         // release block if full
         if (block.isFull()) {
+            logger.trace("Releasing block");
             block.releaseReserved();
         }
         repository.save(block);
+        logger.trace("Block saved");
         entityManager.flush();
     }
 
     @Transactional(isolation = Isolation.SERIALIZABLE, propagation = Propagation.REQUIRES_NEW)
     public ContiguousIdBlock reserveNewBlock(String categoryId, String instanceId) {
+        logger.trace("Inside reserveNewBlock for instanceId {}", instanceId);
         ContiguousIdBlock lastBlock = repository.findFirstByCategoryIdOrderByLastValueDesc(categoryId);
         BlockParameters blockParameters = getBlockParameters(categoryId);
         ContiguousIdBlock reservedBlock;
@@ -107,6 +124,7 @@ public class ContiguousIdBlockService {
                                                                blockParameters.getBlockSize());
             reservedBlock = repository.save(newBlock);
         }
+        logger.trace("Reserved new block: {}", reservedBlock);
         entityManager.flush();
         return reservedBlock;
     }
@@ -117,8 +135,10 @@ public class ContiguousIdBlockService {
 
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public List<ContiguousIdBlock> reserveUncompletedBlocksForCategoryIdAndApplicationInstanceId(String categoryId, String applicationInstanceId) {
+        logger.trace("Inside reserveUncompletedBlocks for instanceId {}", applicationInstanceId);
         List<ContiguousIdBlock> blockList = repository.findUncompletedAndUnreservedBlocksOrderByLastValueAsc(categoryId);
         blockList.stream().forEach(block -> {
+            logger.trace("Reserving incomplete and unreserved block {}", block);
             block.setApplicationInstanceId(applicationInstanceId);
             block.markAsReserved();
         });
