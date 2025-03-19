@@ -23,11 +23,9 @@ jobs:
           java-version: ${{ matrix.java-version }}
       - name: Install and Start MongoDB
         run: |
-          wget http://archive.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.0g-2ubuntu4_amd64.deb
-          sudo dpkg -i ./libssl1.1_1.1.0g-2ubuntu4_amd64.deb
-          wget https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-ubuntu2004-${{ matrix.mongodb-version }}.tgz
-          tar xfz mongodb-linux-x86_64-ubuntu2004-${{ matrix.mongodb-version }}.tgz
-          export PATH=`pwd`/mongodb-linux-x86_64-ubuntu2004-${{ matrix.mongodb-version }}/bin:$PATH
+          wget https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-ubuntu2204-${{ matrix.mongodb-version }}.tgz
+          tar xfz mongodb-linux-x86_64-ubuntu2204-${{ matrix.mongodb-version }}.tgz
+          export PATH=`pwd`/mongodb-linux-x86_64-ubuntu2204-${{ matrix.mongodb-version }}/bin:$PATH
           mkdir -p data/db
           mongod --dbpath=data/db &
           mongod --version
