@@ -100,7 +100,7 @@ public abstract class BasicMongoDbAccessionedCustomRepositoryImpl<
     private Optional<String> reportBulkOperationException(BulkWriteError error) {
         if (11000 == error.getCode()) {
             final String message = error.getMessage();
-            Pattern pattern = Pattern.compile("_id_ dup key:.\\{.:.\"(.*)\".\\}");
+            Pattern pattern = Pattern.compile("_id_ dup key:.\\{.*:.\"(.*)\".\\}");
             Matcher matcher = pattern.matcher(message);
             if (matcher.find()) {
                 return Optional.of(matcher.group(1));
