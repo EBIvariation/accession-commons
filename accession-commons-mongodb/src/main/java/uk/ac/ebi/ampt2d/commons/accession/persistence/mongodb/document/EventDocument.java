@@ -48,7 +48,7 @@ public abstract class EventDocument<
 
     private EventType eventType;
 
-    @Indexed(background = true)
+//    @Indexed(background = true)
     private ACCESSION accession;
 
     private ACCESSION mergeInto;
