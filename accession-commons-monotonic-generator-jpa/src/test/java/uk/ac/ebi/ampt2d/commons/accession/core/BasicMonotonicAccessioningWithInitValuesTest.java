@@ -75,7 +75,8 @@ public class BasicMonotonicAccessioningWithInitValuesTest {
                 monotonicAccessionGenerator,
                 databaseService,
                 TestModel::getValue,
-                new SHA1HashingFunction()
+                new SHA1HashingFunction(),
+                AccessionSaveMode.SAVE_ALL_THEN_RESOLVE
         );
     }
 

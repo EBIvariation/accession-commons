@@ -55,7 +55,7 @@ import static uk.ac.ebi.ampt2d.commons.accession.util.ContiguousIdBlockUtil.getU
 @DataJpaTest
 @ContextConfiguration(classes = {TestMonotonicDatabaseServiceTestConfiguration.class})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
-public class BasicMonotonicAccessioningWithAlternateRangesTest {
+public class BasicMonotonicAccessioningWithAlternateRangesTestWithPreFiltering {
 
     private static final String INSTANCE_ID = "test-instance";
 
@@ -227,7 +227,7 @@ public class BasicMonotonicAccessioningWithAlternateRangesTest {
                 databaseService,
                 TestModel::getValue,
                 new SHA1HashingFunction(),
-                AccessionSaveMode.SAVE_ALL_THEN_RESOLVE
+                AccessionSaveMode.PREFILTER_EXISTING
         );
     }
 

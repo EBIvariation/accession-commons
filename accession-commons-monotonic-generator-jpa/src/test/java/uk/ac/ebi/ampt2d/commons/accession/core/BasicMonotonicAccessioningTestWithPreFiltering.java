@@ -44,7 +44,7 @@ import static org.junit.Assert.assertEquals;
 @RunWith(SpringRunner.class)
 @DataJpaTest
 @ContextConfiguration(classes = {TestMonotonicDatabaseServiceTestConfiguration.class})
-public class BasicMonotonicAccessioningTest {
+public class BasicMonotonicAccessioningTestWithPreFiltering {
 
     private static String APPLICATION_INSTANCE_ID = "TEST_APPPLICATION_INSTANCE_ID";
 
@@ -76,7 +76,7 @@ public class BasicMonotonicAccessioningTest {
                 databaseService,
                 TestModel::getValue,
                 new SHA1HashingFunction(),
-                AccessionSaveMode.SAVE_ALL_THEN_RESOLVE
+                AccessionSaveMode.PREFILTER_EXISTING
         );
     }
 

@@ -17,6 +17,7 @@
  */
 package uk.ac.ebi.ampt2d.test.rest;
 
+import uk.ac.ebi.ampt2d.commons.accession.core.AccessionSaveMode;
 import uk.ac.ebi.ampt2d.commons.accession.core.BasicAccessioningService;
 import uk.ac.ebi.ampt2d.commons.accession.core.DatabaseService;
 import uk.ac.ebi.ampt2d.test.models.TestModel;
@@ -32,7 +33,8 @@ public class MockTestAccessioningService extends BasicAccessioningService<TestMo
                 new MockTestAccessionGenerator(),
                 databaseService,
                 testModel -> testModel.getValue(),
-                s -> "hash-" + s
+                s -> "hash-" + s,
+                AccessionSaveMode.SAVE_ALL_THEN_RESOLVE
         );
     }
 
