@@ -59,13 +59,17 @@ public class BasicAccessioningService<MODEL, HASH, ACCESSION extends Serializabl
 
     private final Function<MODEL, HASH> hashingFunction;
 
+    private final AccessionSaveMode accessionSaveMode;
+
     public BasicAccessioningService(AccessionGenerator<MODEL, ACCESSION> accessionGenerator,
                                     DatabaseService<MODEL, HASH, ACCESSION> dbService,
                                     Function<MODEL, String> summaryFunction,
-                                    Function<String, HASH> hashingFunction) {
+                                    Function<String, HASH> hashingFunction,
+                                    AccessionSaveMode accessionSaveMode) {
         this.accessionGenerator = accessionGenerator;
         this.dbService = dbService;
         this.hashingFunction = summaryFunction.andThen(hashingFunction);
+        this.accessionSaveMode = accessionSaveMode != null ? accessionSaveMode : AccessionSaveMode.SAVE_ALL_THEN_RESOLVE;
     }
 
     @Override
@@ -89,7 +93,17 @@ public class BasicAccessioningService<MODEL, HASH, ACCESSION extends Serializabl
      * application instance / thread with a different id.
      * See {@link #getPreexistingAccessions(List)} } for more details.
      */
-    private List<GetOrCreateAccessionWrapper<MODEL, HASH, ACCESSION>> saveAccessions(
+    private List<GetOrCreateAccessionWrapper<MODEL, HASH, ACCESSION>> saveAccessions(List<AccessionWrapper<MODEL, HASH, ACCESSION>> accessions) {
+        switch (this.accessionSaveMode) {
+            case PREFILTER_EXISTING:
+                return saveAccessionsPrefilteringExisting(accessions);
+            case SAVE_ALL_THEN_RESOLVE:
+            default:
+                return saveAllAccessionsThenResolve(accessions);
+        }
+    }
+
+    private List<GetOrCreateAccessionWrapper<MODEL, HASH, ACCESSION>> saveAllAccessionsThenResolve(
             List<AccessionWrapper<MODEL, HASH, ACCESSION>> accessions) {
         SaveResponse<ACCESSION> response = dbService.save(accessions);
         accessionGenerator.postSave(response);
@@ -108,6 +122,28 @@ public class BasicAccessioningService<MODEL, HASH, ACCESSION extends Serializabl
                     .forEach(savedAccessions::add);
         }
         return savedAccessions;
+    }
+
+    private List<GetOrCreateAccessionWrapper<MODEL, HASH, ACCESSION>> saveAccessionsPrefilteringExisting(
+            List<AccessionWrapper<MODEL, HASH, ACCESSION>> accessions) {
+        Set<HASH> allHashes = accessions.stream().map(AccessionWrapper::getHash).collect(Collectors.toSet());
+        List<AccessionWrapper<MODEL, HASH, ACCESSION>> preexistingAccessions = dbService.findAllByHash(allHashes);
+        Set<HASH> preexistingHashes = preexistingAccessions.stream().map(AccessionWrapper::getHash).collect(Collectors.toSet());
+
+        List<AccessionWrapper<MODEL, HASH, ACCESSION>> accessionsToSave = accessions.stream()
+                .filter(accession -> !preexistingHashes.contains(accession.getHash()))
+                .collect(Collectors.toList());
+
+        final List<GetOrCreateAccessionWrapper<MODEL, HASH, ACCESSION>> result = new ArrayList<>();
+
+        if (!accessionsToSave.isEmpty()) {
+            result.addAll(saveAllAccessionsThenResolve(accessionsToSave));
+        }
+
+        // add pre-existing back to result
+        preexistingAccessions.stream().map(GetOrCreateAccessionWrapper::oldAccession).forEach(result::add);
+
+        return result;
     }
 
     /**

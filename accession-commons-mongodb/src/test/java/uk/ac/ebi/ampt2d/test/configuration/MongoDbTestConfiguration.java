@@ -24,6 +24,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.mongodb.config.EnableMongoAuditing;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
+import uk.ac.ebi.ampt2d.commons.accession.core.AccessionSaveMode;
 import uk.ac.ebi.ampt2d.commons.accession.core.AccessioningService;
 import uk.ac.ebi.ampt2d.commons.accession.core.BasicAccessioningService;
 import uk.ac.ebi.ampt2d.commons.accession.core.DatabaseService;
@@ -83,7 +84,8 @@ public class MongoDbTestConfiguration {
                 new SingleAccessionGenerator<>(o -> "id-" + o.getValue()),
                 testMongoDbService(),
                 testModel -> testModel.getValue(),
-                new SHA1HashingFunction()
+                new SHA1HashingFunction(),
+                AccessionSaveMode.SAVE_ALL_THEN_RESOLVE
         );
     }
 

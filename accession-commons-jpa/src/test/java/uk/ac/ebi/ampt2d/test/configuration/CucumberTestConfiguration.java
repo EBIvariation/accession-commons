@@ -28,6 +28,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import uk.ac.ebi.ampt2d.commons.accession.core.AccessionSaveMode;
 import uk.ac.ebi.ampt2d.commons.accession.core.AccessioningService;
 import uk.ac.ebi.ampt2d.commons.accession.core.BasicAccessioningService;
 import uk.ac.ebi.ampt2d.commons.accession.core.DatabaseService;
@@ -97,7 +98,8 @@ public class CucumberTestConfiguration {
                 ),
                 databaseService(),
                 TestModel::getValue,
-                new SHA1HashingFunction()
+                new SHA1HashingFunction(),
+                AccessionSaveMode.SAVE_ALL_THEN_RESOLVE
         );
     }
 
