@@ -17,6 +17,7 @@
  */
 package uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.repositories;
 
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
@@ -24,7 +25,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.entities.ContiguousIdBlock;
 
-import javax.persistence.LockModeType;
 import java.time.LocalDateTime;
 import java.util.List;
 
