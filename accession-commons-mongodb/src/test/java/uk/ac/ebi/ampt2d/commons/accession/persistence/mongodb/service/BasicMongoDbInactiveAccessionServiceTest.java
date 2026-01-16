@@ -17,17 +17,16 @@
  */
 package uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.service;
 
-import com.lordofthejars.nosqlunit.annotation.UsingDataSet;
-import com.lordofthejars.nosqlunit.core.LoadStrategyEnum;
-import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
-import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.ApplicationContext;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.containers.MongoDBContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.IEvent;
 import uk.ac.ebi.ampt2d.test.configuration.MongoDbTestConfiguration;
@@ -35,31 +34,33 @@ import uk.ac.ebi.ampt2d.test.persistence.document.TestDocument;
 import uk.ac.ebi.ampt2d.test.persistence.document.TestEventDocument;
 import uk.ac.ebi.ampt2d.test.persistence.repository.TestRepository;
 import uk.ac.ebi.ampt2d.test.persistence.service.TestMongoDbInactiveAccessionService;
-import uk.ac.ebi.ampt2d.test.rule.FixSpringMongoDbRule;
 
 import java.util.Arrays;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static uk.ac.ebi.ampt2d.commons.accession.core.models.EventType.DEPRECATED;
 import static uk.ac.ebi.ampt2d.commons.accession.core.models.EventType.MERGED;
 import static uk.ac.ebi.ampt2d.commons.accession.core.models.EventType.UPDATED;
 import static uk.ac.ebi.ampt2d.test.persistence.document.TestDocument.document;
 
-@RunWith(SpringRunner.class)
 @SpringBootTest(classes = {MongoDbTestConfiguration.class})
+@Testcontainers
 public class BasicMongoDbInactiveAccessionServiceTest {
 
     private static final String DEFAULT_REASON = "default-test-reason";
 
-    @Rule
-    public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(MongoDbConfigurationBuilder.mongoDb()
-            .databaseName("accession-test").build());
+    @Container
+    static MongoDBContainer mongoDBContainer = new MongoDBContainer("mongo:6.0");
 
-    //Required for nosql unit
+    @DynamicPropertySource
+    static void setProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.data.mongodb.uri", mongoDBContainer::getReplicaSetUrl);
+    }
+
     @Autowired
-    private ApplicationContext applicationContext;
+    private MongoTemplate mongoTemplate;
 
     @Autowired
     private TestRepository repository;
@@ -67,25 +68,26 @@ public class BasicMongoDbInactiveAccessionServiceTest {
     @Autowired
     private TestMongoDbInactiveAccessionService service;
 
-    @UsingDataSet(loadStrategy = LoadStrategyEnum.DELETE_ALL)
+    @BeforeEach
+    public void setUp() {
+        mongoTemplate.getCollectionNames().forEach(name -> mongoTemplate.dropCollection(name));
+    }
+
     @Test
     public void testLastOperationDoesNotExistBehaviour() {
         new LastOperationAsserts("notExist").assertDoesNotExist();
     }
 
-    @UsingDataSet(loadStrategy = LoadStrategyEnum.DELETE_ALL)
     @Test
     public void testUpdate() {
         update(document(1, "test-update-1")).assertExists().assertIsUpdate();
     }
 
-    @UsingDataSet(loadStrategy = LoadStrategyEnum.DELETE_ALL)
     @Test
     public void testDeprecate() {
         deprecate(document(1, "test-deprecate-1")).assertExists().assertIsDeprecate();
     }
 
-    @UsingDataSet(loadStrategy = LoadStrategyEnum.DELETE_ALL)
     @Test
     public void testMerge() {
         merge(document(1, "test-deprecate-1"), "a2").assertExists().assertIsMerge("a1", "a2", 1);

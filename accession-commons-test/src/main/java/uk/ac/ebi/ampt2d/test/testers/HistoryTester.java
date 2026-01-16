@@ -17,7 +17,7 @@
  */
 package uk.ac.ebi.ampt2d.test.testers;
 
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import uk.ac.ebi.ampt2d.commons.accession.core.HistoryService;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
@@ -27,8 +27,8 @@ import uk.ac.ebi.ampt2d.test.models.TestModel;
 import java.util.List;
 import java.util.function.Consumer;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 public class HistoryTester {
 
@@ -76,7 +76,7 @@ public class HistoryTester {
     }
 
     public static Consumer<HistoryEvent<TestModel, String>> assertMergedInto(String accession) {
-        return event -> Assert.assertEquals(accession, event.getMergedInto());
+        return event -> Assertions.assertEquals(accession, event.getMergedInto());
     }
 
     public static Consumer<HistoryEvent<TestModel, String>> assertNullVersion() {
@@ -84,7 +84,7 @@ public class HistoryTester {
     }
 
     public static Consumer<HistoryEvent<TestModel, String>> assertVersion(int version) {
-        return event -> Assert.assertEquals(new Integer(version), event.getVersion());
+        return event -> Assertions.assertEquals(Integer.valueOf(version), event.getVersion());
     }
 
     public static Consumer<HistoryEvent<TestModel, String>> assertNullData() {

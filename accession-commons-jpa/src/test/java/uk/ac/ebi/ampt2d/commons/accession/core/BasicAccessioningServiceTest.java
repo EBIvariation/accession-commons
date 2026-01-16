@@ -17,12 +17,10 @@
  */
 package uk.ac.ebi.ampt2d.commons.accession.core;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.transaction.TestTransaction;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
@@ -39,12 +37,12 @@ import uk.ac.ebi.ampt2d.test.persistence.TestRepository;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
-@RunWith(SpringRunner.class)
 @DataJpaTest
 @ContextConfiguration(classes = {TestJpaDatabaseServiceTestConfiguration.class})
 public class BasicAccessioningServiceTest {
@@ -127,17 +125,21 @@ public class BasicAccessioningServiceTest {
         TestTransaction.end();
     }
 
-    @Test(expected = AccessionDoesNotExistException.class)
+    @Test
     public void updateFailsWhenAccessionDoesNotExist() throws AccessionDoesNotExistException,
             HashAlreadyExistsException, AccessionMergedException, AccessionDeprecatedException {
-        accessioningService.update("id-service-test-3", 1, TestModel.of("test-3"));
+        assertThrows(AccessionDoesNotExistException.class, () -> {
+            accessioningService.update("id-service-test-3", 1, TestModel.of("test-3"));
+        });
     }
 
-    @Test(expected = HashAlreadyExistsException.class)
+    @Test
     public void updateFailsWhenAccessionAlreadyExists() throws AccessionDoesNotExistException,
             HashAlreadyExistsException, AccessionCouldNotBeGeneratedException, AccessionMergedException, AccessionDeprecatedException {
         accessioningService.getOrCreate(Arrays.asList(TestModel.of("test-3"), TestModel.of("test-4")), APPLICATION_INSTANCE_ID);
-        accessioningService.update("id-service-test-3", 1, TestModel.of("test-4"));
+        assertThrows(HashAlreadyExistsException.class, () -> {
+            accessioningService.update("id-service-test-3", 1, TestModel.of("test-4"));
+        });
     }
 
     @Test
@@ -211,18 +213,22 @@ public class BasicAccessioningServiceTest {
         }
     }
 
-    @Test(expected = AccessionDoesNotExistException.class)
+    @Test
     public void testDeprecateAccessionDoesNotExist() throws AccessionCouldNotBeGeneratedException,
             AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
-        accessioningService.deprecate("id-does-not-exist", "Reasons");
+        assertThrows(AccessionDoesNotExistException.class, () -> {
+            accessioningService.deprecate("id-does-not-exist", "Reasons");
+        });
     }
 
-    @Test(expected = AccessionDeprecatedException.class)
+    @Test
     public void testDeprecateTwice() throws AccessionCouldNotBeGeneratedException, AccessionMergedException,
             AccessionDoesNotExistException, AccessionDeprecatedException {
         accessioningService.getOrCreate(Arrays.asList(TestModel.of("test-deprecate-version-2")), APPLICATION_INSTANCE_ID);
         accessioningService.deprecate("id-service-test-deprecate-version-2", "Reasons");
-        accessioningService.deprecate("id-service-test-deprecate-version-2", "Reasons");
+        assertThrows(AccessionDeprecatedException.class, () -> {
+            accessioningService.deprecate("id-service-test-deprecate-version-2", "Reasons");
+        });
     }
 
     @Test
