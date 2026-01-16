@@ -22,8 +22,8 @@ import uk.ac.ebi.ampt2d.test.utils.ThrowingSupplier;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class MethodResponseTester<T> implements IMethodTester{
 

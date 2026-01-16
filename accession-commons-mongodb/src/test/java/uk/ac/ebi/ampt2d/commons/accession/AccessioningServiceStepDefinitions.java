@@ -17,55 +17,37 @@
  */
 package uk.ac.ebi.ampt2d.commons.accession;
 
-import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
-import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
-import cucumber.api.java.Before;
-import cucumber.api.java.en.And;
-import cucumber.api.java.en.Given;
-import cucumber.api.java.en.Then;
-import cucumber.api.java.en.When;
-import org.junit.Ignore;
-import org.junit.Rule;
-import org.junit.runner.RunWith;
+import io.cucumber.java.Before;
+import io.cucumber.java.en.And;
+import io.cucumber.java.en.Given;
+import io.cucumber.java.en.Then;
+import io.cucumber.java.en.When;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.ApplicationContext;
-import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.HashAlreadyExistsException;
-import uk.ac.ebi.ampt2d.test.configuration.MongoDbCucumberTestConfiguration;
 import uk.ac.ebi.ampt2d.test.models.TestModel;
-import uk.ac.ebi.ampt2d.test.rule.FixSpringMongoDbRule;
 import uk.ac.ebi.ampt2d.test.testers.AccessioningServiceTester;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.hibernate.validator.internal.util.Contracts.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@Ignore
-@RunWith(SpringRunner.class)
-@SpringBootTest(classes = {MongoDbCucumberTestConfiguration.class})
-@DirtiesContext
 public class AccessioningServiceStepDefinitions {
 
-    @Rule
-    public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(MongoDbConfigurationBuilder.mongoDb()
-            .databaseName("accession-test").build());
-
-    //Required for nosql unit
     @Autowired
-    private ApplicationContext applicationContext;
+    private MongoTemplate mongoTemplate;
 
     @Autowired
     private AccessioningServiceTester tester;
 
     @Before
     public void setUp() {
-        mongoDbRule.getDatabaseOperation().deleteAll();
+        // Clean up all collections before each scenario
+        mongoTemplate.getCollectionNames().forEach(name -> mongoTemplate.dropCollection(name));
     }
 
     @Given("^already accessioned ([\\w-,]+)$")

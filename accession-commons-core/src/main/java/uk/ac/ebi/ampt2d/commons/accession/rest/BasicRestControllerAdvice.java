@@ -41,8 +41,8 @@ import uk.ac.ebi.ampt2d.commons.accession.rest.controllers.BasicRestController;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.ErrorMessage;
 import uk.ac.ebi.ampt2d.commons.accession.rest.validation.CollectionValidator;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.ValidationException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ValidationException;
 import java.net.URI;
 import java.util.stream.Collectors;
 
