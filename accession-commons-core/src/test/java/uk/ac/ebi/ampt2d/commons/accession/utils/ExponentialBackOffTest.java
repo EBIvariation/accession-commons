@@ -17,13 +17,14 @@
  */
 package uk.ac.ebi.ampt2d.commons.accession.utils;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import uk.ac.ebi.ampt2d.commons.accession.utils.exceptions.ExponentialBackOffMaxRetriesRuntimeException;
 
 import java.util.function.Supplier;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ExponentialBackOffTest {
 
@@ -44,31 +45,39 @@ public class ExponentialBackOffTest {
         }
     }
 
-    @Test(expected = ExponentialBackOffMaxRetriesRuntimeException.class)
+    @Test
     public void testRunnableDefaultTotalAttempts() {
         ExtendedRunnable runnable = new ExtendedRunnable();
-        ExponentialBackOff.execute((Runnable) runnable);
+        assertThrows(ExponentialBackOffMaxRetriesRuntimeException.class, () -> {
+            ExponentialBackOff.execute((Runnable) runnable);
+        });
         assertEquals(ExponentialBackOff.DEFAULT_TOTAL_ATTEMPTS, runnable.numRun);
     }
 
-    @Test(expected = ExponentialBackOffMaxRetriesRuntimeException.class)
+    @Test
     public void testFunctionDefaultTotalAttempts() {
         ExtendedRunnable runnable = new ExtendedRunnable();
-        ExponentialBackOff.execute((Supplier) runnable);
+        assertThrows(ExponentialBackOffMaxRetriesRuntimeException.class, () -> {
+            ExponentialBackOff.execute((Supplier) runnable);
+        });
         assertEquals(ExponentialBackOff.DEFAULT_TOTAL_ATTEMPTS, runnable.numRun);
     }
 
-    @Test(expected = ExponentialBackOffMaxRetriesRuntimeException.class)
+    @Test
     public void testRunnableTotalAttempts() {
         ExtendedRunnable runnable = new ExtendedRunnable();
-        ExponentialBackOff.execute((Runnable) runnable, 3, 1000);
+        assertThrows(ExponentialBackOffMaxRetriesRuntimeException.class, () -> {
+            ExponentialBackOff.execute((Runnable) runnable, 3, 1000);
+        });
         assertEquals(3, runnable.numRun);
     }
 
-    @Test(expected = ExponentialBackOffMaxRetriesRuntimeException.class)
+    @Test
     public void testFunctionTotalAttempts() {
         ExtendedRunnable runnable = new ExtendedRunnable();
-        ExponentialBackOff.execute((Supplier) runnable, 3, 1000);
+        assertThrows(ExponentialBackOffMaxRetriesRuntimeException.class, () -> {
+            ExponentialBackOff.execute((Supplier) runnable, 3, 1000);
+        });
         assertEquals(3, runnable.numRun);
     }
 

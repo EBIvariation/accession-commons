@@ -21,7 +21,7 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.entities.AccessionedEntity;
 import uk.ac.ebi.ampt2d.test.models.TestModel;
 
-import javax.persistence.Entity;
+import jakarta.persistence.Entity;
 
 @Entity
 public class TestEntity extends AccessionedEntity<TestModel, String> implements TestModel {

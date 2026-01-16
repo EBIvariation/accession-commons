@@ -17,20 +17,14 @@
  */
 package uk.ac.ebi.ampt2d.commons.accession;
 
-import cucumber.api.java.en.And;
-import cucumber.api.java.en.Given;
-import cucumber.api.java.en.Then;
-import cucumber.api.java.en.When;
-import org.junit.Ignore;
-import org.junit.runner.RunWith;
+import io.cucumber.java.en.And;
+import io.cucumber.java.en.Given;
+import io.cucumber.java.en.Then;
+import io.cucumber.java.en.When;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.junit4.SpringRunner;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionMergedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.HashAlreadyExistsException;
-import uk.ac.ebi.ampt2d.test.configuration.CucumberTestConfiguration;
 import uk.ac.ebi.ampt2d.test.models.TestModel;
 import uk.ac.ebi.ampt2d.test.testers.AccessioningServiceTester;
 
@@ -38,12 +32,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.hibernate.validator.internal.util.Contracts.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@Ignore
-@RunWith(SpringRunner.class)
-@SpringBootTest(classes = {CucumberTestConfiguration.class})
-@DirtiesContext
 public class AccessioningServiceStepDefinitions {
 
     @Autowired
@@ -138,6 +128,6 @@ public class AccessioningServiceStepDefinitions {
 
     @Then("^user receives no data$")
     public void userReceivesNoData() {
-        assertTrue(tester.getSingleVersionResults().getData().isEmpty(),"User received data");
+        assertTrue(tester.getSingleVersionResults().getData().isEmpty(), "User received data");
     }
 }

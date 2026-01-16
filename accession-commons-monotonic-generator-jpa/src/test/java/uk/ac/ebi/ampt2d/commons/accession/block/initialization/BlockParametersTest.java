@@ -17,39 +17,51 @@
  */
 package uk.ac.ebi.ampt2d.commons.accession.block.initialization;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class BlockParametersTest {
 
     private BlockParameters blockParameters;
 
-    @Test(expected = BlockInitializationException.class)
+    @Test
     public void emptyBlockParameters() {
         Map<String, String> blockInitializations = null;
-        blockParameters = new BlockParameters("test", blockInitializations);
+        assertThrows(BlockInitializationException.class, () -> {
+            blockParameters = new BlockParameters("test", blockInitializations);
+        });
     }
 
-    @Test(expected = BlockInitializationException.class)
+    @Test
     public void invalidBlockSize() {
-        blockParameters = new BlockParameters("test", getBlockInitialization("0", "0", "0"));
+        assertThrows(BlockInitializationException.class, () -> {
+            blockParameters = new BlockParameters("test", getBlockInitialization("0", "0", "0"));
+        });
     }
 
-    @Test(expected = BlockInitializationException.class)
+    @Test
     public void invalidBlockStartValue() {
-        blockParameters = new BlockParameters("test", getBlockInitialization("1000", "-1", "0"));
+        assertThrows(BlockInitializationException.class, () -> {
+            blockParameters = new BlockParameters("test", getBlockInitialization("1000", "-1", "0"));
+        });
     }
 
-    @Test(expected = BlockInitializationException.class)
+    @Test
     public void invalidInterleaveInterval() {
-        blockParameters = new BlockParameters("test", getBlockInitialization("1000", "0", "1a"));
+        assertThrows(BlockInitializationException.class, () -> {
+            blockParameters = new BlockParameters("test", getBlockInitialization("1000", "0", "1a"));
+        });
     }
 
-    @Test(expected = BlockInitializationException.class)
+    @Test
     public void missingBlockParameters() {
-        blockParameters = new BlockParameters("test", getBlockInitialization("1000", "null", "0"));
+        assertThrows(BlockInitializationException.class, () -> {
+            blockParameters = new BlockParameters("test", getBlockInitialization("1000", "null", "0"));
+        });
     }
 
     @Test

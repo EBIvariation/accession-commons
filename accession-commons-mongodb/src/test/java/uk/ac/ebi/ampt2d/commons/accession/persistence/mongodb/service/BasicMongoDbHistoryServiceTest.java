@@ -17,43 +17,45 @@
  */
 package uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.service;
 
-import com.lordofthejars.nosqlunit.annotation.UsingDataSet;
-import com.lordofthejars.nosqlunit.core.LoadStrategyEnum;
-import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
-import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.ApplicationContext;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.containers.MongoDBContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 import uk.ac.ebi.ampt2d.commons.accession.core.AccessioningService;
 import uk.ac.ebi.ampt2d.commons.accession.core.HistoryService;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
 import uk.ac.ebi.ampt2d.test.configuration.MongoDbTestConfiguration;
 import uk.ac.ebi.ampt2d.test.models.TestModel;
-import uk.ac.ebi.ampt2d.test.rule.FixSpringMongoDbRule;
 import uk.ac.ebi.ampt2d.test.testers.AccessioningServiceTester;
 import uk.ac.ebi.ampt2d.test.testers.HistoryTester;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static uk.ac.ebi.ampt2d.test.testers.HistoryTester.assertEventIsCreated;
 import static uk.ac.ebi.ampt2d.test.testers.HistoryTester.assertEventIsDeprecated;
 import static uk.ac.ebi.ampt2d.test.testers.HistoryTester.assertEventIsMerged;
 import static uk.ac.ebi.ampt2d.test.testers.HistoryTester.assertEventIsPatch;
 import static uk.ac.ebi.ampt2d.test.testers.HistoryTester.assertEventIsUpdated;
 
-@RunWith(SpringRunner.class)
 @SpringBootTest(classes = {MongoDbTestConfiguration.class})
+@Testcontainers
 public class BasicMongoDbHistoryServiceTest {
 
-    @Rule
-    public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(MongoDbConfigurationBuilder.mongoDb()
-            .databaseName("accession-test").build());
+    @Container
+    static MongoDBContainer mongoDBContainer = new MongoDBContainer("mongo:6.0");
 
-    //Required for nosql unit
+    @DynamicPropertySource
+    static void setProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.data.mongodb.uri", mongoDBContainer::getReplicaSetUrl);
+    }
+
     @Autowired
-    private ApplicationContext applicationContext;
+    private MongoTemplate mongoTemplate;
 
     @Autowired
     private AccessioningService<TestModel, String, String> accessioningService;
@@ -61,13 +63,18 @@ public class BasicMongoDbHistoryServiceTest {
     @Autowired
     private HistoryService<TestModel, String> historyService;
 
-    @UsingDataSet(loadStrategy = LoadStrategyEnum.DELETE_ALL)
-    @Test(expected = AccessionDoesNotExistException.class)
-    public void testNoHistory() throws AccessionDoesNotExistException {
-        getHistoryTester("DoesNotExist");
+    @BeforeEach
+    public void setUp() {
+        mongoTemplate.getCollectionNames().forEach(name -> mongoTemplate.dropCollection(name));
     }
 
-    @UsingDataSet(loadStrategy = LoadStrategyEnum.DELETE_ALL)
+    @Test
+    public void testNoHistory() throws AccessionDoesNotExistException {
+        assertThrows(AccessionDoesNotExistException.class, () -> {
+            getHistoryTester("DoesNotExist");
+        });
+    }
+
     @Test
     public void testHistoryNoOperations() throws AccessionDoesNotExistException {
         getAccessionTester()
@@ -77,7 +84,6 @@ public class BasicMongoDbHistoryServiceTest {
                 .assertEvent(0, assertEventIsCreated());
     }
 
-    @UsingDataSet(loadStrategy = LoadStrategyEnum.DELETE_ALL)
     @Test
     public void testHistoryUpdate() throws AccessionDoesNotExistException {
         getAccessionTester()
@@ -88,7 +94,6 @@ public class BasicMongoDbHistoryServiceTest {
                 .assertEvent(1, assertEventIsUpdated("test-2-update-1", 1));
     }
 
-    @UsingDataSet(loadStrategy = LoadStrategyEnum.DELETE_ALL)
     @Test
     public void testHistoryPatch() throws AccessionDoesNotExistException {
         getAccessionTester()
@@ -100,7 +105,6 @@ public class BasicMongoDbHistoryServiceTest {
                 .assertEvent(1, assertEventIsPatch("test-3-patch-2", 2));
     }
 
-    @UsingDataSet(loadStrategy = LoadStrategyEnum.DELETE_ALL)
     @Test
     public void testHistoryMultiplePatch() throws AccessionDoesNotExistException {
         getAccessionTester()
@@ -114,7 +118,6 @@ public class BasicMongoDbHistoryServiceTest {
                 .assertEvent(2, assertEventIsPatch("test-3-patch-3", 3));
     }
 
-    @UsingDataSet(loadStrategy = LoadStrategyEnum.DELETE_ALL)
     @Test
     public void testHistoryPatchAndUpdate() throws AccessionDoesNotExistException {
         getAccessionTester()
@@ -129,7 +132,6 @@ public class BasicMongoDbHistoryServiceTest {
                 .assertEvent(2, assertEventIsUpdated("test-4-update-patch-2", 2));
     }
 
-    @UsingDataSet(loadStrategy = LoadStrategyEnum.DELETE_ALL)
     @Test
     public void testDeprecate() throws AccessionDoesNotExistException {
         getAccessionTester()
@@ -142,7 +144,6 @@ public class BasicMongoDbHistoryServiceTest {
                 .assertEvent(1, assertEventIsDeprecated());
     }
 
-    @UsingDataSet(loadStrategy = LoadStrategyEnum.DELETE_ALL)
     @Test
     public void testMerge() throws AccessionDoesNotExistException {
         getAccessionTester()
@@ -156,7 +157,6 @@ public class BasicMongoDbHistoryServiceTest {
                 .assertEvent(1, assertEventIsMerged("id-test-merge-1"));
     }
 
-    @UsingDataSet(loadStrategy = LoadStrategyEnum.DELETE_ALL)
     @Test
     public void testComplexCase() throws AccessionDoesNotExistException {
         getAccessionTester()

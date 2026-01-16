@@ -17,8 +17,7 @@
  */
 package uk.ac.ebi.ampt2d.commons.accession.rest;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.json.AutoConfigureJsonTesters;
@@ -27,7 +26,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.json.JacksonTester;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
@@ -50,7 +48,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrlPattern;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@RunWith(SpringRunner.class)
 @SpringBootTest
 @AutoConfigureMockMvc
 @AutoConfigureJsonTesters
@@ -229,7 +226,7 @@ public class BasicRestControllerTest {
     public void testCollectionOfDTOValidation() throws Exception {
         doAccession(status().is4xxClientError(), null, null)
                 .andExpect(jsonPath("$.exception")
-                        .value("javax.validation.ValidationException"))
+                        .value("jakarta.validation.ValidationException"))
                 .andExpect(jsonPath("$.message")
                         .value("basicRestModelList[0] : Please provide a value\n" +
                                 "basicRestModelList[1] : Please provide a value\n"));

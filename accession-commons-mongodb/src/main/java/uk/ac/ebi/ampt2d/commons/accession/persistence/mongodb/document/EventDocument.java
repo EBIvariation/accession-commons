@@ -23,7 +23,7 @@ import org.springframework.data.mongodb.core.index.Indexed;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.IEvent;
 
-import javax.persistence.Id;
+import org.springframework.data.annotation.Id;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.ArrayList;

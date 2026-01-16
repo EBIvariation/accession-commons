@@ -17,9 +17,7 @@
  */
 package uk.ac.ebi.ampt2d.commons.accession.rest;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.json.AutoConfigureJsonTesters;
@@ -28,7 +26,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.json.JacksonTester;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
@@ -47,10 +44,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@RunWith(SpringRunner.class)
 @SpringBootTest
 @AutoConfigureMockMvc
 @AutoConfigureJsonTesters
@@ -75,9 +72,9 @@ public class DecoratedAccessionMergedExceptionTest {
         String accession1 = extractAccession(doAccession("merge-test-1"));
         String accession2 = extractAccession(doAccession("merge-test-2"));
         String accession3 = extractAccession(doAccession("merge-test-3"));
-        Assert.assertEquals("EGA00000000100", accession1);
-        Assert.assertEquals("EGA00000000101", accession2);
-        Assert.assertEquals("EGA00000000102", accession3);
+        assertEquals("EGA00000000100", accession1);
+        assertEquals("EGA00000000101", accession2);
+        assertEquals("EGA00000000102", accession3);
         doMerge(accession2, accession3).andExpect(status().isOk());
         doMerge(accession1, accession2).andExpect(status().isNotFound()).andExpect(jsonPath("$.message")
                 .value(accession2 + " has been already merged into " + accession3));

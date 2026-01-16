@@ -17,34 +17,32 @@
  */
 package uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service;
 
-import org.hibernate.exception.ConstraintViolationException;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringRunner;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.entities.ContiguousIdBlock;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.repositories.ContiguousIdBlockRepository;
 import uk.ac.ebi.ampt2d.test.configuration.MonotonicAccessionGeneratorTestConfiguration;
 
-import javax.persistence.PersistenceException;
+import jakarta.persistence.PersistenceException;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static uk.ac.ebi.ampt2d.commons.accession.util.ContiguousIdBlockUtil.getAllBlocksForCategoryId;
 import static uk.ac.ebi.ampt2d.commons.accession.util.ContiguousIdBlockUtil.getUnreservedContiguousIdBlock;
 
-@RunWith(SpringRunner.class)
 @DataJpaTest
 @ContextConfiguration(classes = {MonotonicAccessionGeneratorTestConfiguration.class})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
@@ -271,7 +269,8 @@ public class ContiguousIdBlockServiceTest {
         repository.save(block2);
 
         Throwable exception = assertThrows(PersistenceException.class, () -> testEntityManager.flush());
-        assertTrue(exception.getCause() instanceof ConstraintViolationException);
+        // In Hibernate 6.x, the cause is the database-specific SQLException rather than Hibernate's ConstraintViolationException
+        assertInstanceOf(SQLException.class, exception.getCause());
     }
 
     @Test
