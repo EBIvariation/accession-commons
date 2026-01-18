@@ -8,6 +8,8 @@ import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.entities.ContiguousIdBlock;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.repositories.ContiguousIdBlockRepository;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service.ContiguousIdBlockService;
+
+import jakarta.persistence.EntityManager;
 import uk.ac.ebi.ampt2d.commons.accession.service.BasicSpringDataRepositoryMonotonicDatabaseService;
 import uk.ac.ebi.ampt2d.test.configuration.MonotonicAccessionGeneratorTestConfiguration;
 import uk.ac.ebi.ampt2d.test.configuration.TestMonotonicDatabaseServiceTestConfiguration;
@@ -37,6 +39,8 @@ public class MonotonicAccessionRecoveryAgentTest {
     private ContiguousIdBlockRepository repository;
     @Autowired
     private ContiguousIdBlockService service;
+    @Autowired
+    private EntityManager entityManager;
 
     @Test
     public void testRunRecovery() throws InterruptedException {
@@ -69,6 +73,9 @@ public class MonotonicAccessionRecoveryAgentTest {
         MonotonicAccessionRecoveryAgent recoveryAgent = new MonotonicAccessionRecoveryAgent(service, monotonicDBService);
         recoveryAgent.runRecovery(TEST_CATEGORY, TEST_RECOVERY_AGENT_APP_INSTANCE_ID, recoverCutOffTime);
 
+        // Clear the persistence context to ensure we fetch fresh data from the database
+        entityManager.flush();
+        entityManager.clear();
 
         List<ContiguousIdBlock> blockList = StreamSupport.stream(repository.findAll().spliterator(), false)
                 .sorted(Comparator.comparing(ContiguousIdBlock::getFirstValue))
