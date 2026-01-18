@@ -20,7 +20,7 @@ package uk.ac.ebi.ampt2d.test.persistence;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.entities.InactiveAccessionEntity;
 import uk.ac.ebi.ampt2d.test.models.TestModel;
 
-import javax.persistence.Entity;
+import jakarta.persistence.Entity;
 import java.time.LocalDateTime;
 
 @Entity

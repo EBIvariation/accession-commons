@@ -25,8 +25,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class AccessionWrapperCollectionTester
         extends MethodResponseTester<List<? extends AccessionWrapper<TestModel, String, String>>> {

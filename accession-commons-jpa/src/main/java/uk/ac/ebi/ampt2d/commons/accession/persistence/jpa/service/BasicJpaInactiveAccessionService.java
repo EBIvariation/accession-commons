@@ -17,7 +17,6 @@
  */
 package uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.service;
 
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.IEvent;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.entities.InactiveAccessionEntity;
@@ -102,7 +101,7 @@ public class BasicJpaInactiveAccessionService<
 
     @Override
     public List<? extends IEvent<MODEL, ACCESSION>> getAllEventsInvolvedIn(ACCESSION accession) {
-        throw new NotImplementedException();
+        throw new UnsupportedOperationException("Not implemented");
     }
 
 }

@@ -17,7 +17,7 @@
  */
 package uk.ac.ebi.ampt2d.commons.accession.generators;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.SaveResponse;
 import uk.ac.ebi.ampt2d.commons.accession.hashing.SHA1HashingFunction;
@@ -30,7 +30,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class SingleAccessionGeneratorTest {
     private static String APPLICATION_INSTANCE_ID = "TEST_APPPLICATION_INSTANCE_ID";

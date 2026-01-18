@@ -18,15 +18,13 @@
 package uk.ac.ebi.ampt2d.commons.accession.generators.monotonic;
 
 import org.hibernate.exception.ConstraintViolationException;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
 import org.mockito.Answers;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringRunner;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionGeneratorShutDownException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionIsNotPendingException;
@@ -48,16 +46,15 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static uk.ac.ebi.ampt2d.commons.accession.util.ContiguousIdBlockUtil.getAllBlocksForCategoryId;
 import static uk.ac.ebi.ampt2d.commons.accession.util.ContiguousIdBlockUtil.getUnreservedContiguousIdBlock;
 
-@RunWith(SpringRunner.class)
 @DataJpaTest
 @ContextConfiguration(classes = {MonotonicAccessionGeneratorTestConfiguration.class, TestMonotonicDatabaseServiceTestConfiguration.class})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
@@ -338,28 +335,34 @@ public class MonotonicAccessionGeneratorTest {
         assertEquals(BLOCK_SIZE - 1, monotonicRange.getEnd());
     }
 
-    @Test(expected = AccessionIsNotPendingException.class)
+    @Test
     public void assertReleaseAndCommitSameElement() throws Exception {
         MonotonicAccessionGenerator generator = getMonotonicAccessionGenerator();
         generator.generateAccessions(BLOCK_SIZE, INSTANCE_ID);
         generator.release(2);
-        generator.commit(2);
+        assertThrows(AccessionIsNotPendingException.class, () -> {
+            generator.commit(2);
+        });
     }
 
-    @Test(expected = AccessionIsNotPendingException.class)
+    @Test
     public void assertCommitAndReleaseSameElement() throws Exception {
         MonotonicAccessionGenerator generator = getMonotonicAccessionGenerator();
         generator.generateAccessions(BLOCK_SIZE, INSTANCE_ID);
         generator.commit(2);
-        generator.release(2);
+        assertThrows(AccessionIsNotPendingException.class, () -> {
+            generator.release(2);
+        });
     }
 
-    @Test(expected = AccessionIsNotPendingException.class)
+    @Test
     public void releaseSomeIdsTwice() throws Exception {
         MonotonicAccessionGenerator generator = getMonotonicAccessionGenerator();
         generator.generateAccessions(TENTH_BLOCK_SIZE, INSTANCE_ID);
         generator.release(0, 1);
-        generator.release(0, 1);
+        assertThrows(AccessionIsNotPendingException.class, () -> {
+            generator.release(0, 1);
+        });
     }
 
     private long[] getLongArray(int start, int end) {

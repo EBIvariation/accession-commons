@@ -15,27 +15,15 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ampt2d.test.rest;
+package uk.ac.ebi.ampt2d.commons.accession;
 
-import uk.ac.ebi.ampt2d.test.models.TestModel;
+import io.cucumber.spring.CucumberContextConfiguration;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.DirtiesContext;
+import uk.ac.ebi.ampt2d.test.configuration.CucumberTestConfiguration;
 
-import jakarta.validation.constraints.NotNull;
-
-public class BasicRestModel implements TestModel {
-
-    @NotNull(message = "Please provide a value")
-    private String value;
-
-    public BasicRestModel() {
-    }
-
-    public BasicRestModel(String value) {
-        this.value = value;
-    }
-
-    @Override
-    public String getValue() {
-        return value;
-    }
-
+@CucumberContextConfiguration
+@SpringBootTest(classes = {CucumberTestConfiguration.class})
+@DirtiesContext
+public class CucumberSpringConfiguration {
 }

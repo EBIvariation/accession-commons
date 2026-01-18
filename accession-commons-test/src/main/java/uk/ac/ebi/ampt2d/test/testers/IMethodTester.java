@@ -20,8 +20,8 @@ package uk.ac.ebi.ampt2d.test.testers;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public interface IMethodTester {
 
@@ -31,7 +31,7 @@ public interface IMethodTester {
 
     default void assertThrow(Class<? extends Throwable> exceptionClass) {
         Exception thrownException = getException().get();
-        assertNotNull("No exception was thrown", thrownException);
+        assertNotNull(thrownException, "No exception was thrown");
         assertThatThrownBy(() -> {
             throw thrownException;
         }).isInstanceOf(exceptionClass);
