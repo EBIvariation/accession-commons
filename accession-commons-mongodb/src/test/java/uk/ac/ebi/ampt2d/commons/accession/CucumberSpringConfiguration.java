@@ -23,22 +23,21 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.MongoDBContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 import uk.ac.ebi.ampt2d.test.configuration.MongoDbCucumberTestConfiguration;
 
 @CucumberContextConfiguration
 @SpringBootTest(classes = {MongoDbCucumberTestConfiguration.class})
 @DirtiesContext
-@Testcontainers
 public class CucumberSpringConfiguration {
 
-    @Container
     static MongoDBContainer mongoDBContainer = new MongoDBContainer("mongo:6.0");
+
+    static {
+        mongoDBContainer.start();
+    }
 
     @DynamicPropertySource
     static void setProperties(DynamicPropertyRegistry registry) {
-        mongoDBContainer.start();
         registry.add("spring.data.mongodb.uri", mongoDBContainer::getReplicaSetUrl);
     }
 }
