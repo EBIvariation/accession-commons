@@ -38,6 +38,7 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static uk.ac.ebi.ampt2d.commons.accession.util.ContiguousIdBlockUtil.getAllBlocksForCategoryId;
@@ -126,19 +127,15 @@ public class ContiguousIdBlockServiceTest {
         service.save(Arrays.asList(UncompletedButReservedBlock));
         service.save(Arrays.asList(completedAndReservedBlock));
 
-        // Reserve Uncompleted blocks - should only reserve uncompleted and unreserved
+        // get and reserve first uncompleted blocks - should only reserve uncompleted and unreserved
         String reservingInstanceId = "instance-Id-3";
-        List<ContiguousIdBlock> contiguousBlocks = service.reserveUncompletedBlocksForCategoryIdAndApplicationInstanceId(CATEGORY_ID, reservingInstanceId);
+        ContiguousIdBlock contiguousBlock = service.reserveFirstUncompletedBlockForCategoryIdAndApplicationInstanceId(CATEGORY_ID, reservingInstanceId);
 
-        assertEquals(2, contiguousBlocks.size());
-        assertEquals(0, contiguousBlocks.get(0).getFirstValue());
-        assertEquals(4, contiguousBlocks.get(0).getLastValue());
-        assertEquals(reservingInstanceId, contiguousBlocks.get(0).getApplicationInstanceId());
-        assertTrue(contiguousBlocks.get(0).isReserved());
-        assertEquals(5, contiguousBlocks.get(1).getFirstValue());
-        assertEquals(9, contiguousBlocks.get(1).getLastValue());
-        assertEquals(reservingInstanceId, contiguousBlocks.get(1).getApplicationInstanceId());
-        assertTrue(contiguousBlocks.get(1).isReserved());
+        assertNotNull(contiguousBlock);
+        assertEquals(0, contiguousBlock.getFirstValue());
+        assertEquals(4, contiguousBlock.getLastValue());
+        assertEquals(reservingInstanceId, contiguousBlock.getApplicationInstanceId());
+        assertTrue(contiguousBlock.isReserved());
     }
 
     @Test

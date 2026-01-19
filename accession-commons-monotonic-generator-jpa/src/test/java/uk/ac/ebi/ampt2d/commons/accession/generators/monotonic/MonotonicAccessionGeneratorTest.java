@@ -315,7 +315,7 @@ public class MonotonicAccessionGeneratorTest {
                 new MonotonicAccessionGenerator(CATEGORY_ID, service, monotonicDBService);
         ContiguousIdBlock block = findFirstByCategoryIdAndApplicationInstanceIdOrderByLastValueDesc(CATEGORY_ID);
         assertEquals(-1, block.getLastCommitted());
-        generatorRecovering.generateAccessions(0, INSTANCE_ID);
+        generatorRecovering.generateAccessions(1, INSTANCE_ID);
         assertFalse(generatorRecovering.getAvailableRanges().isEmpty());
     }
 
@@ -331,10 +331,10 @@ public class MonotonicAccessionGeneratorTest {
                 CATEGORY_ID, service, monotonicDBService);
         ContiguousIdBlock block = findFirstByCategoryIdAndApplicationInstanceIdOrderByLastValueDesc(CATEGORY_ID);
         assertEquals(1, block.getLastCommitted());
-        generatorRecovering.generateAccessions(0, INSTANCE_ID);
+        generatorRecovering.generateAccessions(1, INSTANCE_ID);
         assertEquals(1, generatorRecovering.getAvailableRanges().size());
         MonotonicRange monotonicRange = generatorRecovering.getAvailableRanges().peek();
-        assertEquals(2, monotonicRange.getStart());
+        assertEquals(3, monotonicRange.getStart());
         assertEquals(BLOCK_SIZE - 1, monotonicRange.getEnd());
     }
 
@@ -484,9 +484,9 @@ public class MonotonicAccessionGeneratorTest {
         MonotonicAccessionGenerator generator1 = new MonotonicAccessionGenerator(CATEGORY_ID_2, service, monotonicDBService);
         assertEquals(0, generator1.getAvailableRanges().size());
         // its recover state reserves the UnCompleted block
-        generator1.generateAccessions(0, INSTANCE_ID);
+        generator1.generateAccessions(1, INSTANCE_ID);
         assertEquals(1, generator1.getAvailableRanges().size());
-        assertEquals(new MonotonicRange(0, 9), generator1.getAvailableRanges().peek());
+        assertEquals(new MonotonicRange(1, 9), generator1.getAvailableRanges().peek());
 
         // Block is currently reserved by Generator-1
         blockInDBList = findAllByCategoryIdAndApplicationInstanceIdOrderByLastValueAsc(CATEGORY_ID_2);
@@ -508,9 +508,9 @@ public class MonotonicAccessionGeneratorTest {
         // Generator-3 can reserve the same Uncompleted block, once Generator-1 releases it
         generator1.shutDownAccessionGenerator();
         MonotonicAccessionGenerator generator3 = new MonotonicAccessionGenerator(CATEGORY_ID_2, service, monotonicDBService);
-        generator3.generateAccessions(0, INSTANCE_ID);
+        generator3.generateAccessions(1, INSTANCE_ID);
         assertEquals(1, generator3.getAvailableRanges().size());
-        assertEquals(new MonotonicRange(0, 9), generator3.getAvailableRanges().peek());
+        assertEquals(new MonotonicRange(1, 9), generator3.getAvailableRanges().peek());
     }
 
     @Test

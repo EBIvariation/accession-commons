@@ -19,6 +19,7 @@ package uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -116,12 +117,12 @@ public class ContiguousIdBlockService {
         ContiguousIdBlock reservedBlock;
         if (lastBlock != null) {
             reservedBlock = repository.save(lastBlock.nextBlock(instanceId, blockParameters.getBlockSize(),
-                                                                blockParameters.getNextBlockInterval(),
-                                                                blockParameters.getBlockStartValue()));
+                    blockParameters.getNextBlockInterval(),
+                    blockParameters.getBlockStartValue()));
         } else {
             ContiguousIdBlock newBlock = new ContiguousIdBlock(categoryId, instanceId,
-                                                               blockParameters.getBlockStartValue(),
-                                                               blockParameters.getBlockSize());
+                    blockParameters.getBlockStartValue(),
+                    blockParameters.getBlockSize());
             reservedBlock = repository.save(newBlock);
         }
         logger.trace("Reserved new block: {}", reservedBlock);
@@ -134,16 +135,20 @@ public class ContiguousIdBlockService {
     }
 
     @Transactional(isolation = Isolation.SERIALIZABLE)
-    public List<ContiguousIdBlock> reserveUncompletedBlocksForCategoryIdAndApplicationInstanceId(String categoryId, String applicationInstanceId) {
-        logger.trace("Inside reserveUncompletedBlocks for instanceId {}", applicationInstanceId);
-        List<ContiguousIdBlock> blockList = repository.findUncompletedAndUnreservedBlocksOrderByLastValueAsc(categoryId);
-        blockList.stream().forEach(block -> {
-            logger.trace("Reserving incomplete and unreserved block {}", block);
+    public ContiguousIdBlock reserveFirstUncompletedBlockForCategoryIdAndApplicationInstanceId(String categoryId, String applicationInstanceId) {
+        logger.trace("Inside reserveUncompletedBlock for instanceId {}", applicationInstanceId);
+        ContiguousIdBlock block = repository.findUncompletedAndUnreservedBlocksOrderByLastValueAsc(categoryId,
+                        PageRequest.of(0, 1)).stream()
+                .findFirst().orElse(null);
+
+        if (block != null) {
             block.setApplicationInstanceId(applicationInstanceId);
             block.markAsReserved();
-        });
-        save(blockList);
-        return blockList;
+
+            save(block);
+        }
+
+        return block;
     }
 
     public List<ContiguousIdBlock> allBlocksForCategoryIdReservedBeforeTheGivenTimeFrame(String categoryId,

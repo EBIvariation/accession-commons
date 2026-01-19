@@ -17,6 +17,7 @@
  */
 package uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.repositories;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
@@ -38,7 +39,8 @@ public interface ContiguousIdBlockRepository extends CrudRepository<ContiguousId
     // Note that application instances reserving the same new blocks is prevented by the uniqueness constraint in the
     // database and subsequent retry in the accession generator.
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    List<ContiguousIdBlock> findUncompletedAndUnreservedBlocksOrderByLastValueAsc(@Param("categoryId") String categoryId);
+    List<ContiguousIdBlock> findUncompletedAndUnreservedBlocksOrderByLastValueAsc(@Param("categoryId") String categoryId,
+                                                                                  Pageable pageable);
 
     ContiguousIdBlock findFirstByCategoryIdOrderByLastValueDesc(String categoryId);
 
