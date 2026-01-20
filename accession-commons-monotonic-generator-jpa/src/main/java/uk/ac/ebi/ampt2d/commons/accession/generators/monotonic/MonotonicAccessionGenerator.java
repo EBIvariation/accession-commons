@@ -47,6 +47,7 @@ public class MonotonicAccessionGenerator<MODEL> implements AccessionGenerator<MO
     private final String categoryId;
     private final ContiguousIdBlockService blockService;
     private MonotonicDatabaseService monotonicDatabaseService;
+    private boolean UNCOMPLETED_BLOCKS_AVAILABLE = true;
 
     private boolean SHUTDOWN = false;
 
@@ -127,8 +128,12 @@ public class MonotonicAccessionGenerator<MODEL> implements AccessionGenerator<MO
     }
 
     private synchronized void reserveBlock(String categoryId, String instanceId) {
-        boolean reservedUncompleted = recoverAndReserveUncompletedBlock(instanceId);
-        if (!reservedUncompleted) {
+        if (UNCOMPLETED_BLOCKS_AVAILABLE) {
+            boolean reservedUncompleted = recoverAndReserveUncompletedBlock(instanceId);
+            if (!reservedUncompleted) {
+                UNCOMPLETED_BLOCKS_AVAILABLE = false;
+            }
+        } else {
             reserveNewBlock(categoryId, instanceId);
         }
     }
