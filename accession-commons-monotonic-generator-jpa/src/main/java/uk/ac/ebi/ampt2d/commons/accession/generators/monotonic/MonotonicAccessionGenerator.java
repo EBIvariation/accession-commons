@@ -47,9 +47,9 @@ public class MonotonicAccessionGenerator<MODEL> implements AccessionGenerator<MO
     private final String categoryId;
     private final ContiguousIdBlockService blockService;
     private MonotonicDatabaseService monotonicDatabaseService;
+    private boolean UNCOMPLETED_BLOCKS_AVAILABLE = true;
 
     private boolean SHUTDOWN = false;
-    private boolean RUN_RECOVERY = true;
 
     public MonotonicAccessionGenerator(String categoryId,
                                        ContiguousIdBlockService contiguousIdBlockService,
@@ -67,26 +67,23 @@ public class MonotonicAccessionGenerator<MODEL> implements AccessionGenerator<MO
         }
     }
 
-    private void recoverState(String applicationInstanceId) {
-        if (RUN_RECOVERY && monotonicDatabaseService != null) {
-            List<ContiguousIdBlock> uncompletedBlocks = blockService
-                    .reserveUncompletedBlocksForCategoryIdAndApplicationInstanceId(categoryId, applicationInstanceId);
-            //Insert as available ranges
-            for (ContiguousIdBlock block : uncompletedBlocks) {
-                blockManager.addBlock(block);
-            }
-            // As we are going through the available ranges and at the same time we are also going to manipulate/update them
-            // Need to make a copy of the original for iteration to avoid ConcurrentModificationException
-            MonotonicRangePriorityQueue copyOfAvailableRanges = new MonotonicRangePriorityQueue();
-            for (MonotonicRange range : getAvailableRanges()) {
-                copyOfAvailableRanges.offer(range);
-            }
-            for (MonotonicRange monotonicRange : copyOfAvailableRanges) {
-                recoverStateForElements(monotonicDatabaseService.getAccessionsInRanges(Collections.singletonList(monotonicRange)));
-            }
+    private boolean recoverAndReserveUncompletedBlock(String applicationInstanceId) {
+        if (monotonicDatabaseService != null) {
+            ContiguousIdBlock uncompletedBlock = blockService
+                    .reserveFirstUncompletedBlockForCategoryIdAndApplicationInstanceId(categoryId, applicationInstanceId);
+            if (uncompletedBlock != null) {
+                //Insert as available ranges
+                blockManager.addBlock(uncompletedBlock);
 
-            RUN_RECOVERY = false;
+                recoverStateForElements(monotonicDatabaseService.getAccessionsInRanges(
+                        Collections.singletonList(new MonotonicRange(uncompletedBlock.getLastCommitted() + 1,
+                                uncompletedBlock.getLastValue()))));
+
+                return true;
+            }
         }
+
+        return false;
     }
 
     /**
@@ -103,9 +100,8 @@ public class MonotonicAccessionGenerator<MODEL> implements AccessionGenerator<MO
     public synchronized long[] generateAccessions(int numAccessionsToGenerate, String applicationInstanceId)
             throws AccessionCouldNotBeGeneratedException {
         checkAccessionGeneratorNotShutDown();
-        recoverState(applicationInstanceId);
         long[] accessions = new long[numAccessionsToGenerate];
-        reserveNewBlocksUntilSizeIs(numAccessionsToGenerate, applicationInstanceId);
+        reserveBlocksUntilSizeIs(numAccessionsToGenerate, applicationInstanceId);
 
         int i = 0;
         while (i < numAccessionsToGenerate) {
@@ -123,13 +119,25 @@ public class MonotonicAccessionGenerator<MODEL> implements AccessionGenerator<MO
      * Ensures that the available ranges queue hold @param totalAccessionsToGenerate or more elements
      *
      * @param totalAccessionsToGenerate
-     * @param applicationInstanceId - The id of the application(instance) that is trying to reserve the block
+     * @param applicationInstanceId     - The id of the application(instance) that is trying to reserve the block
      */
-    private synchronized void reserveNewBlocksUntilSizeIs(int totalAccessionsToGenerate, String applicationInstanceId) {
+    private synchronized void reserveBlocksUntilSizeIs(int totalAccessionsToGenerate, String applicationInstanceId) {
         while (!blockManager.hasAvailableAccessions(totalAccessionsToGenerate)) {
-            ExponentialBackOff.execute(() -> reserveNewBlock(categoryId, applicationInstanceId), 10, 30);
+            ExponentialBackOff.execute(() -> reserveBlock(categoryId, applicationInstanceId), 10, 30);
         }
     }
+
+    private synchronized void reserveBlock(String categoryId, String instanceId) {
+        if (UNCOMPLETED_BLOCKS_AVAILABLE) {
+            boolean reservedUncompleted = recoverAndReserveUncompletedBlock(instanceId);
+            if (!reservedUncompleted) {
+                UNCOMPLETED_BLOCKS_AVAILABLE = false;
+            }
+        } else {
+            reserveNewBlock(categoryId, instanceId);
+        }
+    }
+
 
     private synchronized void reserveNewBlock(String categoryId, String instanceId) {
         blockManager.addBlock(blockService.reserveNewBlock(categoryId, instanceId));

@@ -76,6 +76,28 @@ public class BasicMonotonicAccessioningWithAlternateRangesTest {
     }
 
     @Test
+    public void testReserveNewBlock() throws AccessionCouldNotBeGeneratedException {
+        String categoryId = "eva_2";
+        String instanceId2 = "test-instance_2";
+
+        assertEquals(0, getAllUncompletedBlocksForCategoryId(contiguousIdBlockRepository, categoryId).size());
+
+        MonotonicAccessionGenerator generator = getGenerator(categoryId, instanceId2);
+        generator.generateAccessions(1, INSTANCE_ID);
+
+        assertEquals(1, getAllUncompletedBlocksForCategoryId(contiguousIdBlockRepository, categoryId).size());
+        ContiguousIdBlock uncompletedBlock = getAllUncompletedBlocksForCategoryId(contiguousIdBlockRepository, categoryId).get(0);
+        assertEquals(0l, uncompletedBlock.getFirstValue());
+        assertEquals(9l, uncompletedBlock.getLastValue());
+        assertEquals(-1l, uncompletedBlock.getLastCommitted());
+
+        MonotonicRangePriorityQueue availableRanges = generator.getAvailableRanges();
+        assertEquals(1, availableRanges.size());
+        assertEquals(1l, availableRanges.peek().getStart());
+        assertEquals(9l, availableRanges.peek().getEnd());
+    }
+
+    @Test
     public void testRecoverState() throws AccessionCouldNotBeGeneratedException {
         String categoryId = "eva_2";
         String instanceId2 = "test-instance_2";
@@ -104,7 +126,7 @@ public class BasicMonotonicAccessioningWithAlternateRangesTest {
 
         // run recover state
         MonotonicAccessionGenerator generator = getGenerator(categoryId, instanceId2);
-        generator.generateAccessions(0, INSTANCE_ID);
+        generator.generateAccessions(1, INSTANCE_ID);
 
         // As we have already saved accessions in db from 100 to 124, the status should be
         // block-1 (100 to 109) : fully complete
@@ -118,7 +140,7 @@ public class BasicMonotonicAccessioningWithAlternateRangesTest {
 
         MonotonicRangePriorityQueue availableRanges = generator.getAvailableRanges();
         assertEquals(1, availableRanges.size());
-        assertEquals(125l, availableRanges.peek().getStart());
+        assertEquals(126l, availableRanges.peek().getStart());
         assertEquals(129l, availableRanges.peek().getEnd());
     }
 
@@ -205,14 +227,11 @@ public class BasicMonotonicAccessioningWithAlternateRangesTest {
         unreservedAndNotFullBlocks = blockInDBList.stream()
                 .filter(b -> b.isNotFull() && b.isNotReserved())
                 .collect(Collectors.toList());
-        assertEquals(0, unreservedAndNotFullBlocks.size());
+        assertEquals(1, unreservedAndNotFullBlocks.size());
         List<ContiguousIdBlock> reservedAndNotFullBlocks = blockInDBList.stream()
                 .filter(b -> b.isNotFull() && b.isReserved())
                 .collect(Collectors.toList());
-        assertEquals(1, reservedAndNotFullBlocks.size());
-        assertEquals(9, reservedAndNotFullBlocks.get(0).getLastValue());
-        assertEquals(-1, reservedAndNotFullBlocks.get(0).getLastCommitted());
-        assertEquals(true, reservedAndNotFullBlocks.get(0).isReserved());
+        assertEquals(0, reservedAndNotFullBlocks.size());
     }
 
     private List<TestModel> getObjectsForAccessionsInRange(int startRange, int endRange) {
@@ -221,7 +240,7 @@ public class BasicMonotonicAccessioningWithAlternateRangesTest {
     }
 
     private BasicAccessioningService<TestModel, String, Long> getAccessioningService(String categoryId,
-                                                                                String instanceId) {
+                                                                                     String instanceId) {
         return new BasicAccessioningService<>(
                 getGenerator(categoryId, instanceId),
                 databaseService,
