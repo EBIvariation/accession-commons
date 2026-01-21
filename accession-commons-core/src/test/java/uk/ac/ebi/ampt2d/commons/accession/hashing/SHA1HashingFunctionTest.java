@@ -17,10 +17,12 @@
  */
 package uk.ac.ebi.ampt2d.commons.accession.hashing;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.function.Function;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 public class SHA1HashingFunctionTest {
 
@@ -32,8 +34,8 @@ public class SHA1HashingFunctionTest {
         String object1Accession = hashingFunction.apply(object1);
         String object2Accession = hashingFunction.apply(object2);
         String object3Accession = hashingFunction.apply(object2);
-        Assert.assertNotEquals(object1Accession, object2Accession);
-        Assert.assertEquals(object2Accession, object3Accession);
-        Assert.assertEquals(40, object1Accession.length());
+        assertNotEquals(object1Accession, object2Accession);
+        assertEquals(object2Accession, object3Accession);
+        assertEquals(40, object1Accession.length());
     }
 }

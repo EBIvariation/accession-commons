@@ -1,15 +1,15 @@
 package uk.ac.ebi.ampt2d.commons.accession.generators.monotonic;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringRunner;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.entities.ContiguousIdBlock;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.repositories.ContiguousIdBlockRepository;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service.ContiguousIdBlockService;
+
+import jakarta.persistence.EntityManager;
 import uk.ac.ebi.ampt2d.commons.accession.service.BasicSpringDataRepositoryMonotonicDatabaseService;
 import uk.ac.ebi.ampt2d.test.configuration.MonotonicAccessionGeneratorTestConfiguration;
 import uk.ac.ebi.ampt2d.test.configuration.TestMonotonicDatabaseServiceTestConfiguration;
@@ -23,10 +23,9 @@ import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 import java.util.stream.StreamSupport;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@RunWith(SpringRunner.class)
 @DataJpaTest
 @ContextConfiguration(classes = {MonotonicAccessionGeneratorTestConfiguration.class, TestMonotonicDatabaseServiceTestConfiguration.class})
 public class MonotonicAccessionRecoveryAgentTest {
@@ -40,6 +39,8 @@ public class MonotonicAccessionRecoveryAgentTest {
     private ContiguousIdBlockRepository repository;
     @Autowired
     private ContiguousIdBlockService service;
+    @Autowired
+    private EntityManager entityManager;
 
     @Test
     public void testRunRecovery() throws InterruptedException {
@@ -72,6 +73,9 @@ public class MonotonicAccessionRecoveryAgentTest {
         MonotonicAccessionRecoveryAgent recoveryAgent = new MonotonicAccessionRecoveryAgent(service, monotonicDBService);
         recoveryAgent.runRecovery(TEST_CATEGORY, TEST_RECOVERY_AGENT_APP_INSTANCE_ID, recoverCutOffTime);
 
+        // Clear the persistence context to ensure we fetch fresh data from the database
+        entityManager.flush();
+        entityManager.clear();
 
         List<ContiguousIdBlock> blockList = StreamSupport.stream(repository.findAll().spliterator(), false)
                 .sorted(Comparator.comparing(ContiguousIdBlock::getFirstValue))

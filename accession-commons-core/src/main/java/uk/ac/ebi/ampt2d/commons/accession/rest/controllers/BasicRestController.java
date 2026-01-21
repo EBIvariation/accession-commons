@@ -33,7 +33,7 @@ import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionResponseDTO;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.AccessionVersionsResponseDTO;
 import uk.ac.ebi.ampt2d.commons.accession.rest.dto.GetOrCreateAccessionResponseDTO;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;

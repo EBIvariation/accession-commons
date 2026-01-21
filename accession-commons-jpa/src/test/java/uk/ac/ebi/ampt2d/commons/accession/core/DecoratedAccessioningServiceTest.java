@@ -17,12 +17,10 @@
  */
 package uk.ac.ebi.ampt2d.commons.accession.core;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringRunner;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDeprecatedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionDoesNotExistException;
@@ -37,9 +35,9 @@ import uk.ac.ebi.ampt2d.test.models.TestModel;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@RunWith(SpringRunner.class)
 @DataJpaTest
 @ContextConfiguration(classes = {TestJpaDatabaseServiceTestConfiguration.class})
 public class DecoratedAccessioningServiceTest {
@@ -79,26 +77,32 @@ public class DecoratedAccessioningServiceTest {
         assertEquals("prefix-id-service-service-test-1", accession.getAccession());
     }
 
-    @Test(expected = AccessionDoesNotExistException.class)
+    @Test
     public void assertGetByAccessionWrongPrefix()
             throws AccessionCouldNotBeGeneratedException, AccessionDeprecatedException,
             AccessionMergedException, AccessionDoesNotExistException {
         assertGetOrCreate();
-        getPrefixedService().getByAccession("service-service-test-1");
+        assertThrows(AccessionDoesNotExistException.class, () -> {
+            getPrefixedService().getByAccession("service-service-test-1");
+        });
     }
 
-    @Test(expected = AccessionDoesNotExistException.class)
+    @Test
     public void assertGetByAccessionAndVersionWrongPrefix() throws AccessionCouldNotBeGeneratedException,
             AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
         assertGetOrCreate();
-        getPrefixedService().getByAccessionAndVersion("service-service-test-1", 1);
+        assertThrows(AccessionDoesNotExistException.class, () -> {
+            getPrefixedService().getByAccessionAndVersion("service-service-test-1", 1);
+        });
     }
 
-    @Test(expected = AccessionDoesNotExistException.class)
+    @Test
     public void assertGetByAccessionWrongPrefixShort() throws AccessionCouldNotBeGeneratedException,
             AccessionMergedException, AccessionDoesNotExistException, AccessionDeprecatedException {
         assertGetOrCreate();
-        getPrefixedService().getByAccessionAndVersion("s", 1);
+        assertThrows(AccessionDoesNotExistException.class, () -> {
+            getPrefixedService().getByAccessionAndVersion("s", 1);
+        });
     }
 
     @Test

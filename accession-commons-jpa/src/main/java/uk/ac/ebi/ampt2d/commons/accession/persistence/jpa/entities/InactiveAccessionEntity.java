@@ -19,11 +19,11 @@ package uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.entities;
 
 import uk.ac.ebi.ampt2d.commons.accession.persistence.models.IAccessionedObject;
 
-import javax.persistence.Column;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.MappedSuperclass;
-import javax.validation.constraints.NotNull;
+import jakarta.persistence.Column;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.MappedSuperclass;
+import jakarta.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
