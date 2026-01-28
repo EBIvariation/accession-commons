@@ -19,6 +19,7 @@ package uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.InvalidDataAccessResourceUsageException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
@@ -137,9 +138,19 @@ public class ContiguousIdBlockService {
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public ContiguousIdBlock reserveFirstUncompletedBlockForCategoryIdAndApplicationInstanceId(String categoryId, String applicationInstanceId) {
         logger.trace("Inside reserveUncompletedBlock for instanceId {}", applicationInstanceId);
-        ContiguousIdBlock block = repository.findUncompletedAndUnreservedBlocksOrderByLastValueAsc(categoryId,
-                        PageRequest.of(0, 1)).stream()
-                .findFirst().orElse(null);
+        ContiguousIdBlock block;
+        try {
+            // Use SKIP LOCKED to atomically get an unreserved block, preventing race conditions
+            // where multiple concurrent transactions could reserve the same block.
+            // This is PostgreSQL-specific and provides the strongest concurrency guarantees.
+            block = repository.findFirstUncompletedAndUnreservedBlockForUpdate(categoryId);
+        } catch (InvalidDataAccessResourceUsageException e) {
+            // Fall back to the original query for databases that don't support SKIP LOCKED (e.g., H2 in tests)
+            logger.debug("SKIP LOCKED not supported, falling back to standard query", e);
+            block = repository.findUncompletedAndUnreservedBlocksOrderByLastValueAsc(categoryId,
+                            PageRequest.of(0, 1)).stream()
+                    .findFirst().orElse(null);
+        }
 
         if (block != null) {
             block.setApplicationInstanceId(applicationInstanceId);

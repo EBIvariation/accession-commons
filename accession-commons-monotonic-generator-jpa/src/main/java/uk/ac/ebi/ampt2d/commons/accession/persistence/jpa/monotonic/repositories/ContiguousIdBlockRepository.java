@@ -42,6 +42,33 @@ public interface ContiguousIdBlockRepository extends CrudRepository<ContiguousId
     List<ContiguousIdBlock> findUncompletedAndUnreservedBlocksOrderByLastValueAsc(@Param("categoryId") String categoryId,
                                                                                   Pageable pageable);
 
+    /**
+     * Atomically finds and locks the first uncompleted and unreserved block for a given category.
+     * Uses PostgreSQL's FOR UPDATE SKIP LOCKED to prevent race conditions where multiple concurrent
+     * transactions could reserve the same block.
+     *
+     * SKIP LOCKED ensures that:
+     * 1. The first available (unlocked) row is atomically selected and locked
+     * 2. Rows already locked by other transactions are skipped rather than waited for
+     * 3. Each concurrent transaction gets a different row (or null if none available)
+     *
+     * This solves the race condition that exists with SERIALIZABLE isolation + PESSIMISTIC_WRITE,
+     * where Postgre
+     * SQL's SSI evaluates WHERE clauses against snapshots rather than current data.
+     *
+     * @param categoryId the category ID to search for blocks
+     * @return the first uncompleted and unreserved block, or null if none available
+     */
+    @Query(value = "SELECT * FROM contiguous_id_blocks " +
+            "WHERE category_id = :categoryId " +
+            "AND last_committed != last_value " +
+            "AND (reserved IS NULL OR reserved = FALSE) " +
+            "ORDER BY last_value ASC " +
+            "LIMIT 1 " +
+            "FOR UPDATE SKIP LOCKED",
+            nativeQuery = true)
+    ContiguousIdBlock findFirstUncompletedAndUnreservedBlockForUpdate(@Param("categoryId") String categoryId);
+
     ContiguousIdBlock findFirstByCategoryIdOrderByLastValueDesc(String categoryId);
 
     List<ContiguousIdBlock> findByCategoryIdAndReservedIsTrueAndLastUpdatedTimestampLessThanEqualOrderByLastValueAsc(
