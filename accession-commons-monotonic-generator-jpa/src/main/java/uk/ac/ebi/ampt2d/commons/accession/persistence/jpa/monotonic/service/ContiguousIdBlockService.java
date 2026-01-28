@@ -73,10 +73,40 @@ public class ContiguousIdBlockService {
     @PersistenceContext
     EntityManager entityManager;
 
+    // Flag to track whether the database supports SKIP LOCKED (PostgreSQL-specific).
+    // Determined by checking the database dialect on first use.
+    private volatile Boolean skipLockedSupported = null;
+
     public ContiguousIdBlockService(ContiguousIdBlockRepository repository, Map<String, BlockParameters>
             categoryBlockInitializations) {
         this.repository = repository;
         this.categoryBlockInitializations = categoryBlockInitializations;
+    }
+
+    /**
+     * Determines if the database supports SKIP LOCKED by checking the Hibernate dialect.
+     * SKIP LOCKED is supported in PostgreSQL 9.5+ and Oracle 11g+.
+     */
+    private boolean isSkipLockedSupported() {
+        if (skipLockedSupported == null) {
+            try {
+                String dialect = (String) entityManager.getEntityManagerFactory()
+                        .getProperties().get("hibernate.dialect");
+                if (dialect != null) {
+                    String dialectLower = dialect.toLowerCase();
+                    // SKIP LOCKED is supported in PostgreSQL 9.5+ and Oracle
+                    skipLockedSupported = dialectLower.contains("postgresql") || dialectLower.contains("oracle");
+                } else {
+                    // If we can't determine the dialect, assume SKIP LOCKED is not supported
+                    skipLockedSupported = false;
+                }
+                logger.debug("Database dialect: {}, SKIP LOCKED supported: {}", dialect, skipLockedSupported);
+            } catch (Exception e) {
+                logger.debug("Could not determine database dialect, assuming SKIP LOCKED not supported", e);
+                skipLockedSupported = false;
+            }
+        }
+        return skipLockedSupported;
     }
 
     @Transactional(isolation = Isolation.SERIALIZABLE)
@@ -134,12 +164,27 @@ public class ContiguousIdBlockService {
         return categoryBlockInitializations.get(categoryId);
     }
 
+    /**
+     * Finds and reserves the first uncompleted and unreserved block for the given category.
+     * Uses PostgreSQL's SKIP LOCKED for atomic selection if supported (determined by database dialect),
+     * otherwise falls back to a standard query with PESSIMISTIC_WRITE lock.
+     */
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public ContiguousIdBlock reserveFirstUncompletedBlockForCategoryIdAndApplicationInstanceId(String categoryId, String applicationInstanceId) {
         logger.trace("Inside reserveUncompletedBlock for instanceId {}", applicationInstanceId);
-        ContiguousIdBlock block = repository.findUncompletedAndUnreservedBlocksOrderByLastValueAsc(categoryId,
-                        PageRequest.of(0, 1)).stream()
-                .findFirst().orElse(null);
+
+        ContiguousIdBlock block;
+        if (isSkipLockedSupported()) {
+            // Use SKIP LOCKED to atomically get an unreserved block, preventing race conditions
+            // where multiple concurrent transactions could reserve the same block.
+            // This is PostgreSQL-specific and provides the strongest concurrency guarantees.
+            block = repository.findFirstUncompletedAndUnreservedBlockForUpdate(categoryId);
+        } else {
+            // SKIP LOCKED not supported, use standard query with PESSIMISTIC_WRITE lock
+            block = repository.findUncompletedAndUnreservedBlocksOrderByLastValueAsc(categoryId,
+                            PageRequest.of(0, 1)).stream()
+                    .findFirst().orElse(null);
+        }
 
         if (block != null) {
             block.setApplicationInstanceId(applicationInstanceId);
