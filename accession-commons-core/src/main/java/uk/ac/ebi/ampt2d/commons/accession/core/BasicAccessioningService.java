@@ -94,6 +94,7 @@ public class BasicAccessioningService<MODEL, HASH, ACCESSION extends Serializabl
      * See {@link #getPreexistingAccessions(List)} } for more details.
      */
     private List<GetOrCreateAccessionWrapper<MODEL, HASH, ACCESSION>> saveAccessions(List<AccessionWrapper<MODEL, HASH, ACCESSION>> accessions) {
+        logger.trace("saveAccessions called with {} accessions, mode: {}", accessions.size(), this.accessionSaveMode);
         switch (this.accessionSaveMode) {
             case PREFILTER_EXISTING:
                 return saveAccessionsPrefilteringExisting(accessions);
@@ -117,11 +118,25 @@ public class BasicAccessioningService<MODEL, HASH, ACCESSION extends Serializabl
                 unsavedAccessions.add(accessionModel);
             }
         });
+
+        traceAccessions("New accessions created", savedAccessions);
+
         if (!unsavedAccessions.isEmpty()) {
-            getPreexistingAccessions(unsavedAccessions).stream().map(GetOrCreateAccessionWrapper::oldAccession)
+            List<AccessionWrapper<MODEL, HASH, ACCESSION>> preexisting = getPreexistingAccessions(unsavedAccessions);
+            traceAccessions("Preexisting accessions found", preexisting);
+            preexisting.stream().map(GetOrCreateAccessionWrapper::oldAccession)
                     .forEach(savedAccessions::add);
         }
         return savedAccessions;
+    }
+
+    private <T extends AccessionWrapper<MODEL, HASH, ACCESSION>> void traceAccessions(String description, List<T> accessions) {
+        if (logger.isTraceEnabled() && !accessions.isEmpty()) {
+            List<ACCESSION> accessionIds = accessions.stream()
+                    .map(AccessionWrapper::getAccession)
+                    .collect(Collectors.toList());
+            logger.trace("{}: {} - IDs: {}", description, accessionIds.size(), accessionIds);
+        }
     }
 
     private List<GetOrCreateAccessionWrapper<MODEL, HASH, ACCESSION>> saveAccessionsPrefilteringExisting(
@@ -134,9 +149,12 @@ public class BasicAccessioningService<MODEL, HASH, ACCESSION extends Serializabl
                 .filter(accession -> !preexistingHashes.contains(accession.getHash()))
                 .collect(Collectors.toList());
 
+        traceAccessions("Prefilter: preexisting accessions", preexistingAccessions);
+
         final List<GetOrCreateAccessionWrapper<MODEL, HASH, ACCESSION>> result = new ArrayList<>();
 
         if (!accessionsToSave.isEmpty()) {
+            logger.trace("Prefilter: {} new accessions to save", accessionsToSave.size());
             result.addAll(saveAllAccessionsThenResolve(accessionsToSave));
         }
 
