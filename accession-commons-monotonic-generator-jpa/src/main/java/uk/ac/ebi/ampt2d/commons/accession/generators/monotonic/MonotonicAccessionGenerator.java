@@ -17,6 +17,8 @@
  */
 package uk.ac.ebi.ampt2d.commons.accession.generators.monotonic;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.ac.ebi.ampt2d.commons.accession.block.initialization.BlockInitializationException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionGeneratorShutDownException;
@@ -43,6 +45,8 @@ import java.util.Map;
  */
 public class MonotonicAccessionGenerator<MODEL> implements AccessionGenerator<MODEL, Long> {
 
+    private static final Logger logger = LoggerFactory.getLogger(MonotonicAccessionGenerator.class);
+
     private final BlockManager blockManager;
     private final String categoryId;
     private final ContiguousIdBlockService blockService;
@@ -68,6 +72,7 @@ public class MonotonicAccessionGenerator<MODEL> implements AccessionGenerator<MO
     }
 
     private boolean recoverAndReserveUncompletedBlock(String applicationInstanceId) {
+        logger.trace("Reserving incomplete block");
         if (monotonicDatabaseService != null) {
             ContiguousIdBlock uncompletedBlock = blockService
                     .reserveFirstUncompletedBlockForCategoryIdAndApplicationInstanceId(categoryId, applicationInstanceId);
@@ -100,6 +105,7 @@ public class MonotonicAccessionGenerator<MODEL> implements AccessionGenerator<MO
     public synchronized long[] generateAccessions(int numAccessionsToGenerate, String applicationInstanceId)
             throws AccessionCouldNotBeGeneratedException {
         checkAccessionGeneratorNotShutDown();
+        logger.trace("Generating {} accessions for application ID {}", numAccessionsToGenerate, applicationInstanceId);
         long[] accessions = new long[numAccessionsToGenerate];
         reserveBlocksUntilSizeIs(numAccessionsToGenerate, applicationInstanceId);
 
@@ -128,6 +134,7 @@ public class MonotonicAccessionGenerator<MODEL> implements AccessionGenerator<MO
     }
 
     private synchronized void reserveBlock(String categoryId, String instanceId) {
+        logger.trace("Inside reserveBlock");
         if (UNCOMPLETED_BLOCKS_AVAILABLE) {
             boolean reservedUncompleted = recoverAndReserveUncompletedBlock(instanceId);
             if (!reservedUncompleted) {
@@ -140,6 +147,7 @@ public class MonotonicAccessionGenerator<MODEL> implements AccessionGenerator<MO
 
 
     private synchronized void reserveNewBlock(String categoryId, String instanceId) {
+        logger.trace("Reserving new block");
         blockManager.addBlock(blockService.reserveNewBlock(categoryId, instanceId));
     }
 
