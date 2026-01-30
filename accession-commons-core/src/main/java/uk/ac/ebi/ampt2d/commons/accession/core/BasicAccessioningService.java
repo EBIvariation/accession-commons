@@ -33,6 +33,7 @@ import uk.ac.ebi.ampt2d.commons.accession.generators.AccessionGenerator;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -129,6 +130,12 @@ public class BasicAccessioningService<MODEL, HASH, ACCESSION extends Serializabl
         Set<HASH> allHashes = accessions.stream().map(AccessionWrapper::getHash).collect(Collectors.toSet());
         List<AccessionWrapper<MODEL, HASH, ACCESSION>> preexistingAccessions = dbService.findAllByHash(allHashes);
         Set<HASH> preexistingHashes = preexistingAccessions.stream().map(AccessionWrapper::getHash).collect(Collectors.toSet());
+
+        // release accessions associated with pre-existing hashes
+        SaveResponse<ACCESSION> response = new SaveResponse<>(
+                Collections.emptySet(),
+                preexistingAccessions.stream().map(AccessionWrapper::getAccession).collect(Collectors.toSet()));
+        accessionGenerator.postSave(response);
 
         List<AccessionWrapper<MODEL, HASH, ACCESSION>> accessionsToSave = accessions.stream()
                 .filter(accession -> !preexistingHashes.contains(accession.getHash()))
