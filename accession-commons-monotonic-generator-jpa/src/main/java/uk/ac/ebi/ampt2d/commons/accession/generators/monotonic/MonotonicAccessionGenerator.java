@@ -191,7 +191,7 @@ public class MonotonicAccessionGenerator<MODEL> implements AccessionGenerator<MO
     public void shutDownAccessionGenerator() {
         List<ContiguousIdBlock> blockList = blockManager.getAssignedBlocks();
         blockList.stream().forEach(block -> block.releaseReserved());
-        blockService.save(blockList);
+        ExponentialBackOff.execute(() -> blockService.save(blockList), 10, 30);
         blockManager.shutDownBlockManager();
         SHUTDOWN = true;
     }
