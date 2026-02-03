@@ -33,6 +33,7 @@ import uk.ac.ebi.ampt2d.commons.accession.generators.AccessionGenerator;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -94,6 +95,8 @@ public class BasicAccessioningService<MODEL, HASH, ACCESSION extends Serializabl
      * See {@link #getPreexistingAccessions(List)} } for more details.
      */
     private List<GetOrCreateAccessionWrapper<MODEL, HASH, ACCESSION>> saveAccessions(List<AccessionWrapper<MODEL, HASH, ACCESSION>> accessions) {
+        logger.trace("Accessions to save: {}", accessions.stream().map(AccessionWrapper::getAccession).collect(
+                Collectors.toList()));
         switch (this.accessionSaveMode) {
             case PREFILTER_EXISTING:
                 return saveAccessionsPrefilteringExisting(accessions);
@@ -130,6 +133,16 @@ public class BasicAccessioningService<MODEL, HASH, ACCESSION extends Serializabl
         List<AccessionWrapper<MODEL, HASH, ACCESSION>> preexistingAccessions = dbService.findAllByHash(allHashes);
         Set<HASH> preexistingHashes = preexistingAccessions.stream().map(AccessionWrapper::getHash).collect(Collectors.toSet());
 
+        // release accessions associated with pre-existing hashes
+        Set<ACCESSION> accessionsToRelease = accessions
+                .stream()
+                .filter(accession -> preexistingHashes.contains(accession.getHash()))
+                .map(AccessionWrapper::getAccession)
+                .collect(Collectors.toSet());
+        SaveResponse<ACCESSION> response = new SaveResponse<>(Collections.emptySet(), accessionsToRelease);
+        accessionGenerator.postSave(response);
+
+        // save rest of the accessions
         List<AccessionWrapper<MODEL, HASH, ACCESSION>> accessionsToSave = accessions.stream()
                 .filter(accession -> !preexistingHashes.contains(accession.getHash()))
                 .collect(Collectors.toList());

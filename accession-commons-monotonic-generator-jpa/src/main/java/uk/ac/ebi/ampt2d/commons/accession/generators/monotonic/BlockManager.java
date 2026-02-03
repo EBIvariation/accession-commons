@@ -17,6 +17,8 @@
  */
 package uk.ac.ebi.ampt2d.commons.accession.generators.monotonic;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.util.Pair;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionIsNotPendingException;
@@ -36,6 +38,8 @@ import java.util.stream.LongStream;
  */
 class BlockManager {
 
+    private static final Logger logger = LoggerFactory.getLogger(BlockManager.class);
+
     private final PriorityQueue<ContiguousIdBlock> assignedBlocks;
 
     private final MonotonicRangePriorityQueue availableRanges;
@@ -52,6 +56,7 @@ class BlockManager {
     }
 
     public void addBlock(ContiguousIdBlock block) {
+        logger.trace("Adding block: {}", block);
         assignedBlocks.add(block);
         availableRanges.add(new MonotonicRange(block.getLastCommitted() + 1, block.getLastValue()));
     }
@@ -67,12 +72,14 @@ class BlockManager {
      * @return Array of monotonically increasing IDs
      */
     public long[] pollNext(int maxValues) throws AccessionCouldNotBeGeneratedException {
+        logger.trace("Polling for {} values", maxValues);
         if (!hasAvailableAccessions(maxValues)) {
             throw new AccessionCouldNotBeGeneratedException("Block manager doesn't have " + maxValues + " values available.");
         }
         MonotonicRange monotonicRange = pollNextMonotonicRange(maxValues);
         long[] ids = monotonicRange.getIds();
         generatedAccessions.addAll(LongStream.of(ids).boxed().collect(Collectors.toList()));
+        logger.trace("Generated accessions: {}", ids);
         return ids;
     }
 
@@ -98,6 +105,7 @@ class BlockManager {
     }
 
     public Set<ContiguousIdBlock> commit(long[] accessions) throws AccessionIsNotPendingException {
+        logger.trace("Inside commit for accessions: {}", accessions);
         assertAccessionsArePending(accessions);
         return doCommit(accessions);
     }
@@ -119,17 +127,31 @@ class BlockManager {
         addToCommitted(accessions);
 
         ContiguousIdBlock block = assignedBlocks.peek();
-        while (block != null && committedAccessions.peek() != null &&
-                committedAccessions.peek() == block.getLastCommitted() + 1) {
-            //Next value continues sequence, change last committed value
+        logger.trace("Trying to commit within block: {}", block);
+        while (true) {
+            if (block == null) {
+                logger.trace("No more blocks");
+                break;
+            } else if (committedAccessions.peek() == null) {
+                logger.trace("No more accessions to commit");
+                break;
+            } else if (committedAccessions.peek() != block.getLastCommitted() + 1) {
+                logger.trace("Next accession to commit is not in sequence: {} != {} + 1",
+                             committedAccessions.peek(), block.getLastCommitted());
+                break;
+            }
+            // Next value continues sequence, change last committed value
+            logger.trace("Setting last committed to {}", committedAccessions.peek());
             block.setLastCommitted(committedAccessions.poll());
             blocksToUpdate.add(block);
             if (!block.isNotFull()) {
                 assignedBlocks.poll();
                 block = assignedBlocks.peek();
+                logger.trace("Trying to commit within block: {}", block);
             }
         }
 
+        logger.trace("Blocks to update: {}", blocksToUpdate);
         return blocksToUpdate;
     }
 
@@ -141,6 +163,7 @@ class BlockManager {
     }
 
     public void release(long[] accessions) throws AccessionIsNotPendingException {
+        logger.trace("Inside release for accessions: {}", accessions);
         assertAccessionsArePending(accessions);
         doRelease(accessions);
     }
@@ -158,6 +181,7 @@ class BlockManager {
      * @throws AccessionIsNotPendingException When the generated accession does not match with the accession to commit
      */
     public Set<ContiguousIdBlock> recoverState(long[] committedElements) throws AccessionIsNotPendingException {
+        logger.trace("Inside recoverState for accessions: {}", committedElements);
         List<MonotonicRange> ranges = MonotonicRange.convertToMonotonicRanges(committedElements);
         List<MonotonicRange> newAvailableRanges = new ArrayList<>();
         for (MonotonicRange monotonicRange : this.availableRanges) {
