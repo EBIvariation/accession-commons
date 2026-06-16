@@ -4,7 +4,7 @@ on:
   push:
     branches: [ master ]
   pull_request:
-    branches: [ master, java21 ]
+    branches: [ master ]
 
 jobs:
   build:
