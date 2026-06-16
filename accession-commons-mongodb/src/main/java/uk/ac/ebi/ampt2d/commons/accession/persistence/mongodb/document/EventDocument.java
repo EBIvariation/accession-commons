@@ -19,11 +19,10 @@ package uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.document;
 
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.domain.Persistable;
-import org.springframework.data.mongodb.core.index.Indexed;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.IEvent;
 
-import javax.persistence.Id;
+import jakarta.persistence.Id;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.ArrayList;

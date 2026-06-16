@@ -5,49 +5,24 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>accession-commons-test</artifactId>
-    <version>0.7.22-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <parent>
-        <artifactId>accession-commons</artifactId>
         <groupId>uk.ac.ebi.ampt2d</groupId>
-        <version>0.7.22-SNAPSHOT</version>
+        <artifactId>accession-commons</artifactId>
+        <version>${revision}</version>
     </parent>
-
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
 
     <dependencies>
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-        </dependency>
-        <dependency>
             <groupId>uk.ac.ebi.ampt2d</groupId>
             <artifactId>accession-commons-core</artifactId>
-            <version>0.7.22-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <configuration>
-                    <reuseForks>false</reuseForks>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
 
 </project>

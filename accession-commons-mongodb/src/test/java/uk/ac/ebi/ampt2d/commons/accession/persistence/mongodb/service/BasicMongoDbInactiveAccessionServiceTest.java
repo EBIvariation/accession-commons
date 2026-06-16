@@ -17,17 +17,13 @@
  */
 package uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.service;
 
-import com.lordofthejars.nosqlunit.annotation.UsingDataSet;
-import com.lordofthejars.nosqlunit.core.LoadStrategyEnum;
-import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
-import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.ApplicationContext;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.EventType;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.IEvent;
 import uk.ac.ebi.ampt2d.test.configuration.MongoDbTestConfiguration;
@@ -35,31 +31,31 @@ import uk.ac.ebi.ampt2d.test.persistence.document.TestDocument;
 import uk.ac.ebi.ampt2d.test.persistence.document.TestEventDocument;
 import uk.ac.ebi.ampt2d.test.persistence.repository.TestRepository;
 import uk.ac.ebi.ampt2d.test.persistence.service.TestMongoDbInactiveAccessionService;
-import uk.ac.ebi.ampt2d.test.rule.FixSpringMongoDbRule;
+import uk.ac.ebi.ampt2d.utils.MongoTestContainerHelper;
 
 import java.util.Arrays;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static uk.ac.ebi.ampt2d.commons.accession.core.models.EventType.DEPRECATED;
 import static uk.ac.ebi.ampt2d.commons.accession.core.models.EventType.MERGED;
 import static uk.ac.ebi.ampt2d.commons.accession.core.models.EventType.UPDATED;
 import static uk.ac.ebi.ampt2d.test.persistence.document.TestDocument.document;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = {MongoDbTestConfiguration.class})
-public class BasicMongoDbInactiveAccessionServiceTest {
+public class BasicMongoDbInactiveAccessionServiceTest extends MongoTestContainerHelper {
 
     private static final String DEFAULT_REASON = "default-test-reason";
 
-    @Rule
-    public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(MongoDbConfigurationBuilder.mongoDb()
-            .databaseName("accession-test").build());
-
-    //Required for nosql unit
     @Autowired
-    private ApplicationContext applicationContext;
+    private MongoTemplate mongoTemplate;
+
+    @BeforeEach
+    void cleanDb() {
+        mongoTemplate.getDb().drop();
+    }
 
     @Autowired
     private TestRepository repository;
@@ -67,25 +63,21 @@ public class BasicMongoDbInactiveAccessionServiceTest {
     @Autowired
     private TestMongoDbInactiveAccessionService service;
 
-    @UsingDataSet(loadStrategy = LoadStrategyEnum.DELETE_ALL)
     @Test
     public void testLastOperationDoesNotExistBehaviour() {
         new LastOperationAsserts("notExist").assertDoesNotExist();
     }
 
-    @UsingDataSet(loadStrategy = LoadStrategyEnum.DELETE_ALL)
     @Test
     public void testUpdate() {
         update(document(1, "test-update-1")).assertExists().assertIsUpdate();
     }
 
-    @UsingDataSet(loadStrategy = LoadStrategyEnum.DELETE_ALL)
     @Test
     public void testDeprecate() {
         deprecate(document(1, "test-deprecate-1")).assertExists().assertIsDeprecate();
     }
 
-    @UsingDataSet(loadStrategy = LoadStrategyEnum.DELETE_ALL)
     @Test
     public void testMerge() {
         merge(document(1, "test-deprecate-1"), "a2").assertExists().assertIsMerge("a1", "a2", 1);

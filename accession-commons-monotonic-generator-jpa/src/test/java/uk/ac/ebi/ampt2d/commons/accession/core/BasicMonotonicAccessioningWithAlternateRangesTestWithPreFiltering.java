@@ -17,13 +17,13 @@
  */
 package uk.ac.ebi.ampt2d.commons.accession.core;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import uk.ac.ebi.ampt2d.commons.accession.block.initialization.BlockInitializationException;
 import uk.ac.ebi.ampt2d.commons.accession.core.exceptions.AccessionCouldNotBeGeneratedException;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
@@ -45,13 +45,14 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static uk.ac.ebi.ampt2d.commons.accession.util.ContiguousIdBlockUtil.getAllBlocksForCategoryId;
 import static uk.ac.ebi.ampt2d.commons.accession.util.ContiguousIdBlockUtil.getAllUncompletedBlocksForCategoryId;
 import static uk.ac.ebi.ampt2d.commons.accession.util.ContiguousIdBlockUtil.getUnreservedContiguousIdBlock;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @DataJpaTest
 @ContextConfiguration(classes = {TestMonotonicDatabaseServiceTestConfiguration.class})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
@@ -68,11 +69,10 @@ public class BasicMonotonicAccessioningWithAlternateRangesTestWithPreFiltering {
     @Autowired
     private ContiguousIdBlockRepository contiguousIdBlockRepository;
 
-    @Test(expected = BlockInitializationException.class)
+    @Test
     public void testUnknownCategory() throws AccessionCouldNotBeGeneratedException {
-        List<GetOrCreateAccessionWrapper<TestModel, String, Long>> evaAccessions =
-                getAccessioningService("unknown-category", INSTANCE_ID)
-                        .getOrCreate(getObjectsForAccessionsInRange(1, 10), INSTANCE_ID);
+        assertThrows(BlockInitializationException.class, () -> getAccessioningService("unknown-category", INSTANCE_ID)
+                .getOrCreate(getObjectsForAccessionsInRange(1, 10), INSTANCE_ID));
     }
 
     @Test

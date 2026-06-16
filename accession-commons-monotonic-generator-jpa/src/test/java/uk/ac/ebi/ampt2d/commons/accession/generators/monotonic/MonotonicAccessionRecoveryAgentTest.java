@@ -1,11 +1,12 @@
 package uk.ac.ebi.ampt2d.commons.accession.generators.monotonic;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import jakarta.persistence.EntityManager;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.AccessionWrapper;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.entities.ContiguousIdBlock;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.repositories.ContiguousIdBlockRepository;
@@ -23,10 +24,10 @@ import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 import java.util.stream.StreamSupport;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @DataJpaTest
 @ContextConfiguration(classes = {MonotonicAccessionGeneratorTestConfiguration.class, TestMonotonicDatabaseServiceTestConfiguration.class})
 public class MonotonicAccessionRecoveryAgentTest {
@@ -40,6 +41,9 @@ public class MonotonicAccessionRecoveryAgentTest {
     private ContiguousIdBlockRepository repository;
     @Autowired
     private ContiguousIdBlockService service;
+
+    @Autowired
+    private EntityManager entityManager;
 
     @Test
     public void testRunRecovery() throws InterruptedException {
@@ -61,14 +65,16 @@ public class MonotonicAccessionRecoveryAgentTest {
                 .map(longAcc -> new AccessionWrapper<>(longAcc, "hash-1" + longAcc, TestModel.of("test-obj-1-" + longAcc)))
                 .collect(Collectors.toList());
         monotonicDBService.save(accessionsSet);
+        entityManager.flush();
 
         // block4 should not be recovered as it is after the recover cut off time
-        Thread.sleep(2000);
+        Thread.sleep(5000);
         ContiguousIdBlock block4 = new ContiguousIdBlock(TEST_CATEGORY, TEST_APP_INSTANCE_ID, 300, 100);
         repository.save(block4);
+        LocalDateTime recoverCutOffTime = block4.getLastUpdatedTimestamp();
+        recoverCutOffTime = recoverCutOffTime.minusSeconds(1);
 
         // run recovery through recovery agent
-        LocalDateTime recoverCutOffTime = block3.getLastUpdatedTimestamp();
         MonotonicAccessionRecoveryAgent recoveryAgent = new MonotonicAccessionRecoveryAgent(service, monotonicDBService);
         recoveryAgent.runRecovery(TEST_CATEGORY, TEST_RECOVERY_AGENT_APP_INSTANCE_ID, recoverCutOffTime);
 

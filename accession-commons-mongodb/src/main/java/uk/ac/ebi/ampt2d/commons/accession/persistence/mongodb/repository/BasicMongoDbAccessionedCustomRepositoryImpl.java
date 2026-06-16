@@ -21,7 +21,7 @@ import com.mongodb.bulk.BulkWriteError;
 import com.mongodb.MongoBulkWriteException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.dao.DuplicateKeyException;
+import org.springframework.data.mongodb.BulkOperationException;
 import org.springframework.data.mongodb.core.BulkOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.SaveResponse;
@@ -62,7 +62,7 @@ public abstract class BasicMongoDbAccessionedCustomRepositoryImpl<
 
         try {
             insert.execute();
-        } catch (DuplicateKeyException e) {
+        } catch (BulkOperationException e) {
             MongoBulkWriteException bulkWriteException = ((MongoBulkWriteException) e.getCause());
             bulkWriteException.getWriteErrors().forEach(error -> {
                 String errorId = reportBulkOperationException(error).orElseThrow(() -> e);

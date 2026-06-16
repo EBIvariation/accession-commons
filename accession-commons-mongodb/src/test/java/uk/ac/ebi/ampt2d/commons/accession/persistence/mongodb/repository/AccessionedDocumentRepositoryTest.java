@@ -17,22 +17,18 @@
  */
 package uk.ac.ebi.ampt2d.commons.accession.persistence.mongodb.repository;
 
-import com.lordofthejars.nosqlunit.annotation.UsingDataSet;
-import com.lordofthejars.nosqlunit.core.LoadStrategyEnum;
-import com.lordofthejars.nosqlunit.mongodb.MongoDbConfigurationBuilder;
-import com.lordofthejars.nosqlunit.mongodb.MongoDbRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.ApplicationContext;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import uk.ac.ebi.ampt2d.commons.accession.core.models.SaveResponse;
 import uk.ac.ebi.ampt2d.test.configuration.MongoDbTestConfiguration;
 import uk.ac.ebi.ampt2d.test.persistence.document.TestDocument;
 import uk.ac.ebi.ampt2d.test.persistence.repository.TestRepository;
-import uk.ac.ebi.ampt2d.test.rule.FixSpringMongoDbRule;
+import uk.ac.ebi.ampt2d.utils.MongoTestContainerHelper;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -40,23 +36,24 @@ import java.util.List;
 import java.util.Optional;
 
 import static junit.framework.TestCase.assertTrue;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static uk.ac.ebi.ampt2d.test.persistence.document.TestDocument.document;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = {MongoDbTestConfiguration.class})
-public class AccessionedDocumentRepositoryTest {
+public class AccessionedDocumentRepositoryTest extends MongoTestContainerHelper {
 
     @Autowired
     private TestRepository repository;
 
-    @Rule
-    public MongoDbRule mongoDbRule = new FixSpringMongoDbRule(MongoDbConfigurationBuilder.mongoDb()
-            .databaseName("accession-test").build());
-
-    //Required for nosql unit
     @Autowired
-    private ApplicationContext applicationContext;
+    MongoTemplate mongoTemplate;
+
+    @BeforeEach
+    void cleanDb() {
+        mongoTemplate.getDb().drop();
+    }
 
     private class TestInsert {
 
@@ -105,32 +102,28 @@ public class AccessionedDocumentRepositoryTest {
         return new TestInsert(documents);
     }
 
-    @UsingDataSet(loadStrategy = LoadStrategyEnum.DELETE_ALL)
     @Test
     public void testInsert() {
         assertEquals(0, repository.count());
         insertDocuments(1).assertInsertOk();
     }
 
-    @UsingDataSet(loadStrategy = LoadStrategyEnum.DELETE_ALL)
     @Test
     public void testInsertMultiple() {
         assertEquals(0, repository.count());
         insertDocuments(2).assertInsertOk();
     }
 
-    @UsingDataSet(loadStrategy = LoadStrategyEnum.DELETE_ALL)
-    @Test(expected = RuntimeException.class)
+    @Test
     public void testInsertDuplicatedHashInBatch() {
         assertEquals(0, repository.count());
-        insertDocuments(document(1), document(2), document(1));
+        assertThrows(RuntimeException.class, () -> insertDocuments(document(1), document(2), document(1)));
     }
 
     private TestInsert insertDocuments(TestDocument... documents) {
         return new TestInsert(Arrays.asList(documents));
     }
 
-    @UsingDataSet(loadStrategy = LoadStrategyEnum.DELETE_ALL)
     @Test
     public void testInsertDuplicatedHashDifferentBatchesBeginning() {
         assertEquals(0, repository.count());
@@ -148,7 +141,6 @@ public class AccessionedDocumentRepositoryTest {
                 .assertAccessionHasNotBeenSaved("a1");
     }
 
-    @UsingDataSet(loadStrategy = LoadStrategyEnum.DELETE_ALL)
     @Test
     public void testInsertDuplicatedHashDifferentBatchesMiddle() {
         assertEquals(0, repository.count());
@@ -166,7 +158,6 @@ public class AccessionedDocumentRepositoryTest {
                 .assertAccessionHasNotBeenSaved("a1");
     }
 
-    @UsingDataSet(loadStrategy = LoadStrategyEnum.DELETE_ALL)
     @Test
     public void testInsertDuplicatedHashDifferentBatchesEnd() {
         assertEquals(0, repository.count());
@@ -184,7 +175,6 @@ public class AccessionedDocumentRepositoryTest {
                 .assertAccessionHasNotBeenSaved("a0");
     }
 
-    @UsingDataSet(loadStrategy = LoadStrategyEnum.DELETE_ALL)
     @Test
     public void testInsertDuplicatedHashDifferentAccession() {
         assertEquals(0, repository.count());
@@ -202,7 +192,6 @@ public class AccessionedDocumentRepositoryTest {
                 .assertAccessionHasNotBeenSaved("a7");
     }
 
-    @UsingDataSet(loadStrategy = LoadStrategyEnum.DELETE_ALL)
     @Test
     public void testInsertMultipleDuplicatedHash() {
         assertEquals(0, repository.count());
@@ -230,7 +219,6 @@ public class AccessionedDocumentRepositoryTest {
                 .assertAccessionHasNotBeenSaved("a9");
     }
 
-    @UsingDataSet(loadStrategy = LoadStrategyEnum.DELETE_ALL)
     @Test
     public void testInsertFindById() {
         insertDocuments(1);
