@@ -100,7 +100,8 @@ public class MonotonicAccessionGenerator<MODEL> implements AccessionGenerator<MO
      * @throws AccessionIsNotPendingException
      */
     private void recoverStateForElements(long[] committedElements) throws AccessionIsNotPendingException {
-        blockService.save(blockManager.recoverState(committedElements));
+        Set<ContiguousIdBlock> recoveredBlocks = blockManager.recoverState(committedElements);
+        ExponentialBackOff.execute(() -> blockService.save(recoveredBlocks));
     }
 
     public synchronized long[] generateAccessions(int numAccessionsToGenerate, String applicationInstanceId)
