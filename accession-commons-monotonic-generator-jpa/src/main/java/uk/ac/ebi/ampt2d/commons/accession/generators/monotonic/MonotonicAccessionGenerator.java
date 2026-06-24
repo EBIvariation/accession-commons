@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Generates monotonically increasing ids for type of objects across multiple application instances. Each
@@ -153,7 +154,8 @@ public class MonotonicAccessionGenerator<MODEL> implements AccessionGenerator<MO
 
     public synchronized void commit(long... accessions) throws AccessionIsNotPendingException {
         checkAccessionGeneratorNotShutDown();
-        blockService.save(blockManager.commit(accessions));
+        Set<ContiguousIdBlock> committedBlocks = blockManager.commit(accessions);
+        ExponentialBackOff.execute(() -> blockService.save(committedBlocks));
     }
 
     public synchronized void release(long... accessions) throws AccessionIsNotPendingException {
