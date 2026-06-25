@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.entities.ContiguousIdBlock;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service.ContiguousIdBlockService;
 import uk.ac.ebi.ampt2d.commons.accession.persistence.jpa.monotonic.service.MonotonicDatabaseService;
+import uk.ac.ebi.ampt2d.commons.accession.utils.ExponentialBackOff;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -64,6 +65,6 @@ public class MonotonicAccessionRecoveryAgent {
     private void setAppInstanceIdAndReleaseBlock(String applicationInstanceId, ContiguousIdBlock block) {
         block.setApplicationInstanceId(applicationInstanceId);
         block.releaseReserved();
-        blockService.save(block);
+        ExponentialBackOff.execute(() -> blockService.save(block));
     }
 }
